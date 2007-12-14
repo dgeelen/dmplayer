@@ -2,7 +2,6 @@
 	#define NETWORK_CORE_H
 	#include "types.h"
 	#include "network-crossplatform.h"
-	#include <sys/socket.h>
 	
 	struct ipv4_addr {
 		union {

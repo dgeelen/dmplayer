@@ -10,11 +10,24 @@
 //
 //
 #include "network-core.h"
-#include <iostream.h>
-#include <sys/socket.h>
+#include <iostream>
 
 using namespace std;
-tcp_listen_socket::tcp_listen_socket(const ipv4_addr addr, const int portnumber) {
+tcp_listen_socket::tcp_listen_socket(const ipv4_addr addr, const int portnumber) 
+{
+	
+	#ifdef HAVE_WINSOCK
+	{
+		WORD wVersionRequested;
+		WSADATA wsaData;
+		int err;
+		wVersionRequested = MAKEWORD( 2, 0 );
+		err = WSAStartup( wVersionRequested, &wsaData );
+		if (err!=0) 
+			throw("error!");
+	}
+	#endif
+
 	sock = socket( AF_INET, SOCK_STREAM, 0 );
 
 	sockaddr_in addr_in;
