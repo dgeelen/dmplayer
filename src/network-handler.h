@@ -12,10 +12,14 @@
 
 #ifndef NETWORK_PROTOCOL_H
 	#define NETWORK_PROTOCOL_H
+	#include "network-core.h"
 	#include "types.h"
+	
 	class network_handler {
 		public:
 			network_handler(uint16 port_number);
 		private:
+			tcp_listen_socket tcp_sock;
+			udp_listen_socket udp_sock;
 	};
 #endif
