@@ -1,0 +1,12 @@
+like this:
+
+void blaat() {
+	int yesthatisatabatthestartofthisline;
+	for (int i; i < 12; ++i) {
+		i *= 2;
+	}
+}
+
+
+Suggestion:
+indent -bap -bbb -bbo -bl -br -brs -cdw -fca -hnl -sob -bad -sc -nce -cli2  -cbi2 -ss -npcs -ncs -bs -nsaf -nsai -nsaw -nprs -nbc -npsl -i2 -ci8 -lp -l79
