@@ -19,7 +19,7 @@
 		public:
 			network_handler(uint16 port_number);
 		private:
-			tcp_listen_socket tcp_sock;
-			udp_listen_socket udp_sock;
+			tcp_listen_socket listen_sock;
+			udp_socket udp_sock;
 	};
 #endif
