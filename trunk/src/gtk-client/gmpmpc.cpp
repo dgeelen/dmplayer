@@ -1,6 +1,9 @@
-#include <stdio.h>
+#include <gtkmm.h>
 
-int main(int argc, char* argv) {
-	fprintf(stdout, "mpmpc V0!\n");
+int main ( int argc, char *argv[] )
+{
+	Gtk::Main kit ( argc, argv );
+	Gtk::Window window;
+	Gtk::Main::run ( window );
 	return 0;
 }
