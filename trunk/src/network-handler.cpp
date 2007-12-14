@@ -30,4 +30,16 @@ network_handler::network_handler(uint16 port_number) {
 	cout << "Listening on "; for(int i=0; i<4; ++i) cout << (int)listen_addr.array[i] << "."; cout << ":" << port_number <<"\n";
 	listen_sock = tcp_listen_socket(listen_addr, port_number);
 	udp_sock = udp_socket( listen_addr, port_number );
+
+	listen_addr.full = 0xffffffff;
+	char buf[256] = "Halllo aaaaleemalaaaalalalaa!!!\n";
+	char rbuf[256] = "                                 ";
+	udp_sock.send( listen_addr, port_number, (uint8*)buf, 256 );
+	udp_sock.receive( &listen_addr, &port_number, (uint8*)rbuf, 256 );
+	cout << "From " << (int)listen_addr.array[0] << "."
+	                << (int)listen_addr.array[1] << "."
+	                << (int)listen_addr.array[2] << "."
+	                << (int)listen_addr.array[3] << ":"
+	                << port_number
+	                << ":\n\""<< rbuf << "\"\n";
 }
