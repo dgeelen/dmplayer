@@ -63,3 +63,22 @@ udp_socket::udp_socket(const ipv4_addr addr, const uint16 portnumber)
 		throw("udp_socket: Unable to enable broadcasting!");
 	};
 }
+
+uint32 udp_socket::send( const ipv4_addr dest_addr, const uint16 dest_port, const uint8* buf, const uint32 len ) {
+	sockaddr_in addr_in;
+	addr_in.sin_family = AF_INET;
+	addr_in.sin_addr.s_addr = (dest_addr.full == 0xffffffff) ? INADDR_BROADCAST : dest_addr.full; //TODO: Broadcast == 0xffffffff?
+	addr_in.sin_port = htons( dest_port );
+	return sendto(sock, buf, len, 0, (sockaddr*)&addr_in, sizeof(addr_in));
+}
+
+uint32 udp_socket::receive( ipv4_addr* from_addr, uint16* from_port, const uint8* buf, const uint32 len ) {
+	sockaddr_in addr_in;
+/*	addr_in.sin_family = AF_INET;
+	addr_in.sin_addr.s_addr = INADDR_ANY; //(from_addr.full == 0xffffffff) ? INADDR_BROADCAST : from_addr.full;
+	addr_in.sin_port = 0;//htons( from_port );*/
+	socklen_t addr_in_len = sizeof(addr_in);
+	uint32 retval = recvfrom( sock, (void*)buf, len, 0, (sockaddr*)&addr_in, &addr_in_len);
+	from_addr->full = addr_in.sin_addr.s_addr;
+	*from_port = ntohs(addr_in.sin_port);
+}
