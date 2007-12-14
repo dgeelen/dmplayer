@@ -12,6 +12,10 @@
 
 #ifndef NETWORK_PROTOCOL_H
 	#define NETWORK_PROTOCOL_H
-
-	
+	#include "types.h"
+	class network_handler {
+		public:
+			network_handler(uint16 port_number);
+		private:
+	};
 #endif
