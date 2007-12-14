@@ -28,15 +28,15 @@
 	
 	class tcp_socket {
 		public:
-			tcp_socket( ipv4_addr addr, uint16 port );
-			tcp_socket( ipv6_addr addr, uint16 port );
-			void connect( ipv4_addr addr, uint16 port );
-			void connect( ipv6_addr addr, uint16 port );
-			bool bind( ipv4_addr addr, uint16 port );
-			bool bind( ipv6_addr addr, uint16 port );
+			tcp_socket( const ipv4_addr addr, const uint16 port );
+			tcp_socket( const ipv6_addr addr, const uint16 port );
+			void connect( const ipv4_addr addr, const uint16 port );
+			void connect( const ipv6_addr addr, const uint16 port );
+			bool bind( const ipv4_addr addr, const uint16 port );
+			bool bind( const ipv6_addr addr, const uint16 port );
 			
-			uint32 send( uint8* buf, uint32 len );
-			uint32 receive( uint8* buf, uint32 len );
+			uint32 send( const uint8* buf, const uint32 len );
+			uint32 receive( const uint8* buf, const uint32 len );
 			void disconnect();
 		private:
 			SOCKET sock;
@@ -44,8 +44,9 @@
 
 	class tcp_listen_socket {
 		public:
-			tcp_listen_socket(const ipv4_addr addr, const int portnumber);
-			tcp_listen_socket(const ipv6_addr addr, const int portnumber);
+			tcp_listen_socket();
+			tcp_listen_socket(const ipv4_addr addr, const uint16 portnumber);
+			tcp_listen_socket(const ipv6_addr addr, const uint16 portnumber);
 			tcp_socket* accept();
 		private:
 			SOCKET sock;
@@ -54,15 +55,16 @@
 	class udp_socket {
 		public:
 			udp_socket( );
-			udp_socket( ipv4_addr, uint16 port );
-			udp_socket( ipv6_addr, uint16 port );
-			bool bind( ipv4_addr addr, uint16 port );
-			bool bind( ipv6_addr addr, uint16 port );
+			udp_socket( const ipv4_addr, const uint16 port );
+			udp_socket( const ipv6_addr, const uint16 port );
+			bool bind( const ipv4_addr addr, const uint16 port );
+			bool bind( const ipv6_addr addr, const uint16 port );
 
-			uint32 send( ipv4_addr addr, uint16 port, uint8* buf, uint32 len );
-			uint32 send( ipv6_addr addr, uint16 port, uint8* buf, uint32 len );
-			uint32 receive( ipv4_addr* addr, uint16* port, uint8* buf, uint32 len );
-			uint32 receive( ipv6_addr* addr, uint16* port, uint8* buf, uint32 len );
+			uint32 send( const ipv4_addr addr, const uint16 port, const uint8* buf, const uint32 len );
+			uint32 send( const ipv6_addr addr, const uint16 port, const uint8* buf, const uint32 len );
+			uint32 receive( const ipv4_addr* addr, const uint16* port, const uint8* buf, const uint32 len );
+			uint32 receive( const ipv6_addr* addr, const uint16* port, const uint8* buf, const uint32 len );
 		private:
+			SOCKET sock;
 	};
 #endif

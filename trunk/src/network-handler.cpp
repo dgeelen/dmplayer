@@ -16,8 +16,18 @@
 using namespace std;
 
 network_handler::network_handler(uint16 port_number) {
+	#ifdef HAVE_WINSOCK //NOTE: This is done only once, network_handler is a singleton class
+	{
+		WORD wVersionRequested;
+		WSADATA wsaData;
+		wVersionRequested = MAKEWORD( 2, 0 );
+		if (WSAStartup( wVersionRequested, &wsaData ) != 0)
+			throw("Error: could not initialize WINSOCK!");
+	}
+	#endif
 	cout << "Initializing network_handler()\n";
 	ipv4_addr listen_addr;
 	cout << "Listening on "; for(int i=0; i<4; ++i) cout << (int)listen_addr.array[i] << "."; cout << ":" << port_number <<"\n";
-	tcp_listen_socket listen_sock(listen_addr, port_number);
+	listen_sock = tcp_listen_socket(listen_addr, port_number);
+	udp_sock = udp_socket( listen_addr, port_number );
 }
