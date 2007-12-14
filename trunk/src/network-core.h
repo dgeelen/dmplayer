@@ -60,10 +60,10 @@
 			bool bind( const ipv4_addr addr, const uint16 port );
 			bool bind( const ipv6_addr addr, const uint16 port );
 
-			uint32 send( const ipv4_addr addr, const uint16 port, const uint8* buf, const uint32 len );
-			uint32 send( const ipv6_addr addr, const uint16 port, const uint8* buf, const uint32 len );
-			uint32 receive( const ipv4_addr* addr, const uint16* port, const uint8* buf, const uint32 len );
-			uint32 receive( const ipv6_addr* addr, const uint16* port, const uint8* buf, const uint32 len );
+			uint32 send( const ipv4_addr dest_addr, const uint16 dest_port, const uint8* buf, const uint32 len );
+			uint32 send( const ipv6_addr dest_addr, const uint16 dest_port, const uint8* buf, const uint32 len );
+			uint32 receive( ipv4_addr* from_addr, uint16* from_port, const uint8* buf, const uint32 len );
+			uint32 receive( ipv6_addr* from_addr, uint16* from_port, const uint8* buf, const uint32 len );
 		private:
 			SOCKET sock;
 	};
