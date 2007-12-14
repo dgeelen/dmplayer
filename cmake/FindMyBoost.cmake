@@ -51,6 +51,14 @@ ELSE(WIN32 AND NOT MINGW)
 		      /usr/lib /usr/local/lib
 	)
 
+	FIND_LIBRARY(BOOST_PROGRAM_OPTIONS_LIBRARY
+		NAMES boost_program_options-mt boost_program_options${BOOST_LIBRARY_SUFFIX}
+		PATHS "${BOOST_LIBRARY_DIR}" 
+		      "${BOOST_INCLUDE_DIR}/lib"
+		      "${BOOST_INCLUDE_DIR}/../lib"
+		      /usr/lib /usr/local/lib
+	)
+	
 	FIND_LIBRARY(BOOST_FILESYSTEM_LIBRARY
 		NAMES boost_filesystem-mt boost_filesystem${BOOST_LIBRARY_SUFFIX}
 		PATHS "${BOOST_LIBRARY_DIR}"
