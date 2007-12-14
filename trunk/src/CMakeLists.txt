@@ -6,10 +6,9 @@ LINK_DIRECTORIES("${BOOST_LIBRARY_DIR}")
 SUBDIRS(gtk-client)
 
 ADD_EXECUTABLE(mpmpd
-	mpmpd.h
-	mpmpd.cpp
-	network-core.cpp
-	network-core.h
+	mpmpd.h mpmpd.cpp
+	network-core.h network-core.cpp
+	network-handler.h network-handler.cpp
 )
 
 TARGET_LINK_LIBRARIES(mpmpd

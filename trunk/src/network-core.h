@@ -1,6 +1,8 @@
 #ifndef NETWORK_CORE_H
 	#define NETWORK_CORE_H
 	#include "types.h"
+	#include "network-crossplatform.h"
+	#include <sys/socket.h>
 	
 	struct ipv4_addr {
 		union {
@@ -38,6 +40,7 @@
 			uint32 receive( uint8* buf, uint32 len );
 			void disconnect();
 		private:
+			SOCKET sock;
 	};
 
 	class tcp_listen_socket {
@@ -46,6 +49,7 @@
 			tcp_listen_socket(const ipv6_addr addr, const int portnumber);
 			tcp_socket* accept();
 		private:
+			SOCKET sock;
 	};
 
 	class udp_socket {
