@@ -1,6 +1,7 @@
 like this:
 
-void blaat() {
+void blaat()
+{
 	int yesthatisatabatthestartofthisline;
 	for (int i; i < 12; ++i) {
 		i *= 2;
