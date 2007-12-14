@@ -15,7 +15,10 @@
 #include <iostream>
 using namespace std;
 
+bool singleton = true;
 network_handler::network_handler(uint16 port_number) {
+	if(!singleton) throw("Error: network_handler() is a singleton class!");
+	singleton=false;
 	#ifdef HAVE_WINSOCK //NOTE: This is done only once, network_handler is a singleton class
 	{
 		WORD wVersionRequested;
