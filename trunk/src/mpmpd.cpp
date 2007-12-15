@@ -30,6 +30,6 @@ int main(int argc, char* argv[]) {
 	}
 
 	network_handler nh(listen_port);
-	
+
 	return 0;
 }

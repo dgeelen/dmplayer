@@ -14,6 +14,7 @@ FIND_PATH(BOOST_INCLUDE_DIR
 		"C:/Program Files/boost/boost_1_34_1"
 		"C:/Program Files/boost/boost_1_34_0"
 		"C:/Program Files/boost/boost_1_34"
+		"C:/Boost/boost_1_34_1/"
 )
 
 IF(WIN32 AND NOT MINGW)

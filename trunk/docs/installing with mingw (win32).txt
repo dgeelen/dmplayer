@@ -1,0 +1,34 @@
+Here's how to compile with mingw32
+1.  Install MinGW from
+==============================================================================
+SET UP BOOST
+
+2.  Download Boost source from http://sourceforge.net/project/showfiles.php?group_id=7586
+3.  Unzip in {BOOST_ROOT}, typically C:\Boost.
+3.  Download (if neccesairy) BJam from http://sourceforge.net/project/showfiles.php?group_id=7586&package_id=72941
+4.  Unzip BJam in {BOOST_ROOT}\boost_1_xx_x (boost version number on xx).
+5.  Open cmd.exe, go to {BOOST_ROOT}\boost_1_xx_x.
+6.  Use command "bjam toolset=gcc install --with-thread".
+7.  Use command "bjam toolset=gcc install --with-program_options".
+8.  Use command "bjam toolset=gcc install --with-filesystem".
+9.  If executed correctly, there should be a directory called {BOOST_ROOT}\lib.
+===============================================================================
+SET UP CMAKE
+
+10. Download CMake binairy from http://www.cmake.org/HTML/Download.html
+11. Install CMake in {CMAKE_ROOT}, typically C:\Program Files\CMake 2.x.
+12. run {CMAKE_ROOT}\bin\CMakeSetup.exe.
+13. select {SVN_ROOT} as source code directory.
+14. select desired directory as binary directory (for example {SVN_ROOT}\build).
+15. click Configure.
+16. change the value of BOOST_LIBRARY_SUFFIX into -mgwxx-mt-x_xx_x (Check your version number in {BOOST_ROOT}\lib).
+17. Click Configure.
+18. Check for error messages (^^)
+===============================================================================
+COMPILING
+
+19. Use your favourite commandline tool (e.g. Cygwin)
+20. Go to {BIN}
+21. Use mingw32-make.exe
+
+Happy compiling :)
