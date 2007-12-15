@@ -1,7 +1,7 @@
 //
 // C++ Implementation: network-core
 //
-// Description: 
+// Description:
 //
 //
 // Author:  <>, (C) 2007
@@ -54,7 +54,7 @@ udp_socket::udp_socket(const ipv4_addr addr, const uint16 portnumber)
 		closesocket( sock );
 		throw("udp_socket: Bind to network failed!");
 	}
-	
+
 	// now enable broadcasting
 	unsigned long bc = 1;
 	if ( setsockopt( sock, SOL_SOCKET, SO_BROADCAST, ( char* )&bc, sizeof( bc )) == SOCKET_ERROR ) {
@@ -69,7 +69,7 @@ uint32 udp_socket::send( const ipv4_addr dest_addr, const uint16 dest_port, cons
 	addr_in.sin_family = AF_INET;
 	addr_in.sin_addr.s_addr = (dest_addr.full == 0xffffffff) ? INADDR_BROADCAST : dest_addr.full; //TODO: Broadcast == 0xffffffff?
 	addr_in.sin_port = htons( dest_port );
-	return sendto(sock, buf, len, 0, (sockaddr*)&addr_in, sizeof(addr_in));
+	return sendto(sock, (char*)buf, len, 0, (sockaddr*) &addr_in, sizeof(addr_in));
 }
 
 uint32 udp_socket::receive( ipv4_addr* from_addr, uint16* from_port, const uint8* buf, const uint32 len ) {
@@ -78,7 +78,7 @@ uint32 udp_socket::receive( ipv4_addr* from_addr, uint16* from_port, const uint8
 	addr_in.sin_addr.s_addr = INADDR_ANY; //(from_addr.full == 0xffffffff) ? INADDR_BROADCAST : from_addr.full;
 	addr_in.sin_port = 0;//htons( from_port );*/
 	socklen_t addr_in_len = sizeof(addr_in);
-	uint32 retval = recvfrom( sock, (void*)buf, len, 0, (sockaddr*)&addr_in, &addr_in_len);
+	uint32 retval = recvfrom( sock, (char*)buf, len, 0, (sockaddr*)&addr_in, &addr_in_len);
 	from_addr->full = addr_in.sin_addr.s_addr;
 	*from_port = ntohs(addr_in.sin_port);
 }
