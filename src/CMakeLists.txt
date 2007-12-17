@@ -3,7 +3,8 @@ FIND_PACKAGE(MyBoost)
 INCLUDE_DIRECTORIES("${BOOST_INCLUDE_DIR}")
 LINK_DIRECTORIES("${BOOST_LIBRARY_DIR}")
 
-#SUBDIRS(gtk-client)
+SUBDIRS(gtk-client)
+
 
 ADD_EXECUTABLE(mpmpd
 	mpmpd.h mpmpd.cpp
