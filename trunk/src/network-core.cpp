@@ -81,4 +81,5 @@ uint32 udp_socket::receive( ipv4_addr* from_addr, uint16* from_port, const uint8
 	uint32 retval = recvfrom( sock, (char*)buf, len, 0, (sockaddr*)&addr_in, &addr_in_len);
 	from_addr->full = addr_in.sin_addr.s_addr;
 	*from_port = ntohs(addr_in.sin_port);
+	return retval;
 }
