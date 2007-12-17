@@ -3,9 +3,11 @@
 
 # This module defines
 #  BOOST_INCLUDE_DIR, location of boost headers
+#  BOOST_LIBRARY_DIR, location of boost libraries
 #  BOOST_XXX_LIBRARY, the library to link against BOOST_XXX lib
+
 # also defined, but not for general use are
-#  BOOST_LIBRARY_SUFFIX
+#  BOOST_LIBRARY_SUFFIX, suffix to try for finding the boost libraries (unix only)
 
 FIND_PATH(BOOST_INCLUDE_DIR
 	NAMES boost/config.hpp
@@ -21,6 +23,7 @@ IF(WIN32 AND NOT MINGW)
 	# depend on autolinking on windows
 	SET(BOOST_THREAD_LIBRARY "")
 	SET(BOOST_FILESYSTEM_LIBRARY "")
+	SET(BOOST_PROGRAM_OPTIONS_LIBRARY "")
 	SET(BOOST_LIBRARY_DIR
 		"${BOOST_INCLUDE_DIR}/lib"
 		CACHE PATH
