@@ -1,13 +1,18 @@
-IF(NOT ENABLE_GTK_GUI)
-	SET(ENABLE_GTK_GUI "NO" CACHE String "Enable building of the gtk gui")
-ENDIF(NOT ENABLE_GTK_GUI)
-
-STRING(COMPARE EQUAL "${ENABLE_GTK_GUI}" "YES" INTERNAL_GTK_ENABLE)
-IF(INTERNAL_GTK_ENABLE)
+STRING(COMPARE EQUAL "${ENABLE_GTK_GUI}" "" AUTODETECT_GTK_GUI)
+IF(AUTODETECT_GTK_GUI)
 	find_package(PkgConfig)
+	pkg_check_modules(GTKMM gtkmm-2.4)
 
-	pkg_check_modules(GTKMM gtkmm-2.4) # look into FindPkgConfig.cmake, 
-					   # it contains documentation
+	IF(PKG_CONFIG_FOUND AND GTKMM_FOUND)
+		SET(ENABLE_GTK_GUI ON CACHE BOOL "Enable building of the gtk gui")
+	ELSE(PKG_CONFIG_FOUND AND GTKMM_FOUND)
+		SET(ENABLE_GTK_GUI OFF CACHE BOOL "Enable building of the gtk gui")
+	ENDIF(PKG_CONFIG_FOUND AND GTKMM_FOUND)
+ENDIF(AUTODETECT_GTK_GUI)
+
+IF(ENABLE_GTK_GUI)
+	find_package(PkgConfig REQUIRED)
+	pkg_check_modules(GTKMM REQUIRED gtkmm-2.4)
 
 	# Now the variables GTKMM_INCLUDE_DIRS, GTKMM_LIBRARY_DIRS and GTKMM_LIBRARIES 
 	# contain what you expect 
@@ -25,4 +30,4 @@ IF(INTERNAL_GTK_ENABLE)
 		${GTKMM_LIBRARIES}
 	)
 
-ENDIF(INTERNAL_GTK_ENABLE)
+ENDIF(ENABLE_GTK_GUI)
