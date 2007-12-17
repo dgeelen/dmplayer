@@ -35,8 +35,8 @@ network_handler::network_handler(uint16 port_number) {
 	udp_sock = udp_socket( listen_addr, port_number );
 
 	listen_addr.full = 0xffffffff;
-	char buf[256] = "Halllo aaaaleemalaaaalalalaa!!!\n";
-	char rbuf[256] = "                                 ";
+	char buf[256] = "Halllo aaaaleemalaaaalalalaa!!!";
+	char rbuf[256] = "                              ";
 	udp_sock.send( listen_addr, port_number, (uint8*)buf, 256 );
 	udp_sock.receive( &listen_addr, &port_number, (uint8*)rbuf, 256 );
 	cout << "From " << (int)listen_addr.array[0] << "."
