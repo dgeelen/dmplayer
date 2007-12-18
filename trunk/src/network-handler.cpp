@@ -36,7 +36,7 @@ network_handler::network_handler(uint16 port_number) {
 	listen_sock = tcp_listen_socket(listen_addr, port_number);
 	udp_sock = udp_socket( listen_addr, port_number );
 
-	listen_addr.full = 0xffffffff;
+	listen_addr.full = INADDR_BROADCAST;
 	char buf[256] = "Halllo aaaaleemalaaaalalalaa!!!";
 	char rbuf[256] = "                              ";
 	udp_sock.send( listen_addr, port_number, (uint8*)buf, 256 );
