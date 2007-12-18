@@ -1,7 +1,7 @@
 //
 // C++ Implementation: network-protocol
 //
-// Description: 
+// Description:
 //
 //
 // Author:  <>, (C) 2007
@@ -25,12 +25,14 @@ network_handler::network_handler(uint16 port_number) {
 		WSADATA wsaData;
 		wVersionRequested = MAKEWORD( 2, 0 );
 		if (WSAStartup( wVersionRequested, &wsaData ) != 0)
-			throw("Error: could not initialize WINSOCK!");
+			throw("Error: could not initialize WIN8SOCK!");
 	}
 	#endif
 	cout << "Initializing network_handler()\n";
 	ipv4_addr listen_addr;
-	cout << "Listening on "; for(int i=0; i<4; ++i) cout << (int)listen_addr.array[i] << "."; cout << ":" << port_number <<"\n";
+	cout << "Listening on ";
+	for(int i=0; i<4; ++i) cout << (int)listen_addr.array[i] << ".";
+	cout << ":" << port_number <<"\n";
 	listen_sock = tcp_listen_socket(listen_addr, port_number);
 	udp_sock = udp_socket( listen_addr, port_number );
 
