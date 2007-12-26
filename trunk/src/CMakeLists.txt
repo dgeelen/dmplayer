@@ -1,4 +1,5 @@
 FIND_PACKAGE(MyBoost)
+FIND_PACKAGE(FMod)
 
 INCLUDE_DIRECTORIES("${BOOST_INCLUDE_DIR}")
 LINK_DIRECTORIES("${BOOST_LIBRARY_DIR}")
@@ -6,16 +7,23 @@ LINK_DIRECTORIES("${BOOST_LIBRARY_DIR}")
 SUBDIRS(gtk-client)
 SUBDIRS(qt-client)
 
-
 ADD_EXECUTABLE(mpmpd
 	mpmpd.h mpmpd.cpp
 	network-core.h network-core.cpp
 	network-handler.h network-handler.cpp
+	audio/mp3/mp3_interface.h 
+  audio/mp3/mp3_interface.cpp
+	audio/gplayback_interface.h
+	audio/gplayback_interface.cpp
 )
 
 TARGET_LINK_LIBRARIES(mpmpd
 	${BOOST_THREAD_LIBRARY}
 	${BOOST_PROGRAM_OPTIONS_LIBRARY}
+)
+
+TARGET_LINK_LIBRARIES(mpmpd
+  ${FMOD_LIBRARY}
 )
 
 IF(WIN32)
