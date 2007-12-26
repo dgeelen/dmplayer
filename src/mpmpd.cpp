@@ -3,6 +3,7 @@
 #include "network-handler.h"
 #include <iostream>
 #include <boost/program_options.hpp>
+#include "audio/mp3/mp3_interface.h"
 
 namespace po = boost::program_options;
 using namespace std;
@@ -30,6 +31,13 @@ int main(int argc, char* argv[]) {
 	}
 
 	network_handler nh(listen_port);
+	mp3_handler* handler = new mp3_handler();
+
+	handler->Load("Nirvana - Smells Like Teen Spirit (1).mp3");
+	handler->Play();
+	std::cerr << " Now playing: Nirvana - Smells Like Teen Spirit \\o\\ \\o/ /o/" << std::endl;
+	getchar();
+
 
 	return 0;
 }

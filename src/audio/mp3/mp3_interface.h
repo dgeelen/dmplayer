@@ -17,6 +17,7 @@ class mp3_handler: public gaudiohandler
 {
 	private:
 		FSOUND_STREAM* g_mp3_stream;
+		bool paused;
 
 	public:
 		mp3_handler();
@@ -25,6 +26,7 @@ class mp3_handler: public gaudiohandler
 		void Pause();
 		void Stop();
 		int Position();
+		void setPosition(int ms);
 		void Load(std::string mp3file);
 		bool isValid();
 
