@@ -1,0 +1,10 @@
+.svn
+*~
+*.o
+*.java
+*.class
+*.jar
+*.tmp
+*.kdevelop*
+*CMakeFiles*
+
