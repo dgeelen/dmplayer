@@ -16,7 +16,7 @@ IF(ENABLE_GTK_GUI)
 	pkg_check_modules(GTKMM REQUIRED gtkmm-2.4)
 	pkg_check_modules(LIBGLADE REQUIRED libglade-2.0)
 
-	# Now the variables GTKMM_INCLUDE_DIRS, GTKMM_LIBRARY_DIRS and GTKMM_LIBRARIES 
+	# Now the variables GTKMM_INCLUDE_DIRS, GTKMM_LIBRARY_DIRS and GTKMM_LIBRARIES
 	# contain what you expect
 
 	INCLUDE_DIRECTORIES(${BOOST_INCLUDE_DIR} ${GTKMM_INCLUDE_DIRS} ${LIBGLADE_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
@@ -34,9 +34,22 @@ IF(ENABLE_GTK_GUI)
 		VERBATIM
 	)
 
+	ADD_CUSTOM_COMMAND(
+		OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/gmpmpc_select_server_window.glade.h"
+		COMMAND sh ARGS
+			"${CMAKE_CURRENT_SOURCE_DIR}/gladegen.sh"
+			"${CMAKE_CURRENT_SOURCE_DIR}/gmpmpc_select_server_window.glade"
+			"${CMAKE_CURRENT_BINARY_DIR}/gmpmpc_select_server_window.glade.h"
+		MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/gmpmpc_select_server_window.glade"
+		COMMENT "Generating: Glade/xml -> C/header"
+		VERBATIM
+	)
+
 	ADD_EXECUTABLE(gmpmpc
 		gmpmpc.cpp
+		gmpmpc_select_server.cpp
 		"${CMAKE_CURRENT_BINARY_DIR}/gmpmpc_main_window.glade.h"
+		"${CMAKE_CURRENT_BINARY_DIR}/gmpmpc_select_server_window.glade.h"
 	)
 
 	TARGET_LINK_LIBRARIES(gmpmpc
