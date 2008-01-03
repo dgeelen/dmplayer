@@ -16,6 +16,7 @@ int main(int argc, char* argv[]) {
 	desc.add_options()
 			("help", "produce help message")
 			("port", po::value<int>(), "listen port for daemon")
+			("file", po::value<string>(), "file to play (Debug for fmod lib)")
 	;
 
 	po::variables_map vm;
@@ -33,11 +34,13 @@ int main(int argc, char* argv[]) {
 	network_handler nh(listen_port);
 	mp3_handler* handler = new mp3_handler();
 
-	handler->Load("Nirvana - Smells Like Teen Spirit (1).mp3");
-	handler->Play();
-	std::cerr << " Now playing: Nirvana - Smells Like Teen Spirit \\o\\ \\o/ /o/" << std::endl;
-	getchar();
-
+	if(vm.count("file")) {
+		const char* fname = vm["file"].as<string>().c_str();
+		handler->Load(fname);
+		handler->Play();
+		std::cerr << " Now playing: " << fname << " \\o\\ \\o/ /o/" << std::endl;
+		getchar();
+	}
 
 	return 0;
 }
