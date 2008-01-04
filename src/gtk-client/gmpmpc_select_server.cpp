@@ -12,7 +12,6 @@
 #include "gmpmpc.h"
 #include "gmpmpc_select_server.h"
 #include "gmpmpc_select_server_window.glade.h"
-#include "gtk-2.0/gtk/gtk.h"
 
 GladeXML *select_server_window = NULL;
 

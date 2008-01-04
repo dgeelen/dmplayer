@@ -13,8 +13,8 @@
 #ifndef GMPMPC_H
 	#define GMPMPC_H
 	#include <glade/glade.h>
-// 	#include <gtkmm.h>
 	#include "../types.h"
+	#include "gtk/gtk.h"
 
 	#define try_connect_signal(xml_source, widget_name, signal_name) {\
 		GtkWidget* widget; \
