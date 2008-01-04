@@ -7,4 +7,6 @@
 *.tmp
 *.kdevelop*
 *CMakeFiles*
-
+*.cmake
+CMakeCache.txt
+Makefile
