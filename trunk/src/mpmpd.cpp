@@ -1,7 +1,6 @@
+#include "cross-platform.h"
 #include "mpmpd.h"
-#include "network-core.h"
 #include "network-handler.h"
-#include <iostream>
 #include <boost/program_options.hpp>
 #include "audio/mp3/mp3_interface.h"
 
@@ -9,7 +8,12 @@ namespace po = boost::program_options;
 using namespace std;
 int main(int argc, char* argv[]) {
 	int listen_port = 55555;
-	cout << "starting mpmpd V" MPMP_VERSION_STRING "\n";
+	cout << "starting mpmpd V" MPMP_VERSION_STRING
+	#ifdef DEBUG
+	     << "   [Debug Build]"
+	#endif
+	     << "\n";
+
 
 	// Declare the supported options.
 	po::options_description desc("Allowed options");
@@ -32,6 +36,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	network_handler nh(listen_port);
+	nh.start();
 	mp3_handler* handler = new mp3_handler();
 
 	if(vm.count("file")) {
