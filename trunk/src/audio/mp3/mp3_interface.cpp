@@ -4,6 +4,9 @@
 mp3_handler::mp3_handler()
 {
 	g_mp3_stream = 0;
+	#ifdef __linux__
+		FSOUND_SetOutput(FSOUND_OUTPUT_ALSA);
+	#endif
 	if (!FSOUND_Init(44000,64,0))
 	{
 		std::cerr << " Could not initialise FMOD" << std::endl;
