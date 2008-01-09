@@ -1,13 +1,15 @@
 #include "cross-platform.h"
 #include "mpmpd.h"
 #include "network-handler.h"
-#include <boost/program_options.hpp>
+#include "error-handling.h"
 #include "audio/mp3/mp3_interface.h"
+#include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
 using namespace std;
 int main(int argc, char* argv[]) {
-	int listen_port = 55555;
+	try {
+	int listen_port = 12345;
 	cout << "starting mpmpd V" MPMP_VERSION_STRING
 	#ifdef DEBUG
 	     << "   [Debug Build]"
@@ -19,7 +21,7 @@ int main(int argc, char* argv[]) {
 	po::options_description desc("Allowed options");
 	desc.add_options()
 			("help", "produce help message")
-			("port", po::value<int>(), "listen port for daemon")
+			("port", po::value<int>(), "listen port for daemon (TCP part)")
 			("file", po::value<string>(), "file to play (Debug for fmod lib)")
 	;
 
@@ -35,8 +37,9 @@ int main(int argc, char* argv[]) {
 		listen_port =  vm["port"].as<int>();
 	}
 
+	dcerr("Starting network_handler");
 	network_handler nh(listen_port);
-	nh.start();
+	dcerr("Starting mp3_handler");
 	mp3_handler* handler = new mp3_handler();
 
 	if(vm.count("file")) {
@@ -44,8 +47,20 @@ int main(int argc, char* argv[]) {
 		handler->Load(fname);
 		handler->Play();
 		std::cerr << " Now playing: " << fname << " \\o\\ \\o/ /o/" << std::endl;
-		getchar();
 	}
+	cout << "Press any key to quit";
+	getchar();
 
 	return 0;
+	}
+	catch(char const* error_msg) {
+		cout << "---<ERROR REPORT>---\n"
+		     << error_msg << "\n"
+		     << "---</ERROR REPORT>---\n";
+	}
+	catch(...) {
+		cout << "---<ERROR REPORT>---\n"
+		     << "Unknown error ?!\n"
+		     << "---</ERROR REPORT>---\n";
+	}
 }

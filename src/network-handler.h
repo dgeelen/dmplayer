@@ -12,24 +12,40 @@
 
 #ifndef NETWORK_PROTOCOL_H
 	#define NETWORK_PROTOCOL_H
+	#include "cross-platform.h"
 	#include "network-core.h"
-	#include "threads.h"
-	#include "types.h"
+	#include <boost/thread/thread.hpp>
+
+	#define UDP_PORT_NUMBER 55555
+
+	struct server_info {
+		public:
+			server_info(std::string name, uint64 ping);
+			std::string get_name();
+			uint64      get_ping();
+		private:
+			std::string name;
+			uint64      ping_nano_secs;
+	};
 
 	class network_handler {
 		public:
-			network_handler(uint16 port_number);
-			bool start();
-			bool stop();
+			network_handler(uint16 tcp_port_number);
+			void receive_packet_handler();
+			void send_packet_handler();
 			bool is_running();
 			uint16 get_port_number();
-			void set_tcp_listen_socket(tcp_listen_socket lsock);
-			void set_udp_socket(udp_socket usock);
+			std::vector<struct server_info> get_available_servers();
+			// Initiates a search for servers, use get_available_servers to retrieve a list
+			void find_available_servers(); //Should probably be private
 		private:
-			THREAD thread;
-			bool thread_is_running;
-			uint16 port_number;
-			tcp_listen_socket listen_sock;
-			udp_socket udp_sock;
-	};
+			boost::thread* thread_receive_packet_handler;
+			boost::thread* thread_send_packet_handler;
+			bool receive_packet_handler_running;
+			bool send_packet_handler_running;
+			uint16 tcp_port_number;
+			std::vector<struct server_info> know_servers;
+			void start();
+			void stop();
+		};
 #endif

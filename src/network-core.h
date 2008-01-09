@@ -1,6 +1,5 @@
 #ifndef NETWORK_CORE_H
 	#define NETWORK_CORE_H
-	#include "types.h"
 	#include "cross-platform.h"
 
 	struct ipv4_addr {
