@@ -13,7 +13,6 @@ ADD_EXECUTABLE(mpmpd
 	network-handler.h network-handler.cpp
 	cross-platform.h
 	types.h
-	threads.h
 	audio/mp3/mp3_interface.h
   audio/mp3/mp3_interface.cpp
 	audio/gplayback_interface.h
