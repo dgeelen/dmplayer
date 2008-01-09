@@ -9,8 +9,10 @@
 // Copyright: See COPYING file that comes with this distribution
 //
 //
+#include "error-handling.h"
 #include "network-core.h"
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 
@@ -34,14 +36,14 @@ tcp_listen_socket::tcp_listen_socket(const ipv4_addr addr, const uint16 portnumb
 	addr_in.sin_port = htons( portnumber );
 
 	if ( bind( sock, ( sockaddr* )&addr_in, sizeof( addr_in ) ) == SOCKET_ERROR ) {
-		cout << "tcp_listen_socket: Bind to network failed:" << NetGetLastError() << "\n";
+		cout << "tcp_listen_socket: Bind to network failed: error " << NetGetLastError() << "\n";
 		closesocket( sock );
-		throw("tcp_listen_socket: Bind to network failed!");
-	}
+		stringstream ss;
+		ss << "tcp_listen_socket: Bind to network failed: error " << NetGetLastError();
+		throw(ss.str().c_str());	}
 }
 
-udp_socket::udp_socket(const ipv4_addr addr, const uint16 portnumber)
-{
+udp_socket::udp_socket(const ipv4_addr addr, const uint16 portnumber) {
 	sock = socket( AF_INET, SOCK_DGRAM, 0 );
 
 	sockaddr_in addr_in;
@@ -49,18 +51,22 @@ udp_socket::udp_socket(const ipv4_addr addr, const uint16 portnumber)
 	addr_in.sin_addr.s_addr = (addr.full == 0) ? INADDR_ANY : addr.full;
 	addr_in.sin_port = htons( portnumber );
 
-	if ( ::bind( sock, ( sockaddr* )&addr_in, sizeof( addr_in ) ) == SOCKET_ERROR ) {
-		cout << "udp_socket: Bind to network failed:" << NetGetLastError() << "\n";
+	if (portnumber && ::bind( sock, ( sockaddr* )&addr_in, sizeof( addr_in ) ) == SOCKET_ERROR ) {
+		dcerr("udp_socket: Bind to network failed: error " << NetGetLastError() << "\n");
 		closesocket( sock );
-		throw("udp_socket: Bind to network failed!");
+		stringstream ss;
+		ss << "udp_socket: Bind to network failed: error " << NetGetLastError();
+		throw(ss.str().c_str());
 	}
 
 	// now enable broadcasting
 	unsigned long bc = 1;
 	if ( setsockopt( sock, SOL_SOCKET, SO_BROADCAST, ( char* )&bc, sizeof( bc )) == SOCKET_ERROR ) {
-		cout << "udp_socket: Unable to enable broadcasting:" << NetGetLastError() << "\n";
+		dcerr("udp_socket: Unable to enable broadcasting: error " << NetGetLastError() << "\n");
 		closesocket( sock );
-		throw("udp_socket: Unable to enable broadcasting!");
+		stringstream ss;
+		ss << "udp_socket: Unable to enable broadcasting: error " << NetGetLastError();
+		throw(ss.str().c_str());
 	};
 }
 

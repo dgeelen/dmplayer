@@ -1,14 +1,27 @@
 #include "gmpmpc.h"
+#include "../types.h"
+#include "../network-handler.h"
 #include "gmpmpc_main_window.glade.h"
 #include "gmpmpc_select_server.h"
 
 using namespace std;
+
+network_handler nh(5844);
 
 int main ( int argc, char *argv[] )
 {
 	fprintf(stderr, "Starting GUI..\n");
 	gtk_init (&argc, &argv);
 	glade_init();
+
+	//TODO: Put gui in a thread
+
+	while(1) {
+		nh.get_available_servers();
+		return 0;
+	}
+
+
 	uint32 retval = show_gui();
 	fprintf(stderr, "Terminating GUI (%i)\n", retval);
 	return retval;

@@ -8,6 +8,7 @@
     #define snprintf _snprintf
   #endif
 
+	//FIXME: HAVE_CONFIG_H is a automake thing, use CMake instead
   #ifdef HAVE_CONFIG_H
     #include <config.h>
   #elif defined(__WIN32__) || defined(WIN32)
@@ -96,10 +97,4 @@
 //	/* Listing and manipulating filesystem objects (files && directories) */
 //	#include <dirent.h>
 
-/* DEBUG #define's */
-#ifdef DEBUG //FIXME: Is this a bit hacky?
-        #define dcout(x) cerr << x
-#else
-        #define dcout(x)
-#endif
 #endif //CROSS_PLATFORM_H
