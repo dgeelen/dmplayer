@@ -126,6 +126,7 @@ void network_handler::receive_packet_handler() {
 				case PT_QUERY_SERVERS: {
 					dcerr("Received a PT_QUERY_SERVER");
 					packet reply_packet;
+					reply_packet.curpos = 0;
 					reply_packet.serialize<uint8>(PT_REPLY_SERVERS);
 					reply_packet.serialize<uint16>(tcp_port_number);
 					reply_packet.serialize<uint32>(received_packet.deserialize<uint32>());
@@ -143,8 +144,15 @@ void network_handler::receive_packet_handler() {
 void network_handler::start() {
 	if(thread_receive_packet_handler!=NULL || thread_send_packet_handler!=NULL) throw("Error: stop() the network_handler() before start()ing it!");
 	dcerr("Starting network IO thread");
-	thread_receive_packet_handler = new boost::thread(error_handler(boost::bind(&network_handler::receive_packet_handler, this)));
-	thread_receive_packet_handler = new boost::thread(error_handler(boost::bind(&network_handler::send_packet_handler, this)));
+	receive_packet_handler_running = true;
+	try {
+		thread_receive_packet_handler = new boost::thread(error_handler(boost::bind(&network_handler::receive_packet_handler, this)));
+		thread_receive_packet_handler = new boost::thread(error_handler(boost::bind(&network_handler::send_packet_handler, this)));
+	}
+	catch(...) {
+		receive_packet_handler_running = false;
+		throw("Could not start one or more threads!");
+	}
 }
 
 void network_handler::stop() {
