@@ -7,34 +7,21 @@
 
 
 FIND_PATH(FMOD_INCLUDE_DIR
-	NAMES FMod.h
+	NAMES fmod.h
 	PATHS
 		/usr/include /usr/local/include
 		"${CMAKE_SOURCE_DIR}/src/audio/mp3"
 )
 
-IF(WIN32 AND NOT MINGW)
-	# depend on autolinking on windows
-	SET(BOOST_THREAD_LIBRARY "")
-	SET(BOOST_FILESYSTEM_LIBRARY "")
-	SET(BOOST_PROGRAM_OPTIONS_LIBRARY "")
-	SET(BOOST_LIBRARY_DIR
-		"${BOOST_INCLUDE_DIR}/lib"
-		CACHE PATH
-		"path to boost library files"
-	)
-ELSE(WIN32 AND NOT MINGW)
-	SET(FMOD_LIBRARY_DIR
-		"${FMOD_INCLUDE_DIR}"
-	)
+SET(FMOD_LIBRARY_DIR
+	"${FMOD_INCLUDE_DIR}"
+)
 
-	FIND_LIBRARY(FMOD_LIBRARY
-		fmod
-		PATHS "${FMOD_LIBRARY_DIR}" 
-		      /usr/lib /usr/local/lib
-	)
-
-ENDIF(WIN32 AND NOT MINGW)
+FIND_LIBRARY(FMOD_LIBRARY
+	fmod
+	PATHS "${FMOD_LIBRARY_DIR}" 
+	      /usr/lib /usr/local/lib
+)
 
 MARK_AS_ADVANCED(FMOD_LIBRARY_DIR)
 
