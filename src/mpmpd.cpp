@@ -9,7 +9,9 @@ namespace po = boost::program_options;
 using namespace std;
 int main(int argc, char* argv[]) {
 	try {
-	int listen_port = 12345;
+	int listen_port;
+	string filename;
+	bool showhelp;
 	cout << "starting mpmpd V" MPMP_VERSION_STRING
 	#ifdef DEBUG
 	     << "   [Debug Build]"
@@ -20,21 +22,18 @@ int main(int argc, char* argv[]) {
 	// Declare the supported options.
 	po::options_description desc("Allowed options");
 	desc.add_options()
-			("help", "produce help message")
-			("port", po::value<int>(), "listen port for daemon (TCP part)")
-			("file", po::value<string>(), "file to play (Debug for fmod lib)")
+			("help", po::bool_switch(&showhelp)                   , "produce help message")
+			("port", po::value(&listen_port)->default_value(12345), "listen port for daemon (TCP part)")
+			("file", po::value(&filename)->default_value("")      , "file to play (Debug for fmod lib)")
 	;
 
 	po::variables_map vm;
  	po::store(po::parse_command_line(argc, argv, desc), vm);
 	po::notify(vm);
 
-	if (vm.count("help")) {
+	if (showhelp) {
 		cout << desc << "\n";
 		return 1;
-	}
-	if (vm.count("port")) {
-		listen_port =  vm["port"].as<int>();
 	}
 
 	dcerr("Starting network_handler");
@@ -42,11 +41,10 @@ int main(int argc, char* argv[]) {
 	dcerr("Starting mp3_handler");
 	mp3_handler* handler = new mp3_handler();
 
-	if(vm.count("file")) {
-		const char* fname = vm["file"].as<string>().c_str();
-		handler->Load(fname);
+	if (filename != "") {
+		handler->Load(filename.c_str());
 		handler->Play();
-		std::cerr << " Now playing: " << fname << " \\o\\ \\o/ /o/" << std::endl;
+		std::cerr << " Now playing: " << filename << " \\o\\ \\o/ /o/" << std::endl;
 	}
 	cout << "Press any key to quit";
 	getchar();
