@@ -48,6 +48,11 @@ MainWindow::MainWindow()
 {
 	setupUi(this);
 	handler = new mp3_handler();
+	progressTimer = new QTimer();
+	progressTimer->stop();
+	trackProgress->setMinimum(0);
+	trackProgress->setValue(0);
+	QObject::connect(progressTimer, SIGNAL(timeout()), this, SLOT(updateProgressBar()));
 }
 
 MainWindow::~MainWindow()
@@ -66,13 +71,22 @@ void MainWindow::UpdateServerList(std::vector<server_info> sl)
 	//serverlist->addTopLevelItem(
 }
 
+void MainWindow::updateProgressBar()
+{
+	trackProgress->setValue(handler->Position());
+}
+
 void MainWindow::on_OpenButton_clicked()
 {
 	QString fileName;
+	trackProgress->setValue(0);
 	fileName = QFileDialog::getOpenFileName(this,
-     tr("Open Image"), "", tr("Audio Files (*.mp3 *.wav)"));
-     file = fileName.toStdString();
-     handler->Load(file);
+		tr("Open Image"), "", tr("Audio Files (*.mp3 *.wav)"));
+	if (fileName == "")
+		return;
+	file = fileName.toStdString();
+    handler->Load(file);
+	trackProgress->setMaximum(handler->Length());
 }
 
 void MainWindow::on_PreviousButton_clicked()
@@ -83,6 +97,7 @@ void MainWindow::on_PreviousButton_clicked()
 void MainWindow::on_PlayButton_clicked()
 {
 	handler->Play();
+	progressTimer->start(250);
 }
 
 void MainWindow::on_PauseButton_clicked()
@@ -93,6 +108,8 @@ void MainWindow::on_PauseButton_clicked()
 void MainWindow::on_StopButton_clicked()
 {
 	handler->Stop();
+	progressTimer->stop();
+	updateProgressBar();
 }
 
 

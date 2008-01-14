@@ -21,6 +21,7 @@ class gaudiohandler
 		void Pause();
 		void Stop();
 		int Position();
+		int Length();
 		void Load(std::string mp3file);
 		bool isValid();
 };
