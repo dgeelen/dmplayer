@@ -11,6 +11,7 @@ int main(int argc, char* argv[]) {
 	try {
 	int listen_port;
 	string filename;
+	string server_name;
 	bool showhelp;
 	cout << "starting mpmpd V" MPMP_VERSION_STRING
 	#ifdef DEBUG
@@ -25,6 +26,7 @@ int main(int argc, char* argv[]) {
 			("help", po::bool_switch(&showhelp)                   , "produce help message")
 			("port", po::value(&listen_port)->default_value(12345), "listen port for daemon (TCP part)")
 			("file", po::value(&filename)->default_value("")      , "file to play (Debug for fmod lib)")
+			("name", po::value(&server_name)->default_value("mpmpd V" MPMP_VERSION_STRING), "Server name")
 	;
 
 	po::variables_map vm;
@@ -37,7 +39,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	dcerr("Starting network_handler");
-	network_handler nh(listen_port);
+	network_handler nh(listen_port, server_name);
 // 	dcerr("Starting mp3_handler");
 // 	mp3_handler* handler = new mp3_handler();
 
@@ -56,9 +58,9 @@ int main(int argc, char* argv[]) {
 		     << error_msg << "\n"
 		     << "---</ERROR REPORT>---\n";
 	}
-	catch(...) {
+/*	catch(...) {
 		cout << "---<ERROR REPORT>---\n"
 		     << "Unknown error ?!\n"
 		     << "---</ERROR REPORT>---\n";
-	}
+	}*/
 }

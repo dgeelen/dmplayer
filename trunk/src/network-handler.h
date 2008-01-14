@@ -20,6 +20,8 @@
 	#include <ctime>
 	#include <iostream>
 	#define UDP_PORT_NUMBER 55555
+	#define MPMP_CLIENT false
+	#define MPMP_SERVER true
 
 
 	struct server_info {
@@ -37,19 +39,23 @@
 	class network_handler {
 		public:
 			network_handler(uint16 tcp_port_number);
+			network_handler(uint16 tcp_port_number, std::string server_name);
 			void receive_packet_handler();
 			void send_packet_handler();
 			bool is_running();
 			uint16 get_port_number();
 			boost::signal<void(const std::vector<server_info>&)> add_server_signal;
 		private:
+			bool server_mode;
 			boost::thread* thread_receive_packet_handler;
 			boost::thread* thread_send_packet_handler;
 			bool receive_packet_handler_running;
 			bool send_packet_handler_running;
 			uint16 tcp_port_number;
 			std::map<ipv4_socket_addr, server_info> known_servers;
+			void init();
 			void start();
+			std::string server_name;
 			void stop();
 			clock_t last_ping_time;
 			uint32 ping_cookie;
