@@ -105,6 +105,12 @@ uint32 udp_socket::receive( ipv4_addr* from_addr, uint16* from_port, packet& p )
 	return retval;
 }
 
+string ipv4_socket_addr::std_str() const {
+	std::stringstream ss;
+	ss << (*this);
+	return ss.str();
+};
+
 /** Stream operators **/
 
 std::ostream& operator<<(std::ostream& os, const ipv4_addr& addr) {

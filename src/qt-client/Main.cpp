@@ -17,7 +17,7 @@ int main( int argc, char **argv )
 	qRegisterMetaType<std::vector<server_info> >("std::vector<server_info>");
 
 	network_handler nh(12345);
-	nh.add_server_signal.connect(
+	nh.server_list_update_signal.connect(
 		QtBooster(&mainwindow, SLOT(UpdateServerList(std::vector<server_info>)))
 	);
 
