@@ -41,11 +41,15 @@ IF(ENABLE_QT_GUI)
 	SET(SRC_FILES
 		Main.cpp
 		MainWindow.cpp
+		../audio/mp3/mp3_interface.cpp
+		../audio/gplayback_interface.cpp
 	)
 
 	# List other files used
 	SET(OTHER_FILES
 		MainWindow.h
+		../audio/gplayback_interface.h
+    ../audio/mp3/mp3_interface.h
 	)
 
 	# Generate headers from .ui files
@@ -53,17 +57,21 @@ IF(ENABLE_QT_GUI)
 
 	# Generate .moc files as needed
 	QT4_AUTOMOC(${SRC_FILES})
+	
+	QT4_ADD_RESOURCES(ResourceFiles icons.qrc)
 
 	# List sources needed by our executable
 	ADD_EXECUTABLE(qt-simple-test
 		${SRC_FILES}
 		${UI_FILES}
 		${OTHER_FILES}
+		${ResourceFiles}
 	)
 
 	# Link our executable against needed Qt4 libraries
 	TARGET_LINK_LIBRARIES(qt-simple-test
 		${QT_LIBRARIES}
+		${FMOD_LIBRARY}
 	)
 
 ENDIF(ENABLE_QT_GUI)
