@@ -16,9 +16,6 @@ enum packet_types {
 
 class packet {
 	public:
-		packet() {
-			curpos = 0;
-		}
 		uint8 data[PACKET_SIZE];
 
 		packet() {

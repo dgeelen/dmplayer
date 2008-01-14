@@ -30,7 +30,7 @@ void mp3_handler::Play()
 	}
 	else
 	{
-		FSOUND_Stream_SetTime(0);
+		FSOUND_Stream_SetTime(g_mp3_stream, 0);
 		FSOUND_Stream_Play(0,g_mp3_stream);
 	}
 }
