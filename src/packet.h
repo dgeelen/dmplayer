@@ -16,28 +16,38 @@ enum packet_types {
 
 class packet {
 	public:
-		int curpos;
 		uint8 data[PACKET_SIZE];
+
+		packet() {
+			reset();
+		}
 
 		template <typename T>
 		typename boost::enable_if<boost::is_unsigned<T> >::type serialize(const T& var) {
 			for (int i = 0; i < sizeof(T); ++i)
-				data[curpos++] = (var >> (i*8)) & 0xFF;
+				data[curpos++] = (var >> (i<<3)) & 0xFF;
 		}
+
 		template <typename T>
 		typename boost::enable_if<boost::is_unsigned<T> >::type deserialize(T& var) {
 			var = 0;
 			for (int i = 0; i < sizeof(T); ++i)
-				var |= data[curpos++] << (i*8);
+				var |= data[curpos++] << (i<<3);
 		}
-		template <typename T>
-			typename boost::enable_if<boost::is_unsigned<T>, T>::type
-			deserialize()
-		{
+
+		template <typename T> typename boost::enable_if<boost::is_unsigned<T>, T>::type deserialize() {
 			T var = 0;
 			for (int i = 0; i < sizeof(T); ++i)
-				var |= data[curpos++] << (i*8);
+				var |= data[curpos++] << (i<<3);
 			return var;
+		}
+
+		uint32 data_length() {
+			return curpos;
+		}
+
+		void reset() {
+			curpos = 0;
 		}
 
 		void serialize(const std::string& var) {
@@ -57,6 +67,8 @@ class packet {
 				var[i] = t;
 			}
 		}
+		private:
+			int curpos;
 };
 
 #endif

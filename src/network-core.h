@@ -1,6 +1,7 @@
 #ifndef NETWORK_CORE_H
 	#define NETWORK_CORE_H
 	#include "cross-platform.h"
+	#include "packet.h"
 
 	struct ipv4_addr {
 		union {
@@ -61,8 +62,10 @@
 
 			uint32 send( const ipv4_addr dest_addr, const uint16 dest_port, const uint8* buf, const uint32 len );
 			uint32 send( const ipv6_addr dest_addr, const uint16 dest_port, const uint8* buf, const uint32 len );
+			uint32 send( const ipv4_addr dest_addr, const uint16 dest_port, packet& p );
 			uint32 receive( ipv4_addr* from_addr, uint16* from_port, const uint8* buf, const uint32 len );
 			uint32 receive( ipv6_addr* from_addr, uint16* from_port, const uint8* buf, const uint32 len );
+			uint32 receive( ipv4_addr* from_addr, uint16* from_port, packet& p );
 		private:
 			SOCKET sock;
 	};

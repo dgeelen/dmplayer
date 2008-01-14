@@ -78,12 +78,12 @@ void network_handler::send_packet_handler() {
 
 	dcerr("Network send thread: starting ping loop");
 	packet request_servers_packet;
+	request_servers_packet.serialize<uint8>(PT_QUERY_SERVERS);
+	request_servers_packet.serialize<uint32>(tcp_port_number);
+
 	while(receive_packet_handler_running) {
 		dcerr("Requesting server list...");
-		request_servers_packet.curpos = 0;
-		request_servers_packet.serialize<uint8>(PT_QUERY_SERVERS);
-		request_servers_packet.serialize<uint32>(tcp_port_number);
-		udp_ssock.send(broadcast_addr, UDP_PORT_NUMBER, request_servers_packet.data, request_servers_packet.curpos);
+		udp_ssock.send(broadcast_addr, UDP_PORT_NUMBER, request_servers_packet);
 		sleep(1);
 	}
 }
@@ -109,8 +109,7 @@ void network_handler::receive_packet_handler() {
 	uint32 message_length;
 
 	while(receive_packet_handler_running) {
-		received_packet.curpos = 0; //FIXME: Should be done by sock_receive
-		message_length = udp_rsock.receive( &listen_addr, &port_number, received_packet.data, PACKET_SIZE );
+		message_length = udp_rsock.receive( &listen_addr, &port_number, received_packet );
 		if(message_length == SOCKET_ERROR)
 			dcerr("network_handler: Network reports error #" << NetGetLastError());
 		else {
@@ -126,12 +125,11 @@ void network_handler::receive_packet_handler() {
 				case PT_QUERY_SERVERS: {
 					dcerr("Received a PT_QUERY_SERVER");
 					packet reply_packet;
-					reply_packet.curpos = 0;
 					reply_packet.serialize<uint8>(PT_REPLY_SERVERS);
 					reply_packet.serialize<uint16>(tcp_port_number);
 					reply_packet.serialize<uint32>(received_packet.deserialize<uint32>());
 					reply_packet.serialize( "test-server" );
-					udp_ssock.send( listen_addr, UDP_PORT_NUMBER, reply_packet.data, reply_packet.curpos );
+					udp_ssock.send( listen_addr, UDP_PORT_NUMBER, reply_packet );
 					break;
 				}
 				default:
