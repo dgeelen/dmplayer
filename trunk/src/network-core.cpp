@@ -104,3 +104,13 @@ uint32 udp_socket::receive( ipv4_addr* from_addr, uint16* from_port, packet& p )
 	*from_port = ntohs(addr_in.sin_port);
 	return retval;
 }
+
+/** Stream operators **/
+
+std::ostream& operator<<(std::ostream& os, const ipv4_addr& addr) {
+		return os << (int)addr.array[0] << "." << (int)addr.array[1] << "." << (int)addr.array[2] << "." << (int)addr.array[3];
+}
+
+std::ostream& operator<<(std::ostream& os, const ipv4_socket_addr& saddr) {
+		return os << saddr.first << ":" << saddr.second;
+}

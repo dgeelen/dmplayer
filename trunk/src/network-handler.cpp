@@ -19,21 +19,6 @@
 
 using namespace std;
 
-/** Begin struct server_info **/
-server_info::server_info(string name, uint64 ping) {
-	this->name = name;
-	this->ping_nano_secs = ping;
-}
-
-string server_info::get_name() {
-	return name;
-}
-
-uint64 server_info::get_ping() {
-	return ping_nano_secs;
-}
-/** End struct server_info **/
-
 /** Begin class network_handler **/
 bool singleton = true;
 network_handler::network_handler(uint16 tcp_port_number) {
@@ -56,17 +41,8 @@ network_handler::network_handler(uint16 tcp_port_number) {
 	dcerr("network_handler(): Initialization complete");
 }
 
-vector<server_info> network_handler::get_available_servers() {
-	return know_servers;
-}
-
 uint16 network_handler::get_port_number() {
 	return tcp_port_number;
-}
-
-
-void network_handler::find_available_servers() {
-
 }
 
 void network_handler::send_packet_handler() {
@@ -78,13 +54,15 @@ void network_handler::send_packet_handler() {
 
 	dcerr("Network send thread: starting ping loop");
 	packet request_servers_packet;
-	request_servers_packet.serialize<uint8>(PT_QUERY_SERVERS);
-	request_servers_packet.serialize<uint32>(tcp_port_number);
-
 	while(receive_packet_handler_running) {
 		dcerr("Requesting server list...");
+		ping_cookie=rand();
+		request_servers_packet.reset();
+		request_servers_packet.serialize<uint8>(PT_QUERY_SERVERS);
+		request_servers_packet.serialize<uint32>(ping_cookie);
+		last_ping_time = clock();
 		udp_ssock.send(broadcast_addr, UDP_PORT_NUMBER, request_servers_packet);
-		sleep(1);
+		usleep(1000000); //TODO: Make this depend on the number of actual clients? (prevents network spam)
 	}
 }
 
@@ -123,13 +101,38 @@ void network_handler::receive_packet_handler() {
 			int packet_type = received_packet.deserialize<uint8>();
 			switch(packet_type) {
 				case PT_QUERY_SERVERS: {
-					dcerr("Received a PT_QUERY_SERVER");
+					dcerr("Received a PT_QUERY_SERVERS");
 					packet reply_packet;
 					reply_packet.serialize<uint8>(PT_REPLY_SERVERS);
 					reply_packet.serialize<uint16>(tcp_port_number);
 					reply_packet.serialize<uint32>(received_packet.deserialize<uint32>());
-					reply_packet.serialize( "test-server" );
+					reply_packet.serialize<string>( "test-server" );
+					#ifdef DEBUG
+						usleep(100000); //Fake some latency (0.1sec)
+					#endif
 					udp_ssock.send( listen_addr, UDP_PORT_NUMBER, reply_packet );
+					break;
+				}
+				case PT_REPLY_SERVERS: {
+					dcerr("Received a PT_REPLY_SERVERS");
+					uint16 tcp_port; received_packet.deserialize(tcp_port); // TCP Port number
+					uint32 cookie; received_packet.deserialize(cookie);
+					ipv4_socket_addr sa(listen_addr, tcp_port);
+					struct server_info& si = known_servers[sa];
+
+					si.sock_addr = sa;
+					received_packet.deserialize(si.name);     // Server Name
+					if (cookie == ping_cookie) {
+						si.ping_last_seen = clock();
+						si.ping_micro_secs = si.ping_last_seen - last_ping_time;
+					} else dcerr("COOKIE FAILURE! (expected 0x" << hex << ping_cookie << ", got 0x" << cookie << ")" << dec);
+
+					dcerr("  Name     : '" << si.name << "'\n" <<
+					      "  Address  : " << si.sock_addr << "\n" <<
+					      "  Last seen: " << hex << "0x" << si.ping_last_seen << "\n" << dec <<
+					      "  Ping     : " << (si.ping_micro_secs / CLOCKS_PER_SEC) << "." <<
+					                         ((si.ping_micro_secs - CLOCKS_PER_SEC*(si.ping_micro_secs/CLOCKS_PER_SEC))/100) << "s"
+					     );
 					break;
 				}
 				default:

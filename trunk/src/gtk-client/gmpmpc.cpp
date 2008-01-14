@@ -16,10 +16,10 @@ int main ( int argc, char *argv[] )
 
 	//TODO: Put gui in a thread
 
-	while(1) {
-		nh.get_available_servers();
-		return 0;
-	}
+// 	while(1) {
+// 		nh.get_available_servers();
+// 		return 0;
+// 	}
 
 
 	uint32 retval = show_gui();

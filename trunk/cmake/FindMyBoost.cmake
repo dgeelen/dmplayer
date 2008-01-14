@@ -50,7 +50,7 @@ ELSE(WIN32 AND NOT MINGW)
 
 	FIND_LIBRARY(BOOST_THREAD_LIBRARY
 		NAMES boost_thread-mt boost_thread${BOOST_LIBRARY_SUFFIX}
-		PATHS "${BOOST_LIBRARY_DIR}" 
+		PATHS "${BOOST_LIBRARY_DIR}"
 		      "${BOOST_INCLUDE_DIR}/lib"
 		      "${BOOST_INCLUDE_DIR}/../lib"
 		      /usr/lib /usr/local/lib
@@ -58,12 +58,12 @@ ELSE(WIN32 AND NOT MINGW)
 
 	FIND_LIBRARY(BOOST_PROGRAM_OPTIONS_LIBRARY
 		NAMES boost_program_options-mt boost_program_options${BOOST_LIBRARY_SUFFIX}
-		PATHS "${BOOST_LIBRARY_DIR}" 
+		PATHS "${BOOST_LIBRARY_DIR}"
 		      "${BOOST_INCLUDE_DIR}/lib"
 		      "${BOOST_INCLUDE_DIR}/../lib"
 		      /usr/lib /usr/local/lib
 	)
-	
+
 	FIND_LIBRARY(BOOST_FILESYSTEM_LIBRARY
 		NAMES boost_filesystem-mt boost_filesystem${BOOST_LIBRARY_SUFFIX}
 		PATHS "${BOOST_LIBRARY_DIR}"
@@ -72,6 +72,13 @@ ELSE(WIN32 AND NOT MINGW)
 		      /usr/lib /usr/local/lib
 	)
 
+	FIND_LIBRARY(BOOST_SIGNALS_LIBRARY
+		NAMES boost_signals-mt boost_signals${BOOST_LIBRARY_SUFFIX}
+		PATHS "${BOOST_LIBRARY_DIR}"
+		      "${BOOST_INCLUDE_DIR}/lib"
+		      "${BOOST_INCLUDE_DIR}/../lib"
+		      /usr/lib /usr/local/lib
+	)
 ENDIF(WIN32 AND NOT MINGW)
 
 MARK_AS_ADVANCED(BOOST_LIBRARY_DIR)

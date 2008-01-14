@@ -2,6 +2,8 @@
 	#define NETWORK_CORE_H
 	#include "cross-platform.h"
 	#include "packet.h"
+	#include <iostream>   /* for std::istream, std::ostream, std::string */
+	#include <utility>
 
 	struct ipv4_addr {
 		union {
@@ -9,6 +11,10 @@
 			struct { uint8 a,b,c,d; }component;
 			uint8  array[4];
 		};
+
+		bool operator<(const ipv4_addr& addr) const {
+			return full < addr.full;
+		}
 
 		ipv4_addr() {
 			full=0;
@@ -69,4 +75,11 @@
 		private:
 			SOCKET sock;
 	};
+
+	typedef std::pair<ipv4_addr, uint16> ipv4_socket_addr;
+	typedef std::pair<ipv6_addr, uint16> ipv6_socket_addr;
+
+
+	std::ostream& operator<<(std::ostream& os, const ipv4_addr& addr);
+	std::ostream& operator<<(std::ostream& os, const ipv4_socket_addr& saddr);
 #endif
