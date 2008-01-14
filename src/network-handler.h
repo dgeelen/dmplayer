@@ -15,17 +15,18 @@
 	#include "cross-platform.h"
 	#include "network-core.h"
 	#include <boost/thread/thread.hpp>
-
+	#include <boost/signal.hpp>
+	#include <map>
+	#include <ctime>
 	#define UDP_PORT_NUMBER 55555
+
 
 	struct server_info {
 		public:
-			server_info(std::string name, uint64 ping);
-			std::string get_name();
-			uint64      get_ping();
-		private:
 			std::string name;
-			uint64      ping_nano_secs;
+			clock_t      ping_last_seen;
+			clock_t      ping_micro_secs;
+			ipv4_socket_addr sock_addr;
 	};
 
 	class network_handler {
@@ -35,17 +36,19 @@
 			void send_packet_handler();
 			bool is_running();
 			uint16 get_port_number();
-			std::vector<struct server_info> get_available_servers();
-			// Initiates a search for servers, use get_available_servers to retrieve a list
-			void find_available_servers(); //Should probably be private
+			boost::signal<void(std::vector<server_info>)> add_server_signal;
 		private:
 			boost::thread* thread_receive_packet_handler;
 			boost::thread* thread_send_packet_handler;
 			bool receive_packet_handler_running;
 			bool send_packet_handler_running;
 			uint16 tcp_port_number;
-			std::vector<struct server_info> know_servers;
+			std::map<ipv4_socket_addr, server_info> known_servers;
 			void start();
 			void stop();
+			clock_t last_ping_time;
+			uint32 ping_cookie;
 		};
+
+
 #endif
