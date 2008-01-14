@@ -25,7 +25,7 @@ class packet {
 		template <typename T>
 		typename boost::enable_if<boost::is_unsigned<T> >::type serialize(const T& var) {
 			for (int i = 0; i < sizeof(T); ++i)
-				data[curpos++] = (var >> (i<<3)) & 0xFF;
+				data[curpos++] = (uint8)((var >> (i<<3)) & 0xFF);
 		}
 
 		template <typename T>
