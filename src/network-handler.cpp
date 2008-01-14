@@ -134,7 +134,7 @@ void network_handler::receive_packet_handler() {
 					uint32 cookie; received_packet.deserialize(cookie);
 					reply_packet.serialize<uint32>(cookie);
 					dcerr("cookie! " << cookie);
-					reply_packet.serialize<string>( server_name );
+					reply_packet.serialize( (string)server_name );
 					#ifdef DEBUG
 						usleep(100000); //Fake some latency (0.1sec)
 					#endif

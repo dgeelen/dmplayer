@@ -52,18 +52,16 @@ class packet {
 			curpos = 0;
 		}
 
-		template <typename T>
-		typename boost::enable_if<boost::is_same<T, std::string> >::type
-		serialize(const T& var) {
+
+		void serialize(const std::string& var) {
 			uint32 size = var.size();
 			serialize(size);
-			for (uint i = 0; i < size; ++i)
+			for (uint i = 0; i < size ; ++i)
 				serialize<uint8>(var[i]);
 		}
 
-		template <typename T>
-		typename boost::enable_if<boost::is_same<T, std::string> >::type
-		deserialize(T& var) {
+
+		void deserialize(std::string& var) {
 			uint32 size;
 			deserialize(size);
 			var.resize(size);

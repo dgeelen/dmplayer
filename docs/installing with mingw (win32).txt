@@ -12,7 +12,8 @@ SET UP BOOST
 6.  Use command "bjam toolset=gcc install --with-thread".
 7.  Use command "bjam toolset=gcc install --with-program_options".
 8.  Use command "bjam toolset=gcc install --with-filesystem".
-9.  If executed correctly, there should be a directory called {BOOST_ROOT}\lib.
+9.  Use command "bjam toolset=gcc install --with-signals".
+10.  If executed correctly, there should be a directory called {BOOST_ROOT}\lib.
 ===============================================================================
 SET UP CMAKE
 
