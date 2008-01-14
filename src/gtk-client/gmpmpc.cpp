@@ -1,19 +1,20 @@
 #include "gmpmpc.h"
 #include "../types.h"
 #include "../network-handler.h"
+#include "../error-handling.h"
 #include "gmpmpc_main_window.glade.h"
 #include "gmpmpc_select_server.h"
+#include <boost/program_options.hpp>
 
 using namespace std;
-
-network_handler nh(5844);
+namespace po = boost::program_options;
 
 void server_lister_tmp( const vector<server_info>& si) {
-	cout << "---SERVER_LISTING_CHANGED:";
+	dcerr("\n\n---SERVER_LISTING_CHANGED:");
 	for(vector<server_info>::const_iterator i = si.begin(); i != si.end(); ++i ) {
-		cout << "   " << *i;
+		dcerr(*i << "\n");
 	}
-	cout << "+++SERVER_LISTING_CHANGED";
+	dcerr("+++SERVER_LISTING_CHANGED\n\n");
 }
 
 int main ( int argc, char *argv[] )
@@ -22,7 +23,25 @@ int main ( int argc, char *argv[] )
 	gtk_init (&argc, &argv);
 	glade_init();
 
-	//TODO: Put gui in a thread
+
+	int listen_port;
+	bool showhelp;
+	po::options_description desc("Allowed options");
+	desc.add_options()
+			("help", po::bool_switch(&showhelp)                   , "produce help message")
+			("port", po::value(&listen_port)->default_value(12345), "TCP Port")
+	;
+	po::variables_map vm;
+ 	po::store(po::parse_command_line(argc, argv, desc), vm);
+	po::notify(vm);
+	if (showhelp) {
+		cout << desc << "\n";
+		return 1;
+	}
+
+
+	network_handler nh(listen_port);
+	nh.add_server_signal.connect(server_lister_tmp);
 
 // 	while(1) {
 // 		nh.get_available_servers();

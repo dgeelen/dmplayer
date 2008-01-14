@@ -14,16 +14,29 @@
 #include "network-handler.h"
 #include "packet.h"
 #include "error-handling.h"
-//#include <unistd.h> //FIXME: Will be included in cross-platform.h
 #include <boost/bind.hpp>
 
 using namespace std;
 
 /** Begin class network_handler **/
 bool singleton = true;
-network_handler::network_handler(uint16 tcp_port_number) {
-	dcerr("network_handler(): Initializing...");
+
+network_handler::network_handler(uint16 tcp_port_number, string server_name) {
+	this->server_name = server_name;
+	server_mode = true;
 	this->tcp_port_number = tcp_port_number;
+	init();
+}
+
+network_handler::network_handler(uint16 tcp_port_number) {
+	this->server_name = "NOT_A_SERVER";
+	server_mode = false;
+	this->tcp_port_number = tcp_port_number;
+	init();
+}
+
+void network_handler::init() {
+	dcerr("network_handler(): Initializing...");
 	thread_send_packet_handler = NULL;
 	thread_receive_packet_handler = NULL;
 	if(!singleton) throw("Error: network_handler() is a singleton class!");
@@ -86,13 +99,14 @@ void network_handler::send_packet_handler() {
 }
 
 void network_handler::receive_packet_handler() {
-	dcerr("Network receive thread: Opening sockets");
+	uint16 rsock_port = UDP_PORT_NUMBER + (server_mode?0:1);
+	uint16 ssock_port = 0;
+	dcerr("Network receive thread: Opening sockets: receive socket=" << rsock_port << ", ssock_port="<<ssock_port<<" (0==random)");
 	ipv4_addr listen_addr;
 	uint16 port_number = 0;
-	tcp_listen_socket tcp_sock = tcp_listen_socket(listen_addr, tcp_port_number);
-	udp_socket udp_rsock = udp_socket( listen_addr, UDP_PORT_NUMBER);
-	udp_socket udp_ssock = udp_socket( listen_addr, 0);
-// 	self =
+// 	tcp_listen_socket tcp_sock = tcp_listen_socket(listen_addr, tcp_port_number);
+	udp_socket udp_rsock = udp_socket( listen_addr, rsock_port);
+	udp_socket udp_ssock = udp_socket( listen_addr, ssock_port);
 	dcerr("Network IO thread: Listening on " << listen_addr << ":" << port_number);
 
 
@@ -113,17 +127,18 @@ void network_handler::receive_packet_handler() {
 			switch(packet_type) {
 				case PT_QUERY_SERVERS: {
 					dcerr("Received a PT_QUERY_SERVERS");
+					if(!server_mode) break;
 					packet reply_packet;
 					reply_packet.serialize<uint8>(PT_REPLY_SERVERS);
 					reply_packet.serialize<uint16>(tcp_port_number);
 					uint32 cookie; received_packet.deserialize(cookie);
 					reply_packet.serialize<uint32>(cookie);
 					dcerr("cookie! " << cookie);
-					reply_packet.serialize<string>( "SIMON!!!!-server" );
+					reply_packet.serialize<string>( server_name );
 					#ifdef DEBUG
 						usleep(100000); //Fake some latency (0.1sec)
 					#endif
-					udp_ssock.send( listen_addr, UDP_PORT_NUMBER, reply_packet );
+					udp_ssock.send( listen_addr, UDP_PORT_NUMBER+1, reply_packet );
 					break;
 				}
 				case PT_REPLY_SERVERS: {
@@ -156,7 +171,8 @@ void network_handler::start() {
 	receive_packet_handler_running = true;
 	try {
 		thread_receive_packet_handler = new boost::thread(error_handler(boost::bind(&network_handler::receive_packet_handler, this)));
-		thread_receive_packet_handler = new boost::thread(error_handler(boost::bind(&network_handler::send_packet_handler, this)));
+		if(!server_mode)
+			thread_receive_packet_handler = new boost::thread(error_handler(boost::bind(&network_handler::send_packet_handler, this)));
 	}
 	catch(...) {
 		receive_packet_handler_running = false;
