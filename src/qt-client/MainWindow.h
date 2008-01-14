@@ -14,8 +14,9 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		MainWindow();
 		~MainWindow();
 
-		void UpdateServerList(const std::vector<server_info>&);
+		
 	public Q_SLOTS:
+		void UpdateServerList(std::vector<server_info>);
 		void on_OpenButton_clicked();
 		void on_PreviousButton_clicked();
 		void on_PlayButton_clicked();
