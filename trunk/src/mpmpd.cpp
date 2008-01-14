@@ -58,9 +58,4 @@ int main(int argc, char* argv[]) {
 		     << error_msg << "\n"
 		     << "---</ERROR REPORT>---\n";
 	}
-/*	catch(...) {
-		cout << "---<ERROR REPORT>---\n"
-		     << "Unknown error ?!\n"
-		     << "---</ERROR REPORT>---\n";
-	}*/
 }
