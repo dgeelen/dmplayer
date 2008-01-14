@@ -19,7 +19,7 @@
       <item>
        <widget class="QTabWidget" name="tabWidget" >
         <property name="currentIndex" >
-         <number>1</number>
+         <number>0</number>
         </property>
         <property name="elideMode" >
          <enum>Qt::ElideLeft</enum>
@@ -38,7 +38,13 @@
           <item>
            <layout class="QHBoxLayout" >
             <item>
-             <widget class="QListView" name="server_list" />
+             <widget class="QTreeWidget" name="serverlist" >
+              <column>
+               <property name="text" >
+                <string>1</string>
+               </property>
+              </column>
+             </widget>
             </item>
             <item>
              <widget class="QPushButton" name="pushButton" >
