@@ -5,6 +5,7 @@
 #include <string>
 #include "../audio/mp3/mp3_interface.h"
 #include "../network-handler.h"
+#include <QTimer>
 
 class MainWindow: public QMainWindow, public Ui::MainWindow
 {
@@ -14,7 +15,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		MainWindow();
 		~MainWindow();
 
-		
+
 	public Q_SLOTS:
 		void UpdateServerList(std::vector<server_info>);
 		void on_OpenButton_clicked();
@@ -23,8 +24,10 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		void on_PauseButton_clicked();
 		void on_StopButton_clicked();
 		void on_NextButton_clicked();
+		void updateProgressBar();
 	private:
 		std::string file;
 		mp3_handler* handler;
+		QTimer *progressTimer;
 };
 #endif

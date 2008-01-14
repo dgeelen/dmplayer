@@ -52,6 +52,11 @@ void mp3_handler::Pause()
 	paused = !paused;
 }
 
+int mp3_handler::Length()
+{
+	return FSOUND_Stream_GetLengthMs(g_mp3_stream);
+}
+
 void mp3_handler::Stop()
 {
 	FSOUND_Stream_Stop( g_mp3_stream );
