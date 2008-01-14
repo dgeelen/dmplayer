@@ -39,7 +39,7 @@
 			void send_packet_handler();
 			bool is_running();
 			uint16 get_port_number();
-			boost::signal<void(std::vector<server_info>)> add_server_signal;
+			boost::signal<void(const std::vector<server_info>&)> add_server_signal;
 		private:
 			boost::thread* thread_receive_packet_handler;
 			boost::thread* thread_send_packet_handler;
@@ -51,6 +51,7 @@
 			void stop();
 			clock_t last_ping_time;
 			uint32 ping_cookie;
+			ipv6_socket_addr self;
 		};
 
 

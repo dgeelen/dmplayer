@@ -8,6 +8,14 @@ using namespace std;
 
 network_handler nh(5844);
 
+void server_lister_tmp( const vector<server_info>& si) {
+	cout << "---SERVER_LISTING_CHANGED:";
+	for(vector<server_info>::const_iterator i = si.begin(); i != si.end(); ++i ) {
+		cout << "   " << *i;
+	}
+	cout << "+++SERVER_LISTING_CHANGED";
+}
+
 int main ( int argc, char *argv[] )
 {
 	fprintf(stderr, "Starting GUI..\n");
