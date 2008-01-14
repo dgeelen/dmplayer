@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
 		handler->Play();
 		std::cerr << " Now playing: " << filename << " \\o\\ \\o/ /o/" << std::endl;
 	}
-	cout << "Press any key to quit";
+	cout << "Press any key to quit\n";
 	getchar();
 
 	return 0;

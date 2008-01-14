@@ -18,6 +18,7 @@
 	#include <boost/signal.hpp>
 	#include <map>
 	#include <ctime>
+	#include <iostream>
 	#define UDP_PORT_NUMBER 55555
 
 
@@ -28,6 +29,8 @@
 			clock_t      ping_micro_secs;
 			ipv4_socket_addr sock_addr;
 	};
+
+	std::ostream& operator<<(std::ostream& os, const server_info& si);
 
 	class network_handler {
 		public:

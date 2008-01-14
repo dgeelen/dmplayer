@@ -63,6 +63,17 @@ void network_handler::send_packet_handler() {
 		last_ping_time = clock();
 		udp_ssock.send(broadcast_addr, UDP_PORT_NUMBER, request_servers_packet);
 		usleep(1000000); //TODO: Make this depend on the number of actual clients? (prevents network spam)
+
+		dcerr("---\nList of known servers:");
+		bool server_list_changed = false;
+		for(map<ipv4_socket_addr, server_info>::iterator i = known_servers.begin(); i != known_servers.end(); ++i) {
+			time_t curtime = clock();
+			if(curtime - i->second.ping_last_seen > CLOCKS_PER_SEC * 3 ) {
+				known_servers.erase(i);
+				dcerr((i->second));
+			}
+		}
+		dcerr("---");
 	}
 }
 
@@ -91,12 +102,7 @@ void network_handler::receive_packet_handler() {
 		if(message_length == SOCKET_ERROR)
 			dcerr("network_handler: Network reports error #" << NetGetLastError());
 		else {
-				dcerr("Network IO thread: Received a packet from "
-				<< (int)listen_addr.array[0] << "."
-				<< (int)listen_addr.array[1] << "."
-				<< (int)listen_addr.array[2] << "."
-				<< (int)listen_addr.array[3] << ":"
-				<< port_number );
+			dcerr("Network IO thread: Received a packet from " << listen_addr << ":" << port_number );
 
 			int packet_type = received_packet.deserialize<uint8>();
 			switch(packet_type) {
@@ -115,24 +121,18 @@ void network_handler::receive_packet_handler() {
 				}
 				case PT_REPLY_SERVERS: {
 					dcerr("Received a PT_REPLY_SERVERS");
-					uint16 tcp_port; received_packet.deserialize(tcp_port); // TCP Port number
+					uint16 tcp_port; received_packet.deserialize(tcp_port);
 					uint32 cookie; received_packet.deserialize(cookie);
 					ipv4_socket_addr sa(listen_addr, tcp_port);
-					struct server_info& si = known_servers[sa];
+					struct server_info& si = known_servers[sa]; // Get/Add server to list of known servers
 
 					si.sock_addr = sa;
-					received_packet.deserialize(si.name);     // Server Name
+					received_packet.deserialize(si.name);
 					if (cookie == ping_cookie) {
 						si.ping_last_seen = clock();
 						si.ping_micro_secs = si.ping_last_seen - last_ping_time;
 					} else dcerr("COOKIE FAILURE! (expected 0x" << hex << ping_cookie << ", got 0x" << cookie << ")" << dec);
-
-					dcerr("  Name     : '" << si.name << "'\n" <<
-					      "  Address  : " << si.sock_addr << "\n" <<
-					      "  Last seen: " << hex << "0x" << si.ping_last_seen << "\n" << dec <<
-					      "  Ping     : " << (si.ping_micro_secs / CLOCKS_PER_SEC) << "." <<
-					                         ((si.ping_micro_secs - CLOCKS_PER_SEC*(si.ping_micro_secs/CLOCKS_PER_SEC))/100) << "s"
-					     );
+					dcerr(si);
 					break;
 				}
 				default:
@@ -162,3 +162,14 @@ void network_handler::stop() {
 	//TODO: Wait for thread to finish
 }
 /** End class network_handler **/
+
+/** Begin ostream operators **/
+ostream& operator<<(std::ostream& os, const server_info& si) {
+	return os << "  Name     : '" << si.name << "'\n" <<
+							 "  Address  : "  << si.sock_addr << "\n" <<
+							 "  Last seen: "  << hex << "0x" << si.ping_last_seen << "\n" << dec <<
+							 "  Ping     : "  << (si.ping_micro_secs / CLOCKS_PER_SEC) << "." <<
+																	 ((si.ping_micro_secs - CLOCKS_PER_SEC*(si.ping_micro_secs/CLOCKS_PER_SEC))
+																	  /(CLOCKS_PER_SEC/100)) << "s";
+	}
+/** End ostream operators **/
