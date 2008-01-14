@@ -28,6 +28,8 @@
 			clock_t      ping_last_seen;
 			clock_t      ping_micro_secs;
 			ipv4_socket_addr sock_addr;
+
+			server_info() : ping_last_seen(0), ping_micro_secs(0) {};
 	};
 
 	std::ostream& operator<<(std::ostream& os, const server_info& si);
