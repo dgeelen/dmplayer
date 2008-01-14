@@ -17,7 +17,7 @@ IF(ENABLE_QT_GUI)
 	find_package(Qt4 REQUIRED)
 
 	# add definitions needed for Qt4
-	add_definitions(${QT_DEFINITIONS})
+	add_definitions("${QT_DEFINITIONS} -DQT_NO_KEYWORDS")
 
 	# include Qt4 cmake file
 	include(${QT_USE_FILE})
@@ -49,7 +49,10 @@ IF(ENABLE_QT_GUI)
 	SET(OTHER_FILES
 		MainWindow.h
 		../audio/gplayback_interface.h
-    ../audio/mp3/mp3_interface.h
+		../audio/mp3/mp3_interface.h
+		../network-handler.h
+		../network-handler.cpp
+		../network-core.cpp
 	)
 
 	# Generate headers from .ui files
