@@ -11,6 +11,10 @@ MainWindow::~MainWindow()
 {
 }
 
+void MainWindow::UpdateServerList(const std::vector<server_info>&)
+{
+}
+
 void MainWindow::on_OpenButton_clicked()
 {
 	QString fileName;

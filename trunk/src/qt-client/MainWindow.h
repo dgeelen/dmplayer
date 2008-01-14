@@ -4,6 +4,7 @@
 #include "ui_MainWindow.h"
 #include <string>
 #include "../audio/mp3/mp3_interface.h"
+#include "../network-handler.h"
 
 class MainWindow: public QMainWindow, public Ui::MainWindow
 {
@@ -12,7 +13,9 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 	public:
 		MainWindow();
 		~MainWindow();
-	public slots:
+
+		void UpdateServerList(const std::vector<server_info>&);
+	public Q_SLOTS:
 		void on_OpenButton_clicked();
 		void on_PreviousButton_clicked();
 		void on_PlayButton_clicked();
