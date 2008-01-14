@@ -36,7 +36,7 @@
 		#include <ws2tcpip.h>
 
 		#ifdef HAVE_WSNWLINK_H
-			# include <wsnwlink.h>
+//			# include <wsnwlink.h>
 		#endif
 
 		#define NetGetLastError() WSAGetLastError()

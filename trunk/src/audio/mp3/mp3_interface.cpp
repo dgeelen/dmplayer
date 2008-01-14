@@ -12,6 +12,7 @@ mp3_handler::mp3_handler()
 		std::cerr << " Could not initialise FMOD" << std::endl;
 		return;
 	}
+	 paused = false;
 }
 
 mp3_handler::~mp3_handler()
@@ -23,7 +24,15 @@ mp3_handler::~mp3_handler()
 
 void mp3_handler::Play()
 {
-	FSOUND_Stream_Play(0,g_mp3_stream);
+	if (paused)
+	{
+		Pause();
+	}
+	else
+	{
+		FSOUND_Stream_SetTime(0);
+		FSOUND_Stream_Play(0,g_mp3_stream);
+	}
 }
 
 void mp3_handler::Load(std::string mp3file)

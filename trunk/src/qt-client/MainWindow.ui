@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>725</width>
-    <height>386</height>
+    <width>653</width>
+    <height>519</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -17,25 +17,159 @@
     <item>
      <layout class="QHBoxLayout" >
       <item>
-       <widget class="QListView" name="listView" />
+       <widget class="QTabWidget" name="tabWidget" >
+        <property name="currentIndex" >
+         <number>1</number>
+        </property>
+        <property name="elideMode" >
+         <enum>Qt::ElideLeft</enum>
+        </property>
+        <widget class="QWidget" name="tab" >
+         <property name="sizePolicy" >
+          <sizepolicy vsizetype="Preferred" hsizetype="MinimumExpanding" >
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <attribute name="title" >
+          <string>Tab 1</string>
+         </attribute>
+         <layout class="QHBoxLayout" >
+          <item>
+           <layout class="QHBoxLayout" >
+            <item>
+             <widget class="QListView" name="server_list" />
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton" >
+              <property name="text" >
+               <string>PushButton</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="tab_2" >
+         <attribute name="title" >
+          <string>Tab 2</string>
+         </attribute>
+         <widget class="QWidget" name="horizontalLayout" >
+          <property name="geometry" >
+           <rect>
+            <x>40</x>
+            <y>110</y>
+            <width>522</width>
+            <height>71</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" >
+           <item>
+            <widget class="QPushButton" name="PreviousButton" >
+             <property name="text" >
+              <string>Previous</string>
+             </property>
+             <property name="icon" >
+              <iconset resource="icons.qrc" >:/new/prefix1/Images/Prev.png</iconset>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="PlayButton" >
+             <property name="text" >
+              <string>Play</string>
+             </property>
+             <property name="icon" >
+              <iconset resource="icons.qrc" >:/new/prefix1/Images/Play.png</iconset>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="PauseButton" >
+             <property name="text" >
+              <string>Pause</string>
+             </property>
+             <property name="icon" >
+              <iconset resource="icons.qrc" >:/new/prefix1/Images/Pause.png</iconset>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="StopButton" >
+             <property name="text" >
+              <string>Stop</string>
+             </property>
+             <property name="icon" >
+              <iconset resource="icons.qrc" >:/new/prefix1/Images/Stop.png</iconset>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="NextButton" >
+             <property name="text" >
+              <string>Next</string>
+             </property>
+             <property name="icon" >
+              <iconset resource="icons.qrc" >:/new/prefix1/Images/Next.png</iconset>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QPushButton" name="OpenButton" >
+          <property name="geometry" >
+           <rect>
+            <x>60</x>
+            <y>220</y>
+            <width>75</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="text" >
+           <string>Open</string>
+          </property>
+         </widget>
+         <widget class="QWidget" name="horizontalLayout_2" >
+          <property name="geometry" >
+           <rect>
+            <x>39</x>
+            <y>10</y>
+            <width>521</width>
+            <height>80</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" >
+           <item>
+            <widget class="QProgressBar" name="trackProgress" >
+             <property name="value" >
+              <number>24</number>
+             </property>
+             <property name="alignment" >
+              <set>Qt::AlignLeading</set>
+             </property>
+             <property name="textVisible" >
+              <bool>false</bool>
+             </property>
+             <property name="format" >
+              <string>%p%</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label" >
+             <property name="text" >
+              <string>bahahahahahahahahaha</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </widget>
       </item>
       <item>
-       <layout class="QVBoxLayout" >
-        <item>
-         <widget class="QLabel" name="label" >
-          <property name="text" >
-           <string>Hello World</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButton" >
-          <property name="text" >
-           <string>blaat</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <layout class="QVBoxLayout" />
       </item>
      </layout>
     </item>
@@ -46,7 +180,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>725</width>
+     <width>653</width>
      <height>19</height>
     </rect>
    </property>
@@ -107,7 +241,9 @@
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="icons.qrc" />
+ </resources>
  <connections>
   <connection>
    <sender>actionClose</sender>
