@@ -17,10 +17,6 @@
     #define HAVE_WSNWLINK_H
   #endif
 
-  #if defined(HAVE_UNISTD_H)
-    # include <unistd.h>
-  #endif
-
 // TODO: properly figure network stuff out (in conjunction with cmake)
 // ??: http://www.cmake.org/pipermail/cmake-commits/2007-March/001026.html
 
@@ -28,6 +24,9 @@
 		// borland/msvs win32 specifics..
 		#define HAVE_WINSOCK
 		//#define HAVE_WSNWLINK_H
+		#define usleep(x) Sleep(x/1000)
+	#else
+		#include <unistd.h>
 	#endif
 
 	#if defined(HAVE_WINSOCK)
@@ -74,25 +73,6 @@
 	#include <queue>
 	#include <algorithm>
 
-	/* Crossplatform Thread handling */
-	#ifndef __WIN32__
-		//<FIXME: This should be detected by cmake, and used as guard instead>
-		#define HAVE_PTHREAD_H
-		//</FIXME>
-
-		#include <pthread.h>
-		#define THREAD pthread_t
-		#define THREAD_CREATE_OK 0
-		//pthread_exit() takes a void* argument
-		#define ThreadExit(x) pthread_exit((void*)(x))
-
-		#undef WINAPI
-		#define WINAPI
-	#else
-		#include <windows.h>
-		#define THREAD DWORD
-		#define ThreadExit ExitThread
-	#endif
 
 //	/* Listing and manipulating filesystem objects (files && directories) */
 //	#include <dirent.h>

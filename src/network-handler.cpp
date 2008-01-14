@@ -14,7 +14,7 @@
 #include "network-handler.h"
 #include "packet.h"
 #include "error-handling.h"
-#include <unistd.h> //FIXME: Will be included in cross-platform.h
+//#include <unistd.h> //FIXME: Will be included in cross-platform.h
 #include <boost/bind.hpp>
 
 using namespace std;
@@ -57,6 +57,7 @@ void network_handler::send_packet_handler() {
 	while(receive_packet_handler_running) {
 		dcerr("Requesting server list...");
 		ping_cookie=rand();
+		dcerr("ping_cookie: " << ping_cookie);
 		request_servers_packet.reset();
 		request_servers_packet.serialize<uint8>(PT_QUERY_SERVERS);
 		request_servers_packet.serialize<uint32>(ping_cookie);
@@ -65,17 +66,19 @@ void network_handler::send_packet_handler() {
 		usleep(1000000); //TODO: Make this depend on the number of actual clients? (prevents network spam)
 
 		dcerr("---\nList of known servers:");
-		bool server_list_changed = false;
 		vector<server_info> vsi;
-		for(map<ipv4_socket_addr, server_info>::iterator i = known_servers.begin(); i != known_servers.end(); ++i) {
-			time_t curtime = clock();
+		time_t curtime = clock();
+		for(map<ipv4_socket_addr, server_info>::iterator i = known_servers.begin(); i != known_servers.end(); ) {
 			if((curtime - i->second.ping_last_seen > CLOCKS_PER_SEC * 3)) {
 				known_servers.erase(i);
+				i = known_servers.begin();
+				continue;
 			}
 			else {
 				dcerr((i->second));
 				vsi.push_back(i->second);
 			}
+			++i;
 		}
 		add_server_signal(vsi);
 		dcerr("---");
@@ -106,14 +109,17 @@ void network_handler::receive_packet_handler() {
 			dcerr("Network IO thread: Received a packet from " << listen_addr << ":" << port_number );
 
 			int packet_type = received_packet.deserialize<uint8>();
+			dcerr("got packet type:" << packet_type);
 			switch(packet_type) {
 				case PT_QUERY_SERVERS: {
 					dcerr("Received a PT_QUERY_SERVERS");
 					packet reply_packet;
 					reply_packet.serialize<uint8>(PT_REPLY_SERVERS);
 					reply_packet.serialize<uint16>(tcp_port_number);
-					reply_packet.serialize<uint32>(received_packet.deserialize<uint32>());
-					reply_packet.serialize<string>( "test-server" );
+					uint32 cookie; received_packet.deserialize(cookie);
+					reply_packet.serialize<uint32>(cookie);
+					dcerr("cookie! " << cookie);
+					reply_packet.serialize<string>( "SIMON!!!!-server" );
 					#ifdef DEBUG
 						usleep(100000); //Fake some latency (0.1sec)
 					#endif
@@ -131,6 +137,7 @@ void network_handler::receive_packet_handler() {
 					received_packet.deserialize(si.name);
 					if (cookie == ping_cookie) {
 						si.ping_last_seen = clock();
+						dcerr("XXXXX: " << si.ping_last_seen);
 						si.ping_micro_secs = si.ping_last_seen - last_ping_time;
 					} else dcerr("COOKIE FAILURE! (expected 0x" << hex << ping_cookie << ", got 0x" << cookie << ")" << dec);
 					dcerr(si);
