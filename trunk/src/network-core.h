@@ -2,6 +2,7 @@
 	#define NETWORK_CORE_H
 	#include "cross-platform.h"
 	#include "packet.h"
+	#include <sstream>
 	#include <iostream>   /* for std::istream, std::ostream, std::string */
 	#include <utility>
 
@@ -80,9 +81,12 @@
 			SOCKET sock;
 	};
 
-	typedef std::pair<ipv4_addr, uint16> ipv4_socket_addr;
-	typedef std::pair<ipv6_addr, uint16> ipv6_socket_addr;
-
+	struct ipv4_socket_addr : std::pair<ipv4_addr, uint16> {
+		ipv4_socket_addr(ipv4_addr a, uint16 b) : std::pair<ipv4_addr, uint16>(a,b) {};
+		ipv4_socket_addr() {};
+		std::string std_str() const;
+	};
+// 	typedef std::pair<ipv6_addr, uint16> ipv6_socket_addr;
 
 	std::ostream& operator<<(std::ostream& os, const ipv4_addr& addr);
 	std::ostream& operator<<(std::ostream& os, const ipv4_socket_addr& saddr);
