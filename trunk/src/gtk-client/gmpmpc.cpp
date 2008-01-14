@@ -8,14 +8,7 @@
 
 using namespace std;
 namespace po = boost::program_options;
-
-void server_lister_tmp( const vector<server_info>& si) {
-	dcerr("\n\n---SERVER_LISTING_CHANGED:");
-	for(vector<server_info>::const_iterator i = si.begin(); i != si.end(); ++i ) {
-		dcerr(*i << "\n");
-	}
-	dcerr("+++SERVER_LISTING_CHANGED\n\n");
-}
+network_handler* gmpmpc_network_handler; //FIXME: Global variables == 3vil
 
 int main ( int argc, char *argv[] )
 {
@@ -39,9 +32,9 @@ int main ( int argc, char *argv[] )
 		return 1;
 	}
 
-
 	network_handler nh(listen_port);
-	nh.add_server_signal.connect(server_lister_tmp);
+	gmpmpc_network_handler = &nh;
+// 	nh.add_server_signal.connect(server_lister_tmp);
 
 // 	while(1) {
 // 		nh.get_available_servers();

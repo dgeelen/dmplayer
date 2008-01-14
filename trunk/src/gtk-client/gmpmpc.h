@@ -12,9 +12,10 @@
 
 #ifndef GMPMPC_H
 	#define GMPMPC_H
-	#include <glade/glade.h>
 	#include "../types.h"
 	#include "gtk/gtk.h"
+	#include <glade/glade.h>
+	#include "../network-handler.h"
 
 	#define try_connect_signal(xml_source, widget_name, signal_name) {\
 		GtkWidget* widget; \
@@ -28,6 +29,17 @@
 			true; \
 		}\
 		}
+
+	/* NOTE:
+	 * According to the standard this should also be valid:
+	 *   if( (int x = y) == z() ) { foo() }
+	 * But gcc doesn't agree, so we use two if's
+	 */
+	#define try_with_widget(xml_source, widget_name, widget) \
+	if( GtkWidget* widget = glade_xml_get_widget (xml_source, #widget_name) ) if(widget==NULL) { \
+		fprintf(stderr,"Error: can not find widget `widget_name'!\n"); \
+		false; \
+	} else
 
 	uint32 show_gui();
 #endif
