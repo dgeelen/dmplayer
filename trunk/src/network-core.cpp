@@ -86,3 +86,21 @@ uint32 udp_socket::receive( ipv4_addr* from_addr, uint16* from_port, const uint8
 	*from_port = ntohs(addr_in.sin_port);
 	return retval;
 }
+
+uint32 udp_socket::send( const ipv4_addr dest_addr, const uint16 dest_port, packet& p ) {
+	sockaddr_in addr_in;
+	addr_in.sin_family = AF_INET;
+	addr_in.sin_addr.s_addr = dest_addr.full;
+	addr_in.sin_port = htons( dest_port );
+	return sendto(sock, p.data, p.data_length(), 0, (sockaddr*) &addr_in, sizeof(addr_in));
+}
+
+uint32 udp_socket::receive( ipv4_addr* from_addr, uint16* from_port, packet& p ) {
+	p.reset();
+	sockaddr_in addr_in;
+	socklen_t addr_in_len = sizeof(addr_in);
+	uint32 retval = recvfrom( sock, p.data, PACKET_SIZE, 0, (sockaddr*)&addr_in, &addr_in_len);
+	from_addr->full = addr_in.sin_addr.s_addr;
+	*from_port = ntohs(addr_in.sin_port);
+	return retval;
+}
