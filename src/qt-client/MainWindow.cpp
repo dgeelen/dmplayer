@@ -13,7 +13,10 @@
  * @see http://www.boost.org/libs/format/doc/format.html
  *      for formatting info etc (its mostly compatible with printf, though)
  */
-/*
+
+
+// TODO:put in seperate header
+
 #define STRFORMAT(fmt, ...) \
 	((TStringUtils::detail::macro_str_format(fmt), ## __VA_ARGS__).str())
 
@@ -40,7 +43,7 @@ namespace TStringUtils {
 		};
 	}
 }
-*/
+
 MainWindow::MainWindow()
 {
 	setupUi(this);
@@ -58,7 +61,7 @@ void MainWindow::UpdateServerList(std::vector<server_info> sl)
 	for (int i = 0; i < sl.size(); ++i) {
 		QTreeWidgetItem* rwi = new QTreeWidgetItem(serverlist, 0);
 		rwi->setText(0, sl[i].name.c_str());
-		//rwi->setText(1, STRFORMAT("%i ms", sl[i].ping_micro_secs).c_str());
+		rwi->setText(1, STRFORMAT("%i ms", sl[i].ping_micro_secs).c_str());
 	}
 	//serverlist->addTopLevelItem(
 }
