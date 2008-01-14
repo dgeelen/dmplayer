@@ -16,6 +16,10 @@
 			return full < addr.full;
 		}
 
+		bool operator==(const ipv4_addr& addr) const {
+			return full == addr.full;
+		}
+
 		ipv4_addr() {
 			full=0;
 		}
