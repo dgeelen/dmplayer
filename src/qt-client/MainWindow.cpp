@@ -11,8 +11,15 @@ MainWindow::~MainWindow()
 {
 }
 
-void MainWindow::UpdateServerList(const std::vector<server_info>&)
+void MainWindow::UpdateServerList(const std::vector<server_info>& sl)
 {
+	serverlist->clear();
+
+	for (int i = 0; i < sl.size(); ++i) {
+		QTreeWidgetItem* rwi = new QTreeWidgetItem(serverlist, 0);
+		rwi->setText(0, sl[i].name.c_str());
+	}
+	//serverlist->addTopLevelItem(
 }
 
 void MainWindow::on_OpenButton_clicked()
