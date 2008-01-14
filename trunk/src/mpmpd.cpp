@@ -2,7 +2,7 @@
 #include "mpmpd.h"
 #include "network-handler.h"
 #include "error-handling.h"
-#include "audio/mp3/mp3_interface.h"
+// #include "audio/mp3/mp3_interface.h"
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
@@ -38,14 +38,14 @@ int main(int argc, char* argv[]) {
 
 	dcerr("Starting network_handler");
 	network_handler nh(listen_port);
-	dcerr("Starting mp3_handler");
-	mp3_handler* handler = new mp3_handler();
+// 	dcerr("Starting mp3_handler");
+// 	mp3_handler* handler = new mp3_handler();
 
-	if (filename != "") {
+/*	if (filename != "") {
 		handler->Load(filename.c_str());
 		handler->Play();
 		std::cerr << " Now playing: " << filename << " \\o\\ \\o/ /o/" << std::endl;
-	}
+	}*/
 	cout << "Press any key to quit\n";
 	getchar();
 

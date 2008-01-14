@@ -66,13 +66,18 @@ void network_handler::send_packet_handler() {
 
 		dcerr("---\nList of known servers:");
 		bool server_list_changed = false;
+		vector<server_info> vsi;
 		for(map<ipv4_socket_addr, server_info>::iterator i = known_servers.begin(); i != known_servers.end(); ++i) {
 			time_t curtime = clock();
-			if(curtime - i->second.ping_last_seen > CLOCKS_PER_SEC * 3 ) {
+			if((curtime - i->second.ping_last_seen > CLOCKS_PER_SEC * 3)) {
 				known_servers.erase(i);
+			}
+			else {
 				dcerr((i->second));
+				vsi.push_back(i->second);
 			}
 		}
+		add_server_signal(vsi);
 		dcerr("---");
 	}
 }
@@ -84,12 +89,8 @@ void network_handler::receive_packet_handler() {
 	tcp_listen_socket tcp_sock = tcp_listen_socket(listen_addr, tcp_port_number);
 	udp_socket udp_rsock = udp_socket( listen_addr, UDP_PORT_NUMBER);
 	udp_socket udp_ssock = udp_socket( listen_addr, 0);
-	dcerr("Network IO thread: Listening on " <<
-	     (int)listen_addr.array[0] << "." <<
-	     (int)listen_addr.array[1] << "." <<
-	     (int)listen_addr.array[2] << "." <<
-	     (int)listen_addr.array[3] << "." <<
-	     ":" << port_number);
+// 	self =
+	dcerr("Network IO thread: Listening on " << listen_addr << ":" << port_number);
 
 
 	listen_addr.full = INADDR_BROADCAST;
