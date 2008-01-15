@@ -18,7 +18,7 @@ int main( int argc, char **argv )
 
 	network_handler nh(12345);
 	nh.server_list_update_signal.connect(
-		QtBooster(&mainwindow, SLOT(UpdateServerList(std::vector<server_info>)))
+		QTBOOSTER(&mainwindow, MainWindow::UpdateServerList)
 	);
 
 	return app.exec();
