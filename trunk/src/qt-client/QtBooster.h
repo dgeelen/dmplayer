@@ -132,7 +132,7 @@ class QtBooster {
 		void operator()() {
 			QMetaObject::invokeMethod(target, csig[0]);
 			return;
-			((*((X*)NULL)).*((Y)NULL))(); // see top of file
+			((*((X*)NULL)).*((Y)NULL))();
 		}
 
 		template<typename T1>
@@ -176,6 +176,99 @@ class QtBooster {
 			return;
 			((*((X*)NULL)).*((Y)NULL))(t1, t2, t3, t4);
 		}
+
+		template<typename T1, typename T2, typename T3, typename T4, typename T5>
+		void operator()(const T1 & t1, const T2 & t2, const T3 & t3, const T4 & t4, const T5 & t5) {
+			QMetaObject::invokeMethod(target, csig[0],
+				QArgument<T1>(csig[1], t1),
+				QArgument<T2>(csig[2], t2),
+				QArgument<T3>(csig[3], t3),
+				QArgument<T4>(csig[4], t4),
+				QArgument<T5>(csig[5], t5)
+			);
+			return;
+			((*((X*)NULL)).*((Y)NULL))(t1, t2, t3, t4, t5);
+		}
+
+		template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+		void operator()(const T1 & t1, const T2 & t2, const T3 & t3, const T4 & t4, const T5 & t5, const T6 & t6) {
+			QMetaObject::invokeMethod(target, csig[0],
+				QArgument<T1>(csig[1], t1),
+				QArgument<T2>(csig[2], t2),
+				QArgument<T3>(csig[3], t3),
+				QArgument<T4>(csig[4], t4),
+				QArgument<T5>(csig[5], t5),
+				QArgument<T6>(csig[6], t6)
+			);
+			return;
+			((*((X*)NULL)).*((Y)NULL))(t1, t2, t3, t4, t5, t6);
+		}
+
+		template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
+		void operator()(const T1 & t1, const T2 & t2, const T3 & t3, const T4 & t4, const T5 & t5, const T6 & t6, const T7 & t7) {
+			QMetaObject::invokeMethod(target, csig[0],
+				QArgument<T1>(csig[1], t1),
+				QArgument<T2>(csig[2], t2),
+				QArgument<T3>(csig[3], t3),
+				QArgument<T4>(csig[4], t4),
+				QArgument<T5>(csig[5], t5),
+				QArgument<T6>(csig[6], t6),
+				QArgument<T7>(csig[7], t7)
+			);
+			return;
+			((*((X*)NULL)).*((Y)NULL))(t1, t2, t3, t4, t5, t6, t7);
+		}
+
+		template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
+		void operator()(const T1 & t1, const T2 & t2, const T3 & t3, const T4 & t4, const T5 & t5, const T6 & t6, const T7 & t7, const T8 & t8) {
+			QMetaObject::invokeMethod(target, csig[0],
+				QArgument<T1>(csig[1], t1),
+				QArgument<T2>(csig[2], t2),
+				QArgument<T3>(csig[3], t3),
+				QArgument<T4>(csig[4], t4),
+				QArgument<T5>(csig[5], t5),
+				QArgument<T6>(csig[6], t6),
+				QArgument<T7>(csig[7], t7),
+				QArgument<T8>(csig[8], t8)
+			);
+			return;
+			((*((X*)NULL)).*((Y)NULL))(t1, t2, t3, t4, t5, t6, t7, t8);
+		}
+
+		template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
+		void operator()(const T1 & t1, const T2 & t2, const T3 & t3, const T4 & t4, const T5 & t5, const T6 & t6, const T7 & t7, const T8 & t8, const T9 & t9) {
+			QMetaObject::invokeMethod(target, csig[0],
+				QArgument<T1>(csig[1], t1),
+				QArgument<T2>(csig[2], t2),
+				QArgument<T3>(csig[3], t3),
+				QArgument<T4>(csig[4], t4),
+				QArgument<T5>(csig[5], t5),
+				QArgument<T6>(csig[6], t6),
+				QArgument<T7>(csig[7], t7),
+				QArgument<T8>(csig[8], t8),
+				QArgument<T9>(csig[9], t9)
+			);
+			return;
+			((*((X*)NULL)).*((Y)NULL))(t1, t2, t3, t4, t5, t6, t7, t8, t9);
+		}
+
+		template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
+		void operator()(const T1 & t1, const T2 & t2, const T3 & t3, const T4 & t4, const T5 & t5, const T6 & t6, const T7 & t7, const T8 & t8, const T9 & t9, const T10 & t10) {
+			QMetaObject::invokeMethod(target, csig[0],
+				QArgument<T1>(csig[1], t1),
+				QArgument<T2>(csig[2], t2),
+				QArgument<T3>(csig[3], t3),
+				QArgument<T4>(csig[4], t4),
+				QArgument<T5>(csig[5], t5),
+				QArgument<T6>(csig[6], t6),
+				QArgument<T7>(csig[7], t7),
+				QArgument<T8>(csig[8], t8),
+				QArgument<T9>(csig[9], t9),
+				QArgument<T10>(csig[10], t10)
+			);
+			return;
+			((*((X*)NULL)).*((Y)NULL))(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
+		}
 };
 
 template <class X, typename Y>
@@ -186,4 +279,59 @@ QtBooster<X, Y> makeQtBooster(X* tgt, Y mtype, char* mdesc)
 
 #define QTBOOSTER(x, y) makeQtBooster(x, &y, #y)
 
+#include <fstream>
+#include <string>
+
+void generateQtBoosterImplementation(std::string fname) {
+	std::ofstream out;
+	out.open(fname.c_str());
+	assert(out.good());
+
+	int stabs = 2;
+	char tabs[] = "\t\t\t\t\t\t\t\t\t\t";
+	#define TABS(x) (tabs+strlen(tabs)-(stabs+(x)))
+
+	for (int na = 0; na <= 10; ++na) {
+		if (na != 0) {
+			out << '\n';
+			out << TABS(0) << "template<";
+			for (int i = 1; i < na; ++i)
+				out << "typename T" << i << ", ";
+			out << "typename T" << na << ">" << '\n';
+		}
+		
+		out << TABS(0) << "void operator()(";
+		for (int i = 1; i <= na; ++i) {
+			if (i != 1) out << ", ";
+			out << "const T" << i << " & t" << i;
+		}
+		out << ") {" << '\n';
+
+		out << TABS(1) << "QMetaObject::invokeMethod(target, csig[0]";
+
+		if (na != 0) {
+			out << ",\n";
+
+			for (int i = 1; i <= na; ++i) {
+				if (i!=1) out << ",\n";
+				out << TABS(2) << "QArgument<T" << i << ">(csig[" << i << "], t" << i << ")";
+			}
+			out << '\n' << TABS(1) << ");" << '\n';
+		} else {
+			out << ");\n";
+		}
+
+		out << TABS(1) << "return;" << '\n';
+
+		out << TABS(1) << "((*((X*)NULL)).*((Y)NULL))";
+		out << "(";
+		for (int i = 1; i <= na; ++i) {
+			if (i!=1) out << ", ";
+			out << "t" << i;
+		}
+		out << ");" << '\n';
+
+		out << TABS(0) << "}" << '\n';
+	}
+}
 #endif//QT_BOOSTER_H
