@@ -30,6 +30,8 @@ IF(ENABLE_QT_GUI)
 	IF(MINGW AND NOT QT_SHARED) 
 		SET(QT_LIBRARIES "${QT_LIBRARIES}" Imm32 Winmm gdi32 comdlg32 oleaut32 winspool Ws2_32 ole32 uuid)
 	ENDIF(MINGW AND NOT QT_SHARED)
+	
+  INCLUDE_DIRECTORIES(${FMOD_INCLUDE_DIR})
 
 
 	# List .ui files which need processing by Qt4
@@ -69,6 +71,7 @@ IF(ENABLE_QT_GUI)
 		${UI_FILES}
 		${OTHER_FILES}
 		${ResourceFiles}
+		${FMOD_INCLUDE_DIR}
 	)
 
 	# Link our executable against needed Qt4 libraries
@@ -78,17 +81,6 @@ IF(ENABLE_QT_GUI)
 		${BOOST_SIGNALS_LIBRARY}
 		${BOOST_THREAD_LIBRARY}
 	)
-	
-IF(WIN32)
-	GET_TARGET_PROPERTY(EXEPATH qt-simple-test LOCATION)
-	FILE(TO_NATIVE_PATH "${EXEPATH}" EXEPATH)
-	STRING(REPLACE qt-simple-test.exe fmod.dll FMODDLLPATH "${EXEPATH}")
-	ADD_CUSTOM_COMMAND(TARGET qt-simple-test
-		POST_BUILD
-		COMMAND "${CMAKE_COMMAND}" -E copy ${CMAKE_CURRENT_SOURCE_DIR}/../audio/mp3/fmod.dll "${FMODDLLPATH}"
-	)
-	#CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/../audio/mp3/fmod.dll ${FMODDLLPATH}/fmod.dll COPYONLY)
-	#MESSAGE(${EXEPATH}/fmod.dll)
-ENDIF(WIN32)
+
 
 ENDIF(ENABLE_QT_GUI)

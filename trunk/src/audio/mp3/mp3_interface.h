@@ -9,14 +9,11 @@
 */
 
 #include <string>
-#include "fmod.h"
-#include "fmod_errors.h"
 #include "../gplayback_interface.h"
+#include "../../types.h"
 
-class mp3_handler: public gaudiohandler
-{
+class mp3_handler: public gaudiohandler {
 	private:
-		FSOUND_STREAM* g_mp3_stream;
 		bool paused;
 
 	public:
@@ -25,10 +22,10 @@ class mp3_handler: public gaudiohandler
 		void Play();
 		void Pause();
 		void Stop();
-		int Position();
-		int Length();
-		void setPosition(int ms);
-		void Load(std::string mp3file);
+		uint Position();
+		uint Length();
+		void setPosition(const uint ms);
+		void Load(const std::string& mp3file);
 		bool isValid();
 
 };
