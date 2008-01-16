@@ -3,8 +3,10 @@ FIND_PACKAGE(MyBoost)
 INCLUDE_DIRECTORIES("${BOOST_INCLUDE_DIR}" )
 LINK_DIRECTORIES("${BOOST_LIBRARY_DIR}")
 
+
 SUBDIRS(gtk-client)
 SUBDIRS(qt-client)
+SUBDIRS(audio)
 
 ADD_EXECUTABLE(mpmpd
 	mpmpd.h mpmpd.cpp
@@ -12,10 +14,6 @@ ADD_EXECUTABLE(mpmpd
 	network-handler.h network-handler.cpp
 	cross-platform.h
 	types.h
-	audio/mp3/mp3_interface.h
-	audio/mp3/mp3_interface.cpp
-	audio/gplayback_interface.h
-	audio/gplayback_interface.cpp
 )
 
 TARGET_LINK_LIBRARIES(mpmpd
@@ -24,6 +22,12 @@ TARGET_LINK_LIBRARIES(mpmpd
 	${BOOST_PROGRAM_OPTIONS_LIBRARY}
 )
 
+INCLUDE_DIRECTORIES("D:/Stuff/Projects/dMPlayer/portaudio_v18_1/pa_common")
+
+TARGET_LINK_LIBRARIES(mpmpd
+	"D:/Stuff/Projects/dMPlayer/portaudio_v18_1/VC8/lib/PAStaticWMMED.lib"
+	winmm
+)
 
 IF(WIN32)
 	TARGET_LINK_LIBRARIES(mpmpd

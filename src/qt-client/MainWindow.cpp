@@ -1,6 +1,7 @@
 #include "MainWindow.moc"
 #include <QFileDialog>
 
+#include "../audio/backend_portaudio.h"
 #include <boost/format.hpp>
 
 /**
@@ -47,7 +48,7 @@ namespace TStringUtils {
 MainWindow::MainWindow()
 {
 	setupUi(this);
-	handler = new mp3_handler();
+	//handler = new mp3_handler();
 	progressTimer = new QTimer();
 	progressTimer->stop();
 	trackProgress->setMinimum(0);
@@ -73,7 +74,7 @@ void MainWindow::UpdateServerList(std::vector<server_info> sl)
 
 void MainWindow::updateProgressBar()
 {
-	trackProgress->setValue(handler->Position());
+//	trackProgress->setValue(handler->Position());
 }
 
 void MainWindow::on_OpenButton_clicked()
@@ -85,8 +86,8 @@ void MainWindow::on_OpenButton_clicked()
 	if (fileName == "")
 		return;
 	file = fileName.toStdString();
-    handler->Load(file);
-	trackProgress->setMaximum(handler->Length());
+//    handler->Load(file);
+//	trackProgress->setMaximum(handler->Length());
 }
 
 void MainWindow::on_PreviousButton_clicked()
@@ -96,18 +97,19 @@ void MainWindow::on_PreviousButton_clicked()
 
 void MainWindow::on_PlayButton_clicked()
 {
-	handler->Play();
+//	handler->Play();
+	new PortAudioBackend(NULL);
 	progressTimer->start(250);
 }
 
 void MainWindow::on_PauseButton_clicked()
 {
-	handler->Pause();
+//	handler->Pause();
 }
 
 void MainWindow::on_StopButton_clicked()
 {
-	handler->Stop();
+//	handler->Stop();
 	progressTimer->stop();
 	updateProgressBar();
 }
