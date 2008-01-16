@@ -1,73 +1,51 @@
 #include "mp3_interface.h"
+#include "../../error-handling.h"
+#include <stdio.h>
 #include <iostream>
+
+using namespace std;
 
 mp3_handler::mp3_handler()
 {
-	g_mp3_stream = 0;
-	#ifdef __linux__
-		FSOUND_SetOutput(FSOUND_OUTPUT_ALSA);
-	#endif
-	if (!FSOUND_Init(44000,64,0))
-	{
-		std::cerr << " Could not initialise FMOD" << std::endl;
-		return;
-	}
-	 paused = false;
+
 }
 
 mp3_handler::~mp3_handler()
 {
-	FSOUND_Stream_Stop( g_mp3_stream );
-	FSOUND_Stream_Close( g_mp3_stream );
-	FSOUND_Close();
+
 }
 
 void mp3_handler::Play()
 {
-	if (paused)
-	{
-		Pause();
-	}
-	else
-	{
-		FSOUND_Stream_SetTime(g_mp3_stream, 0);
-		FSOUND_Stream_Play(0,g_mp3_stream);
-	}
+
 }
 
-void mp3_handler::Load(std::string mp3file)
+void mp3_handler::Load(const std::string& mp3file)
 {
-	FSOUND_Stream_Close( g_mp3_stream );
-	g_mp3_stream = FSOUND_Stream_Open( mp3file.c_str() , FSOUND_2D , 0 , 0 );
-	if (!g_mp3_stream)
-	{
-		std::cerr << "Could not open mp3 file" << std:: endl;
-		return;
-	}
+
 }
 
 void mp3_handler::Pause()
 {
-	FSOUND_SetPaused(0, !paused);
-	paused = !paused;
+
 }
 
-int mp3_handler::Length()
+uint mp3_handler::Length()
 {
-	return FSOUND_Stream_GetLengthMs(g_mp3_stream);
+
 }
 
 void mp3_handler::Stop()
 {
-	FSOUND_Stream_Stop( g_mp3_stream );
+
 }
 
-int mp3_handler::Position()
+uint mp3_handler::Position()
 {
-	return FSOUND_Stream_GetTime( g_mp3_stream );
+
 }
 
-void mp3_handler::setPosition(int ms)
+void mp3_handler::setPosition(const uint ms)
 {
-	FSOUND_Stream_SetTime( g_mp3_stream, ms);
+
 }

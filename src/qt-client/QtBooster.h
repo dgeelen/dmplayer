@@ -28,7 +28,7 @@
  * > return;
  * > ((*((X*)NULL)).*((Y)NULL))(t1, t2, ...);
  * the return is there to never have the sencod line executed
- * the second line is the check, it calls the member function 
+ * the second line is the check, it calls the member function
  * with the passed arguments
  */
 
@@ -112,7 +112,7 @@ class QtBooster {
 			lenstore = tlen;
 
 			return;
-			((*((X*)NULL)).*((Y)NULL)); // check if Y is a member of X (compile time)
+//			((*((X*)NULL)).*((Y)NULL)); // check if Y is a member of X (compile time)
 		}
 
 		QtBooster(const QtBooster & o) {
