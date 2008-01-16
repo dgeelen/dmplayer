@@ -43,15 +43,11 @@ IF(ENABLE_QT_GUI)
 	SET(SRC_FILES
 		Main.cpp
 		MainWindow.cpp
-		../audio/mp3/mp3_interface.cpp
-		../audio/gplayback_interface.cpp
 	)
 
 	# List other files used
 	SET(OTHER_FILES
 		MainWindow.h
-		../audio/gplayback_interface.h
-		../audio/mp3/mp3_interface.h
 		../network-handler.h
 		../network-handler.cpp
 		../network-core.cpp
@@ -80,7 +76,8 @@ IF(ENABLE_QT_GUI)
 		${FMOD_LIBRARY}
 		${BOOST_SIGNALS_LIBRARY}
 		${BOOST_THREAD_LIBRARY}
+		mpmp_audio
+		"D:/Stuff/Projects/dMPlayer/portaudio_v18_1/VC8/Lib/PAStaticWMMED.lib"
 	)
-
-
+		
 ENDIF(ENABLE_QT_GUI)
