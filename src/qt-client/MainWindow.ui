@@ -15,6 +15,9 @@
   <property name="dockNestingEnabled" >
    <bool>true</bool>
   </property>
+  <property name="dockOptions" >
+   <set>QMainWindow::AllowNestedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks|QMainWindow::VerticalTabs</set>
+  </property>
   <widget class="QWidget" name="centralwidget" >
    <layout class="QHBoxLayout" >
     <item>
@@ -197,7 +200,7 @@
     <bool>false</bool>
    </property>
    <property name="features" >
-    <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable|QDockWidget::DockWidgetVerticalTitleBar|QDockWidget::NoDockWidgetFeatures</set>
+    <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable|QDockWidget::NoDockWidgetFeatures</set>
    </property>
    <property name="windowTitle" >
     <string>Server List</string>
