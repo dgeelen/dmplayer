@@ -2,23 +2,27 @@
 #
 
 # This module defines
-#  FMOD_INCLUDE_DIR, location of boost headers
-#  FMOD_LIBRARY_DIR, location of boost libraries
-
+#  FMOD_INCLUDE_DIR, location of FMod headers
+#  FMOD_LIBRARY_DIR, location of FMod libraries
 
 FIND_PATH(FMOD_INCLUDE_DIR
-	NAMES fmod.h
+	NAMES fmod.hpp
 	PATHS
-		/usr/include /usr/local/include
-		"${CMAKE_SOURCE_DIR}/src/audio/mp3"
+		/usr/include/fmodex /usr/local/include/fmodex
+		"D:/FMod Programmers API Win32/api/inc"
+		"C:/Program Files/FMod Programmers API Win32/api/inc"     
 )
 
-SET(FMOD_LIBRARY_DIR
-	"${FMOD_INCLUDE_DIR}"
+FIND_PATH(FMOD_LIBRARY_DIR
+	NAMES libfmodexp.a
+	PATHS
+		/usr/lib /usr/local/lib
+		"D:/FMod Programmers API Win32/api/lib"
+		"C:/Program Files/FMod Programmers API Win32/api/lib"     
 )
 
 FIND_LIBRARY(FMOD_LIBRARY
-	fmod
+	fmodexp
 	PATHS "${FMOD_LIBRARY_DIR}" 
 	      /usr/lib /usr/local/lib
 )
