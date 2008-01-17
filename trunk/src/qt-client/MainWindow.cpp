@@ -1,7 +1,6 @@
 #include "MainWindow.moc"
 #include <QFileDialog>
 
-#include "../audio/backend_portaudio.h"
 #include <boost/format.hpp>
 
 /**
@@ -98,7 +97,7 @@ void MainWindow::on_PreviousButton_clicked()
 void MainWindow::on_PlayButton_clicked()
 {
 //	handler->Play();
-	new PortAudioBackend(NULL);
+//	new PortAudioBackend(NULL);
 	progressTimer->start(250);
 }
 

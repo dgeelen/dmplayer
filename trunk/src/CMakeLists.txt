@@ -24,11 +24,6 @@ TARGET_LINK_LIBRARIES(mpmpd
 
 INCLUDE_DIRECTORIES("D:/Stuff/Projects/dMPlayer/portaudio_v18_1/pa_common")
 
-TARGET_LINK_LIBRARIES(mpmpd
-	"D:/Stuff/Projects/dMPlayer/portaudio_v18_1/VC8/lib/PAStaticWMMED.lib"
-	winmm
-)
-
 IF(WIN32)
 	TARGET_LINK_LIBRARIES(mpmpd
 		ws2_32
