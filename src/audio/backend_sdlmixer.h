@@ -7,6 +7,7 @@ class SDLMixerBackend : public IBackend {
 	public:
 		SDLMixerBackend(IDecoder* dec);
 		virtual ~SDLMixerBackend() {};
+		void test_playback(const char* filename);
 		private:
 };
 
