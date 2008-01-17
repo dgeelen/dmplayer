@@ -6,6 +6,8 @@
 #include "gmpmpc_select_server.h"
 #include <boost/program_options.hpp>
 
+#include "../audio/backend_sdlmixer.h"
+
 using namespace std;
 namespace po = boost::program_options;
 network_handler* gmpmpc_network_handler; //FIXME: Global variables == 3vil
@@ -19,10 +21,12 @@ int main ( int argc, char *argv[] )
 
 	int listen_port;
 	bool showhelp;
+	string filename;
 	po::options_description desc("Allowed options");
 	desc.add_options()
 			("help", po::bool_switch(&showhelp)                   , "produce help message")
 			("port", po::value(&listen_port)->default_value(12345), "TCP Port")
+			("file", po::value(&filename)->default_value(""), "Filename to test with")
 	;
 	po::variables_map vm;
  	po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -31,6 +35,9 @@ int main ( int argc, char *argv[] )
 		cout << desc << "\n";
 		return 1;
 	}
+
+	SDLMixerBackend sdlmbe(NULL);
+	sdlmbe.test_playback(filename.c_str());
 
 	network_handler nh(listen_port);
 	gmpmpc_network_handler = &nh;
