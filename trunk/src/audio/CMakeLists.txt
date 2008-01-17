@@ -26,11 +26,12 @@ IF(SDLMIXER_FOUND)
 	ADD_DEFINITIONS(-DSDL_MIXER_BACKEND)
 ENDIF(SDLMIXER_FOUND)
 
-ADD_LIBRARY(mpmp_audio SHARED
+ADD_LIBRARY(mpmp_audio
 	backend_interface.h
 	datasource_interface.h
 	decoder_interface.h
-	audio_controller.h audio_controller.cpp
+	audio_controller.h
+	audio_controller.cpp
 	${BACKEND_FILES_PORTAUDIO}
 	${BACKEND_FILES_SDLMIXER}
 )

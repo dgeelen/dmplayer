@@ -4,6 +4,7 @@
 #include "ui_MainWindow.h"
 #include <string>
 #include "../network-handler.h"
+#include "../audio/audio_controller.h"
 #include <QTimer>
 
 class MainWindow: public QMainWindow, public Ui::MainWindow
@@ -26,7 +27,8 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		void updateProgressBar();
 	private:
 		std::string file;
+		AudioController audiocontroller;
 		//mp3_handler* handler;
-		QTimer *progressTimer;
+		QTimer progressTimer;
 };
 #endif
