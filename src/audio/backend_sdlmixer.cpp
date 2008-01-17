@@ -19,7 +19,7 @@ SDLMixerBackend::SDLMixerBackend(IDecoder* dec)	: IBackend(dec) {
 	 * as its parameters the audio format we'd /like/ to have.
 	 */
 	if(Mix_OpenAudio(audio_rate, audio_format, audio_channels, audio_buffers)) {
-		throw "SDLMixerBackend: Mix_OpenAudio() failed!"
+		throw "SDLMixerBackend: Mix_OpenAudio() failed!";
 	}
 
 	/* TODO: Check to see if we got what we asked for */
@@ -28,12 +28,12 @@ SDLMixerBackend::SDLMixerBackend(IDecoder* dec)	: IBackend(dec) {
 
 }
 
-SDLMixerBackend::~SDLMixerBackend()	: IBackend(dec) {
+SDLMixerBackend::~SDLMixerBackend() {
 	Mix_CloseAudio();
 	SDL_Quit();
 }
 
 void SDLMixerBackend::test_playback(const char* filename) {
-	Mix_Music music = Mix_LoadMUS( filename );
+	Mix_Music* music = Mix_LoadMUS( filename );
 	Mix_PlayMusic(music, 0);
 }
