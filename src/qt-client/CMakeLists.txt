@@ -11,7 +11,7 @@ ENDIF(AUTODETECT_QT_GUI)
 
 IF(ENABLE_QT_GUI)
 	# CMake >= 2.4.0 is needed for Qt4
-	cmake_minimum_required(VERSION 2.4.0) 
+	cmake_minimum_required(VERSION 2.4.0)
 
 	# find and setup Qt4 for this project
 	find_package(Qt4 REQUIRED)
@@ -27,10 +27,10 @@ IF(ENABLE_QT_GUI)
 
 	# CMake fails to add all libraries needed for linking with staticially built Qt, so we do it ourselves
 	# TODO: maybe this is needed for msvc too
-	IF(MINGW AND NOT QT_SHARED) 
+	IF(MINGW AND NOT QT_SHARED)
 		SET(QT_LIBRARIES "${QT_LIBRARIES}" Imm32 Winmm gdi32 comdlg32 oleaut32 winspool Ws2_32 ole32 uuid)
 	ENDIF(MINGW AND NOT QT_SHARED)
-	
+
   INCLUDE_DIRECTORIES(${FMOD_INCLUDE_DIR})
 
 
@@ -58,7 +58,7 @@ IF(ENABLE_QT_GUI)
 
 	# Generate .moc files as needed
 	QT4_AUTOMOC(${SRC_FILES})
-	
+
 	QT4_ADD_RESOURCES(ResourceFiles icons.qrc)
 
 	# List sources needed by our executable
@@ -76,8 +76,6 @@ IF(ENABLE_QT_GUI)
 		${FMOD_LIBRARY}
 		${BOOST_SIGNALS_LIBRARY}
 		${BOOST_THREAD_LIBRARY}
-		mpmp_audio
-		"D:/Stuff/Projects/dMPlayer/portaudio_v18_1/VC8/Lib/PAStaticWMMED.lib"
 	)
-		
+
 ENDIF(ENABLE_QT_GUI)
