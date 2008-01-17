@@ -1,12 +1,2 @@
 .svn
 *~
-*.o
-*.java
-*.class
-*.jar
-*.tmp
-*.kdevelop*
-*CMakeFiles*
-*.cmake
-CMakeCache.txt
-Makefile
