@@ -47,12 +47,10 @@ namespace TStringUtils {
 MainWindow::MainWindow()
 {
 	setupUi(this);
-	//handler = new mp3_handler();
-	progressTimer = new QTimer();
-	progressTimer->stop();
+	progressTimer.stop();
 	trackProgress->setMinimum(0);
 	trackProgress->setValue(0);
-	QObject::connect(progressTimer, SIGNAL(timeout()), this, SLOT(updateProgressBar()));
+	QObject::connect(&progressTimer, SIGNAL(timeout()), this, SLOT(updateProgressBar()));
 }
 
 MainWindow::~MainWindow()
@@ -98,7 +96,7 @@ void MainWindow::on_PlayButton_clicked()
 {
 //	handler->Play();
 //	new PortAudioBackend(NULL);
-	progressTimer->start(250);
+	progressTimer.start(250);
 }
 
 void MainWindow::on_PauseButton_clicked()
@@ -109,7 +107,7 @@ void MainWindow::on_PauseButton_clicked()
 void MainWindow::on_StopButton_clicked()
 {
 //	handler->Stop();
-	progressTimer->stop();
+	progressTimer.stop();
 	updateProgressBar();
 }
 
