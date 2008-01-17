@@ -6,7 +6,7 @@
 #include "gmpmpc_select_server.h"
 #include <boost/program_options.hpp>
 
-#include "../audio/backend_sdlmixer.h"
+#include "../audio/audio_controller.h"
 
 using namespace std;
 namespace po = boost::program_options;
@@ -36,8 +36,7 @@ int main ( int argc, char *argv[] )
 		return 1;
 	}
 
-	SDLMixerBackend sdlmbe(NULL);
-	sdlmbe.test_playback(filename.c_str());
+	AudioController ac;
 
 	network_handler nh(listen_port);
 	gmpmpc_network_handler = &nh;
