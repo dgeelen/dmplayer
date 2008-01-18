@@ -1,6 +1,7 @@
 find_package(SDL)
 find_package(SDL_mixer)
 find_package(PortAudio)
+find_package(Mad)
 find_package(LibAO)
 
 
@@ -27,6 +28,16 @@ IF(SDLMIXER_FOUND)
 	ADD_DEFINITIONS(-DSDL_MIXER_BACKEND)
 ENDIF(SDLMIXER_FOUND)
 
+IF(MAD_FOUND)
+  SET(DECODER_FILES_MAD
+    decoder_mad.h
+    decoder_mad.cpp
+  )
+  SET(DECODER_LIBRARIES_MAD ${MAD_LIBRARY})
+  INCLUDE_DIRECTORIES(${MAD_INCLUDE_DIR})
+  ADD_DEFINITIONS(-DMAD_DECODER)
+ENDIF(MAD_FOUND)
+
 IF(LIBAO_FOUND)
 	SET(BACKEND_FILES_LIBAO
 		backend_libao.h
@@ -45,8 +56,11 @@ ADD_LIBRARY(mpmp_audio
 	decoder_interface.h
 	audio_controller.h
 	audio_controller.cpp
+	datasource_filereader.h
+	datasource_filereader.cpp
 	${BACKEND_FILES_PORTAUDIO}
 	${BACKEND_FILES_SDLMIXER}
+	${DECODER_FILES_MAD}
 	${BACKEND_FILES_LIBAO}
 )
 

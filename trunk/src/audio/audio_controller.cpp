@@ -12,6 +12,10 @@
 	#include "backend_libao.h"
 #endif
 
+#include "datasource_filereader.h"
+#include "decoder_mad.h"
+#include "backend_portaudio.h"
+
 AudioController::AudioController() : IDecoder() {
 	#ifdef PORTAUDIO_BACKEND
 	backend = NULL;
@@ -50,4 +54,14 @@ AudioController::~AudioController() {
 IDecoder* AudioController::tryDecode(IDataSource* ds) {
 	//TODO:
 	return this;
+}
+
+void AudioController::test_functie(std::string file) {
+	std::cerr << "blaat1 \n";
+	MadDecoder* DE = new MadDecoder();
+	std::cerr << "blaat2 \n";
+	FileReaderDataSource* FRDS = new FileReaderDataSource(file);
+	std::cerr << "blaat3 \n";
+	PortAudioBackend* BE = new PortAudioBackend(DE);
+	std::cerr << "blaat4 \n";
 }

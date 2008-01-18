@@ -3,7 +3,7 @@
 
 #include "backend_interface.h"
 
-#include <portaudio.h>
+#include "portaudio.h"
 
 #define TABLE_SIZE   (200)
 typedef struct

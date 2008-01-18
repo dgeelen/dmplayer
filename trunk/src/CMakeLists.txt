@@ -21,6 +21,7 @@ TARGET_LINK_LIBRARIES(mpmpd
 	${BOOST_THREAD_LIBRARY}
 	${BOOST_SIGNALS_LIBRARY}
 	${BOOST_PROGRAM_OPTIONS_LIBRARY}
+	mpmp_audio
 )
 
 INCLUDE_DIRECTORIES("D:/Stuff/Projects/dMPlayer/portaudio_v18_1/pa_common")

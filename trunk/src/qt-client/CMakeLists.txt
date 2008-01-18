@@ -31,8 +31,6 @@ IF(ENABLE_QT_GUI)
 		SET(QT_LIBRARIES "${QT_LIBRARIES}" Imm32 Winmm gdi32 comdlg32 oleaut32 winspool Ws2_32 ole32 uuid)
 	ENDIF(MINGW AND NOT QT_SHARED)
 
-  INCLUDE_DIRECTORIES(${FMOD_INCLUDE_DIR})
-
 
 	# List .ui files which need processing by Qt4
 	SET(UI_FILES
@@ -73,7 +71,6 @@ IF(ENABLE_QT_GUI)
 	# Link our executable against needed Qt4 libraries
 	TARGET_LINK_LIBRARIES(qt-simple-test
 		${QT_LIBRARIES}
-		${FMOD_LIBRARY}
 		${BOOST_SIGNALS_LIBRARY}
 		${BOOST_THREAD_LIBRARY}
 		mpmp_audio
