@@ -77,4 +77,24 @@
 //	/* Listing and manipulating filesystem objects (files && directories) */
 //	#include <dirent.h>
 
+/* Cross-platform Time */
+#ifdef __linux__
+	#include <sys/time.h>
+	uint64 inline get_time_us() {
+		struct timeval tv;
+		if(gettimeofday(&tv, NULL) == -1) return 0;
+		return tv.tv_sec * 1000000 + tv.tv_usec;
+	}
+#else
+	#ifdef __WIN32__
+		uint64 inline get_time_us() {
+			return clock() * (1000000 / CLOCKS_PER_SEC);
+		}
+	#else
+		uint64 inline get_time_us() {
+			return -1;
+		}
+	#endif
+#endif
+
 #endif //CROSS_PLATFORM_H
