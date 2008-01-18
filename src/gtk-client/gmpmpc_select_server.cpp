@@ -59,6 +59,8 @@ void select_server_update_treeview( const vector<server_info>& si) {
 													SERVER_LIST_COLUMN_SOCK_ADDR, i->sock_addr.std_str().c_str(),
 													-1);
 		}
+		gtk_list_store_append(list_store_servers, &iter);
+// 		gtk_list_store_remove(list_store_servers, &iter);
 	}
 	dcerr("+++SERVER_LISTING_CHANGED\n\n");
 }
@@ -71,7 +73,7 @@ bool select_server_initialise_window() {
 		try_connect_signal(select_server_window, window_select_server, delete_event);
 
 		/* Initialise store for server treeview with Name, Ping, Last Seen, Address */
-		GtkListStore *list_store_servers = gtk_list_store_new(4, G_TYPE_STRING, G_TYPE_UINT, G_TYPE_UINT, G_TYPE_STRING);
+		GtkListStore *list_store_servers = gtk_list_store_new(4, G_TYPE_STRING, G_TYPE_UINT64, G_TYPE_UINT64, G_TYPE_STRING);
 
 		/* Connect View to Store */
 		try_with_widget(select_server_window, treeview_discovered_servers, tv) {
