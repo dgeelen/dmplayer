@@ -73,14 +73,20 @@ void network_handler::send_packet_handler() {
 		request_servers_packet.reset();
 		request_servers_packet.serialize<uint8>(PT_QUERY_SERVERS);
 		request_servers_packet.serialize<uint32>(ping_cookie);
-		last_ping_time = clock();
+		last_ping_time = get_time_us();
 		udp_ssock.send(broadcast_addr, UDP_PORT_NUMBER, request_servers_packet);
 		usleep(1000000); //TODO: Make this depend on the number of actual clients? (prevents network spam)
 
 		vector<server_info> vsi;
-		time_t curtime = clock();
+		uint64 curtime = get_time_us();
+		dcerr("---Evalutaing "<<known_servers.size()<<" servers...");
 		for(map<ipv4_socket_addr, server_info>::iterator i = known_servers.begin(); i != known_servers.end(); ) {
-			if((curtime - i->second.ping_last_seen > CLOCKS_PER_SEC * 3)) {
+			dcerr(i->second);
+			dcerr("Curtime:" << curtime);
+			dcerr("i->second.ping_last_seen" << i->second.ping_last_seen);
+			dcerr("Diff: " << (curtime - i->second.ping_last_seen));
+			if(((curtime - i->second.ping_last_seen) > (3000000))) {
+				dcerr("Deleting server");
 				known_servers.erase(i);
 				i = known_servers.begin();
 				continue;
@@ -89,7 +95,9 @@ void network_handler::send_packet_handler() {
 				vsi.push_back(i->second);
 			}
 			++i;
+			dcerr("");
 		}
+		dcerr("---Eval_DONE");
 		server_list_update_signal(vsi);
 	}
 }
@@ -143,7 +151,7 @@ void network_handler::receive_packet_handler() {
 					si.sock_addr = sa;
 					received_packet.deserialize(si.name);
 					if (cookie == ping_cookie) {
-						si.ping_last_seen = clock();
+						si.ping_last_seen = get_time_us();
 						si.ping_micro_secs = si.ping_last_seen - last_ping_time;
 					} else dcerr("COOKIE FAILURE! (expected 0x" << hex << ping_cookie << ", got 0x" << cookie << ")" << dec);
 					break;
@@ -182,8 +190,8 @@ ostream& operator<<(std::ostream& os, const server_info& si) {
 	return os << "  Name     : '" << si.name << "'\n" <<
 							 "  Address  : "  << si.sock_addr << "\n" <<
 							 "  Last seen: "  << hex << "0x" << si.ping_last_seen << "\n" << dec <<
-							 "  Ping     : "  << (si.ping_micro_secs / CLOCKS_PER_SEC) << "." <<
-																	 ((si.ping_micro_secs - CLOCKS_PER_SEC*(si.ping_micro_secs/CLOCKS_PER_SEC))
-																	  /(CLOCKS_PER_SEC/100)) << "s";
+							 "  Ping     : "  << (si.ping_micro_secs / 1000000) << "." <<
+																	 ((si.ping_micro_secs - 1000000*(si.ping_micro_secs/1000000))
+																	  /(1000000/100)) << "s";
 	}
 /** End ostream operators **/

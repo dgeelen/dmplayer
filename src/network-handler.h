@@ -27,8 +27,8 @@
 	struct server_info {
 		public:
 			std::string name;
-			clock_t      ping_last_seen;
-			clock_t      ping_micro_secs;
+			uint64      ping_last_seen;
+			uint64      ping_micro_secs;
 			ipv4_socket_addr sock_addr;
 
 			server_info() : ping_last_seen(0), ping_micro_secs(0) {};
@@ -57,7 +57,7 @@
 			void start();
 			std::string server_name;
 			void stop();
-			clock_t last_ping_time;
+			uint64 last_ping_time;
 			uint32 ping_cookie;
 		};
 
