@@ -8,6 +8,9 @@
 #ifdef SDL_MIXER_BACKEND
 	#include "backend_sdlmixer.h"
 #endif
+#ifdef SDL_MIXER_BACKEND
+	#include "backend_libao.h"
+#endif
 
 AudioController::AudioController() : IDecoder() {
 	#ifdef PORTAUDIO_BACKEND
@@ -15,14 +18,21 @@ AudioController::AudioController() : IDecoder() {
 	try {
 		PortAudioBackend* be = new PortAudioBackend(this);
 		backend = be;
-		dcerr("AudioController: using PortAudioBackend");
+		dcerr("AudioController: PortAudioBackend is available");
 	} catch(...) {}
 	#endif
 	#ifdef SDL_MIXER_BACKEND
 	try {
 		SDLMixerBackend* be = new SDLMixerBackend(this);
 		backend = be;
-		dcerr("AudioController: using SDLMixerBackend");
+		dcerr("AudioController: SDLMixerBackend is available");
+	} catch(...) {}
+	#endif
+	#ifdef LIBAO_BACKEND
+	try {
+		LibAOBackend* be = new LibAOBackend(this);
+		backend = be;
+		dcerr("AudioController: LibAOBackend is available");
 	} catch(...) {}
 	#endif
 	if(backend == NULL) {
