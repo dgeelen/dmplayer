@@ -11,10 +11,13 @@
 #ifdef SDL_MIXER_BACKEND
 	#include "backend_libao.h"
 #endif
+#ifdef LIBOGG_DECODER
+	#include "decoder_libogg.h"
+#endif
 
+/* FOR TESTING PURPOSES ONLY */
 #include "datasource_filereader.h"
 #include "decoder_mad.h"
-#include "backend_portaudio.h"
 
 AudioController::AudioController() : IDecoder() {
 	#ifdef PORTAUDIO_BACKEND

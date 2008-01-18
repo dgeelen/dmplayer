@@ -1,11 +1,13 @@
+# Try to find all packages that we need/support
 find_package(SDL)
 find_package(SDL_mixer)
 find_package(PortAudio)
 find_package(Mad)
 find_package(LibAO)
+find_package(LibOGG)
 
-
-IF(PORTAUDIO_FOUND)
+#First set up everything for all BackEnds
+IF(PORTAUDIO_FOUND) #PortAudio backend
 	SET(BACKEND_FILES_PORTAUDIO
 		backend_portaudio.h
 		backend_portaudio.cpp
@@ -15,7 +17,7 @@ IF(PORTAUDIO_FOUND)
 	ADD_DEFINITIONS(-DPORTAUDIO_BACKEND)
 ENDIF(PORTAUDIO_FOUND)
 
-IF(SDLMIXER_FOUND)
+IF(SDLMIXER_FOUND) #SDL backend
 	SET(BACKEND_FILES_SDLMIXER
 		backend_sdlmixer.h
 		backend_sdlmixer.cpp
@@ -28,7 +30,20 @@ IF(SDLMIXER_FOUND)
 	ADD_DEFINITIONS(-DSDL_MIXER_BACKEND)
 ENDIF(SDLMIXER_FOUND)
 
-IF(MAD_FOUND)
+IF(LIBAO_FOUND) # Xiph.org libao backend
+	SET(BACKEND_FILES_LIBAO
+		backend_libao.h
+  backend_libao.cpp
+	)
+	SET(BACKEND_LIBRARIES_LIBAO ${LIBAO_LIBRARY})
+	INCLUDE_DIRECTORIES(
+		${LIBAO_INCLUDE_DIR}
+	)
+	ADD_DEFINITIONS(-DLIBAO_BACKEND)
+ENDIF(LIBAO_FOUND)
+
+# Now set up all decoders
+IF(MAD_FOUND) # MAD MP3 decoder
   SET(DECODER_FILES_MAD
     decoder_mad.h
     decoder_mad.cpp
@@ -38,18 +53,17 @@ IF(MAD_FOUND)
   ADD_DEFINITIONS(-DMAD_DECODER)
 ENDIF(MAD_FOUND)
 
-IF(LIBAO_FOUND)
-	SET(BACKEND_FILES_LIBAO
-		backend_libao.h
-		backend_libao.cpp
+IF(LIBOGG_FOUND) # Xiph.org OGG decoder (demuxer really)
+	SET(DECODER_FILES_LIBOGG
+		decoder_libogg.h
+		decoder_libogg.cpp
 	)
-	SET(BACKEND_LIBRARIES_LIBAO ${LIBAO_LIBRARY})
-	INCLUDE_DIRECTORIES(
-		${LIBAO_INCLUDE_DIR}
-	)
-	ADD_DEFINITIONS(-DLIBAO_BACKEND)
-ENDIF(LIBAO_FOUND)
+	SET(DECODER_LIBRARIES_LIBOGG ${LIBOGG_LIBRARY})
+	INCLUDE_DIRECTORIES(${LIBOGG_INCLUDE_DIR})
+	ADD_DEFINITIONS(-DLIBOGG_DECODER)
+ENDIF(LIBOGG_FOUND)
 
+# Finally declare all files to CMake
 ADD_LIBRARY(mpmp_audio
 	backend_interface.h
 	datasource_interface.h
@@ -58,16 +72,23 @@ ADD_LIBRARY(mpmp_audio
 	audio_controller.cpp
 	datasource_filereader.h
 	datasource_filereader.cpp
+
 	${BACKEND_FILES_PORTAUDIO}
 	${BACKEND_FILES_SDLMIXER}
-	${DECODER_FILES_MAD}
 	${BACKEND_FILES_LIBAO}
+
+	${DECODER_FILES_MAD}
+	${DECODER_FILES_LIBOGG}
 )
 
+# Set link properties of mpmp_audio (only needed when ADD_LIBRARY(mpmp_audio) above
+# does not contain any source files, but only headers
 SET_TARGET_PROPERTIES(mpmp_audio PROPERTIES LINKER_LANGUAGE CXX)
 
+# Define libraries that we link against
 TARGET_LINK_LIBRARIES(mpmp_audio
 	${BACKEND_LIBRARIES_SDL}
 	${BACKEND_LIBRARIES_PORTAUDIO}
 	${BACKEND_LIBRARIES_LIBAO}
+	${DECODER_LIBRARIES_LIBOGG}
 )
