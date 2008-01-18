@@ -1,5 +1,6 @@
 #include "datasource_filereader.h"
 #include <iostream>
+#include "../error-handling.h"
 
 /** @brief FileReaderDataSource
   *
@@ -8,7 +9,6 @@
  FileReaderDataSource::FileReaderDataSource(std::string FileName)
 {
 	FileHandle = fopen(FileName.c_str(), "rb");
-	std::cerr << FileHandle;
 	if (FileHandle == NULL)
 		throw "Could not open " + FileName;
 }
@@ -26,7 +26,7 @@ void FileReaderDataSource::reset()
   *
   * @todo: document this function
   */
-int FileReaderDataSource::read(char* buffer, int len)
+int FileReaderDataSource::read(char* const & buffer, int len)
 {
 	return fread (buffer, 1, len, FileHandle);
 }

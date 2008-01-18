@@ -8,7 +8,7 @@ class IDataSource {
 
 		virtual void reset() = 0;
 
-		virtual int read(char* buffer, int len) = 0;
+		virtual int read(char* const & buffer, int len) = 0;
 };
 
 #endif//DATASOURCE_INTERFACE_H

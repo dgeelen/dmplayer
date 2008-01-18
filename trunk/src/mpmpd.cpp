@@ -3,6 +3,7 @@
 #include "network-handler.h"
 #include "error-handling.h"
 #include <boost/program_options.hpp>
+#include "audio/audio_controller.h"
 
 namespace po = boost::program_options;
 using namespace std;
@@ -39,6 +40,11 @@ int main(int argc, char* argv[]) {
 
 	dcerr("Starting network_handler");
 	network_handler nh(listen_port, server_name);
+
+	AudioController* ac = new AudioController();
+	if(filename!= "") {
+		ac->test_functie(filename);
+	}
 
 	cout << "Press any key to quit\n";
 	getchar();
