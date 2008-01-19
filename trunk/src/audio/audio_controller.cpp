@@ -48,6 +48,7 @@ AudioController::AudioController() : IDecoder() {
 
 	/* Now we have a backend */
 
+	curdecoder = NULL;
 }
 
 AudioController::~AudioController() {
@@ -61,7 +62,8 @@ IDecoder* AudioController::tryDecode(IDataSource* ds) {
 
 uint32 AudioController::doDecode(char* buf, uint32 max, uint32 req)
 {
-	return 0;
+	if (!curdecoder) return 0;
+	return curdecoder->doDecode(buf, max, req);
 }
 
 void AudioController::test_functie(std::string file) {

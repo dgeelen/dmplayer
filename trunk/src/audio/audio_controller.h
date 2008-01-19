@@ -14,6 +14,7 @@ class AudioController : public IDecoder {
 		uint32 doDecode(char* buf, uint32 max, uint32 req);
 	private:
 		IBackend* backend;
+		IDecoder* curdecoder;
 };
 
 #endif//AUDIO_CONTROLLER_H
