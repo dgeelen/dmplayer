@@ -8,9 +8,10 @@
 #define TABLE_SIZE   (200)
 typedef struct
 {
-    float sine[TABLE_SIZE];
-    int left_phase;
-    int right_phase;
+	float sine[TABLE_SIZE];
+	int left_phase;
+	int right_phase;
+	IDecoder* decoder;
 }
 paTestData;
 
