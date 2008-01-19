@@ -21,5 +21,11 @@ IDecoder* RawDecoder::tryDecode(IDataSource* datasource)
 
 uint32 RawDecoder::doDecode(char* buf, uint32 max, uint32 req)
 {
-	return 0;
+	uint32 res = 0;
+	do {
+		uint32 read = source->read(buf, max);
+		if (read == 0) return res;
+		res += read;
+	} while (res < req);
+	return res;
 }
