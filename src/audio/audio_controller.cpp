@@ -11,14 +11,9 @@
 #ifdef SDL_MIXER_BACKEND
 	#include "backend_libao.h"
 #endif
-#ifdef LIBOGG_DECODER
-	#include "decoder_libogg.h"
-#endif
 
 /* FOR TESTING PURPOSES ONLY */
 #include "datasource_filereader.h"
-#include "decoder_mad.h"
-#include "decoder_raw.h"
 
 AudioController::AudioController() : IDecoder() {
 	curdecoder = NULL;
@@ -68,6 +63,11 @@ uint32 AudioController::doDecode(char* buf, uint32 max, uint32 req)
 
 void AudioController::test_functie(std::string file) {
 	FileReaderDataSource* FRDS = new FileReaderDataSource(file);
-	RawDecoder* RD = new RawDecoder(FRDS);
-	curdecoder = RD;
+	for (unsigned int i = 0; i < decoderlist.size(); ++i) {
+		IDecoder* decoder = decoderlist[i](FRDS);
+		if (decoder) {
+			curdecoder = decoder;
+			return;
+		}
+	}
 }
