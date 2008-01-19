@@ -15,11 +15,11 @@ static int patestCallback(   void *inputBuffer, void *outputBuffer,
                              unsigned long framesPerBuffer,
                              PaTimestamp outTime, void *userData )
 {
-    paTestData *data = (paTestData*)userData;
-    char *out = (char*)outputBuffer;
+	IDecoder* decoder = (IDecoder*)userData;
+	char *out = (char*)outputBuffer;
 
 	// 2 byte samples + 2 channels -> 2*2=4 -> 4 bytes/frame
-	uint32 act = data->decoder->doDecode(out, framesPerBuffer*4, framesPerBuffer*4);
+	uint32 act = decoder->doDecode(out, framesPerBuffer*4, framesPerBuffer*4);
 	return 0;
 }
 
@@ -30,38 +30,31 @@ PortAudioBackend::PortAudioBackend(IDecoder* dec)
 	PaError err = Pa_Initialize();
 	if (err != paNoError) throw "error! PortAudioBackend::PortAudioBackend";
 
-    /* initialise sinusoidal wavetable */
-    for( int i=0; i<TABLE_SIZE; i++ )
-    {
-        data.sine[i] = (float) (AMPLITUDE * sin( ((double)i/(double)TABLE_SIZE) * M_PI * 2. ));
-    }
-    data.left_phase = data.right_phase = 0;
-	data.decoder = dec;
-
-    err = Pa_OpenStream(
-              &stream,
-              paNoDevice,/* default input device */
-              0,              /* no input */
-              paInt16,  /* 32 bit floating point input */
-              NULL,
-              OUTPUT_DEVICE,
-              2,          /* stereo output */
-              paInt16,      /* 32 bit floating point output */
-              NULL,
-              SAMPLE_RATE,
-              FRAMES_PER_BUFFER,
-			  0,              /* number of buffers, if zero then use default minimum */
-              paClipOff,      /* we won't output out of range samples so don't bother clipping them */
-              patestCallback,
-              &data );
+	err = Pa_OpenStream(
+	          &stream,
+	          paNoDevice,        /* default input device */
+	          0,                 /* no input */
+	          paInt16,           /* 16 bit signed input */
+	          NULL,
+	          OUTPUT_DEVICE,
+	          2,                 /* stereo output */
+	          paInt16,           /* 16 bit signed output */
+	          NULL,
+	          SAMPLE_RATE,
+	          FRAMES_PER_BUFFER,
+			  0,                 /* number of buffers, if zero then use default minimum */
+	          paClipOff,         /* we won't output out of range samples so don't bother clipping them */
+	          patestCallback,
+	          dec );
 	if (err != paNoError) throw "error! PortAudioBackend::PortAudioBackend";
 
-    err = Pa_StartStream( stream );
+	err = Pa_StartStream( stream );
 	if (err != paNoError) throw "error! PortAudioBackend::PortAudioBackend";
 };
 
 PortAudioBackend::~PortAudioBackend()
 {
-	PaError err = Pa_StopStream(stream);
+	Pa_StopStream(stream);
+	Pa_CloseStream(stream);
 	Pa_Terminate();
 }
