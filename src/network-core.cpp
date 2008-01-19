@@ -105,6 +105,14 @@ uint32 udp_socket::receive( ipv4_addr* from_addr, uint16* from_port, packet& p )
 	return retval;
 }
 
+void udp_socket::close()
+{
+	if (sock != INVALID_SOCKET) {
+		closesocket(sock);
+		sock = INVALID_SOCKET;
+	}
+}
+
 string ipv4_socket_addr::std_str() const {
 	std::stringstream ss;
 	ss << (*this);

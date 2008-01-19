@@ -77,6 +77,8 @@
 			uint32 receive( ipv4_addr* from_addr, uint16* from_port, const uint8* buf, const uint32 len );
 			uint32 receive( ipv6_addr* from_addr, uint16* from_port, const uint8* buf, const uint32 len );
 			uint32 receive( ipv4_addr* from_addr, uint16* from_port, packet& p );
+
+			void close();
 		private:
 			SOCKET sock;
 	};
