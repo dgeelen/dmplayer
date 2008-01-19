@@ -11,6 +11,7 @@
 	FileHandle = fopen(FileName.c_str(), "rb");
 	if (FileHandle == NULL)
 		throw "Could not open " + FileName;
+	reset();
 }
 
 /** @brief reset
