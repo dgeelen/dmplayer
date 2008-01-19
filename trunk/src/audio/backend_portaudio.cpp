@@ -1,15 +1,8 @@
 #include "backend_portaudio.h"
-#include <cstdlib>
 
-#define NUM_SECONDS   (10)
 #define SAMPLE_RATE   (44100/2)
-#define AMPLITUDE     (0.9)
 #define FRAMES_PER_BUFFER  (64)
 #define OUTPUT_DEVICE Pa_GetDefaultOutputDeviceID()
-#ifndef M_PI
-#define M_PI  (3.14159265)
-#endif
-#include <math.h>
 
 static int patestCallback(   void *inputBuffer, void *outputBuffer,
                              unsigned long framesPerBuffer,
@@ -23,7 +16,6 @@ static int patestCallback(   void *inputBuffer, void *outputBuffer,
 	return 0;
 }
 
-
 PortAudioBackend::PortAudioBackend(IDecoder* dec)
 	: IBackend(dec)
 {
@@ -31,21 +23,22 @@ PortAudioBackend::PortAudioBackend(IDecoder* dec)
 	if (err != paNoError) throw "error! PortAudioBackend::PortAudioBackend";
 
 	err = Pa_OpenStream(
-	          &stream,
-	          paNoDevice,        /* default input device */
-	          0,                 /* no input */
-	          paInt16,           /* 16 bit signed input */
-	          NULL,
-	          OUTPUT_DEVICE,
-	          2,                 /* stereo output */
-	          paInt16,           /* 16 bit signed output */
-	          NULL,
-	          SAMPLE_RATE,
-	          FRAMES_PER_BUFFER,
-			  0,                 /* number of buffers, if zero then use default minimum */
-	          paClipOff,         /* we won't output out of range samples so don't bother clipping them */
-	          patestCallback,
-	          dec );
+		&stream,
+		paNoDevice,        /* default input device */
+		0,                 /* no input */
+		paInt16,           /* 16 bit signed input */
+		NULL,
+		OUTPUT_DEVICE,
+		2,                 /* stereo output */
+		paInt16,           /* 16 bit signed output */
+		NULL,
+		SAMPLE_RATE,
+		FRAMES_PER_BUFFER,
+		0,                 /* number of buffers, if zero then use default minimum */
+		paClipOff,         /* we won't output out of range samples so don't bother clipping them */
+		patestCallback,
+		dec );
+
 	if (err != paNoError) throw "error! PortAudioBackend::PortAudioBackend";
 
 	err = Pa_StartStream( stream );
