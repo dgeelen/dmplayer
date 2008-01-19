@@ -181,14 +181,13 @@ void network_handler::start() {
 
 void network_handler::stop()
 {
-	if(thread_receive_packet_handler==NULL && thread_send_packet_handler==NULL) return;
 	dcerr("Stopping network IO thread");
 	are_we_done = true; // signal the threads the end is near
 	udp_qsock.close(); // kill the sockets to abort any blocking socket operations
 	udp_rsock.close();
 	udp_ssock.close();
-	thread_receive_packet_handler->join();
-	thread_send_packet_handler->join();
+	if (thread_receive_packet_handler) thread_receive_packet_handler->join();
+	if (thread_send_packet_handler) thread_send_packet_handler->join();
 }
 /** End class network_handler **/
 
