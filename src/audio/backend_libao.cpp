@@ -2,7 +2,7 @@
 #include "../error-handling.h"
 #include <boost/bind.hpp>
 
-#define BUF_SIZE 1024*160
+#define BUF_SIZE 1024*8 /* 8K buffers =~ 0.0464399sec of buffer) */
 LibAOBackend::LibAOBackend(IDecoder* dec)	: IBackend(dec) {
 	ao_initialize();
 	int default_driver = ao_default_driver_id();
@@ -22,12 +22,14 @@ LibAOBackend::LibAOBackend(IDecoder* dec)	: IBackend(dec) {
 		audio_buffer[i] = new char[BUF_SIZE];
 		audio_buffer_fill[i] = BUF_SIZE;
 		for(int j=0; j<BUF_SIZE; ++j) {
-			audio_buffer[i][j]= ++x;
-			x+=i;
+			audio_buffer[i][j]= 0;
 		}
 	}
 
+	decoder = dec;
+
 	/* Start output thread */
+	fill_buffer_barrier = new boost::barrier::barrier(2);
 	play_back = true;
 	try {
 		thread_decoder_read_thread = NULL;
@@ -42,66 +44,62 @@ LibAOBackend::LibAOBackend(IDecoder* dec)	: IBackend(dec) {
 
 
 /*
- *   mutexen mutex_a and mutex_b to represent each buffer
- *   locks lock_a and lock_b to lock buffers A and B for use by a particular thread
- *   conditions cond_a and cond_b to indicate A/B will be released by the opposing thread
- *
+ *   Mutexen mutex_a and mutex_b to represent each buffer
+ *   Locks lock_a and lock_b to lock buffers A and B for use by a particular thread
+ *   The barrier ensures that both threads are only active when there is something
+ *   which needs doing.
+ *     Initially:
+ *       A is empty, B is empty, N=0
+ *     Then:
+ *       Before playing A, the playback thread waits                (N=1, A empty,          B empty         )
+ *       After filling A, the reader waits                          (N=2, A full,           B empty         )
+ *   (#) N=2 -> Now both continue: playback plays A, reader reads B (N=0, A emptying,       B filling       )
+ *       Before playing B, the playback thread waits                (N=1, A empty,          B filling/full  )
+ *       After filling B, the reader waits                          (N=2, A empty/emptying, B full          )
+ *       N=2 -> Now both continue: playback plays B, reader reads A (N=0, A filling,        B emptying      )
+ *       Before playing A, the playback thread waits                (N=1, A filling/full,   B empty         )
+ *       After filling A, the reader waits                          (N=2, A full,           B empty/emptying)
+ *       goto (#)
+
  */
 void LibAOBackend::decoder_read_thread() {
 	int filled_buffer = 1-playing_buffer;
-	dcerr("start");
 	while(play_back) {
 		{ //Fill buffer a
-			dcerr("waiting on lock for buffer a");
 			boost::mutex::scoped_lock lk_a( buffer_a_mutex ); // After this we have buffer A
-			dcerr("Filling buffer a");
-
-			buffer_b_condition.wait(lk_a);   // Wait until playback thread releases playing B
-			buffer_a_condition.notify_all(); // Notify playback thread that it can play A
+			if(decoder)
+				audio_buffer_fill[0] = decoder->doDecode(audio_buffer[0], BUF_SIZE, BUF_SIZE);
 		}
+		fill_buffer_barrier->wait();
 		{ //Fill buffer b
-			dcerr("waiting on lock for buffer b");
 			boost::mutex::scoped_lock lk_b( buffer_b_mutex ); // After this we have buffer B
-			dcerr("Filling buffer b");
-			usleep(100000); //'fill it'
-			buffer_a_condition.wait(lk_b);   // Wait until playback thread releases playing A
-			buffer_b_condition.notify_all(); // Notify playback thread that it can play B
+			if(decoder)
+				audio_buffer_fill[1] = decoder->doDecode(audio_buffer[1], BUF_SIZE, BUF_SIZE);
 		}
+		fill_buffer_barrier->wait();
 	}
-	dcerr("stop");
 }
 
 void LibAOBackend::ao_play_thread() {
-// 	uint32 act = data->decoder->doDecode(out, framesPerBuffer*4, framesPerBuffer*4);
-	dcerr("start");
 	while(play_back) {
-
-		{ //Play buffer b
-			dcerr("waiting on lock for buffer b"); // After this we have buffer B
-			boost::mutex::scoped_lock lk_b( buffer_b_mutex );
-			dcerr("Playing buffer b");
-			ao_play( device, audio_buffer[1], audio_buffer_fill[1]); // Play it
-			dcerr("Played buffer b");
-			buffer_b_condition.notify_all(); // Notify reader thread it can refill B
-			buffer_a_condition.wait(lk_b);   // Wait until reader thread finishes reading A
-		}
+		fill_buffer_barrier->wait();
 		{ //Play buffer a
-			dcerr("waiting on lock for buffer a");
 			boost::mutex::scoped_lock lk_a( buffer_a_mutex ); // After this we have buffer A
-			dcerr("Playing buffer a");
-			ao_play( device, audio_buffer[0], audio_buffer_fill[0]); // Play it
-			dcerr("Played buffer a");
-			buffer_a_condition.notify_all(); // Notify reader thread it can refill A
-			buffer_b_condition.wait(lk_a);   // Wait until reader thread finishes reading B
+			ao_play( device, audio_buffer[0], audio_buffer_fill[0]);
+		}
+		fill_buffer_barrier->wait();
+		{ //Play buffer b
+			boost::mutex::scoped_lock lk_b( buffer_b_mutex ); // After this we have buffer B
+			ao_play( device, audio_buffer[1], audio_buffer_fill[1]);
 		}
 	}
-	dcerr("stop");
 }
 
 LibAOBackend::~LibAOBackend() {
 	play_back=false;
 	if (thread_ao_play_thread) thread_ao_play_thread->join();
 	if (thread_decoder_read_thread) thread_decoder_read_thread->join();
+	delete fill_buffer_barrier;
 	ao_close(device);
 	ao_shutdown();
 }
