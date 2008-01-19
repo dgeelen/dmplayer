@@ -2,7 +2,7 @@
 #include <cstdlib>
 
 #define NUM_SECONDS   (10)
-#define SAMPLE_RATE   (44100)
+#define SAMPLE_RATE   (44100/2)
 #define AMPLITUDE     (0.9)
 #define FRAMES_PER_BUFFER  (64)
 #define OUTPUT_DEVICE Pa_GetDefaultOutputDeviceID()
@@ -18,13 +18,8 @@ static int patestCallback(   void *inputBuffer, void *outputBuffer,
     paTestData *data = (paTestData*)userData;
     char *out = (char*)outputBuffer;
 
-	uint32 act = data->decoder->doDecode(out, framesPerBuffer, framesPerBuffer);
-	//for (uint32 i = 0; i < act; i+=2) {
-	//	char tmp;
-	//	tmp = out[i];
-	//	out[i] = out[i+1];
-	//	out[i+1] = tmp;
-	//}
+	// 2 byte samples + 2 channels -> 2*2=4 -> 4 bytes/frame
+	uint32 act = data->decoder->doDecode(out, framesPerBuffer*4, framesPerBuffer*4);
 	return 0;
 }
 
@@ -55,7 +50,7 @@ PortAudioBackend::PortAudioBackend(IDecoder* dec)
               NULL,
               SAMPLE_RATE,
               FRAMES_PER_BUFFER,
-			  100,              /* number of buffers, if zero then use default minimum */
+			  0,              /* number of buffers, if zero then use default minimum */
               paClipOff,      /* we won't output out of range samples so don't bother clipping them */
               patestCallback,
               &data );
