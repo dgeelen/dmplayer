@@ -18,8 +18,10 @@
 /* FOR TESTING PURPOSES ONLY */
 #include "datasource_filereader.h"
 #include "decoder_mad.h"
+#include "decoder_raw.h"
 
 AudioController::AudioController() : IDecoder() {
+	curdecoder = NULL;
 	#ifdef PORTAUDIO_BACKEND
 	backend = NULL;
 	try {
@@ -47,8 +49,6 @@ AudioController::AudioController() : IDecoder() {
 	}
 
 	/* Now we have a backend */
-
-	curdecoder = NULL;
 }
 
 AudioController::~AudioController() {
@@ -67,13 +67,7 @@ uint32 AudioController::doDecode(char* buf, uint32 max, uint32 req)
 }
 
 void AudioController::test_functie(std::string file) {
-/*
-	std::cerr << "blaat1 \n";
-	MadDecoder* DE = new MadDecoder();
-	std::cerr << "blaat2 \n";
 	FileReaderDataSource* FRDS = new FileReaderDataSource(file);
-	std::cerr << "blaat3 \n";
-	PortAudioBackend* BE = new PortAudioBackend(DE);
-	std::cerr << "blaat4 \n";
-*/
+	RawDecoder* RD = new RawDecoder(FRDS);
+	curdecoder = RD;
 }
