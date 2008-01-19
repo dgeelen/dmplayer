@@ -11,9 +11,10 @@ OGGDecoder::~OGGDecoder() {
 }
 
 //FIXME: Does this mean min_file_size == 8k?
-#define BLOCK_SIZE 1024
+#define BLOCK_SIZE 1024*8
 
 IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
+	IDecoder* decoder = NULL;
 	/* Initialize libogg */
 	dcerr("Initializing libogg");
 	sync = new ogg_sync_state();
@@ -21,29 +22,47 @@ IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
 	ogg_sync_init(sync);
 
 	dcerr("Attempting to read a page");
-
-	int page_state = 0;
-	while(!page_state) {
-		dcerr("1");
+	bool done = false;
+	while(!done) {
+	int page_state=0;
+	while(page_state!=1) {
 		page_state = ogg_sync_pageout(sync, page);
-		dcerr("2");
-		if(page_state==-1) dcerr("libogg: sync lost, skipping some bytes");
-		dcerr("3");
-		buffer = ogg_sync_buffer(sync, BLOCK_SIZE);
-		dcerr("4");
-		int bytes_read = ds->read( buffer, BLOCK_SIZE );
-		if(!bytes_read) throw "EOF while looking for a page!";
-		dcerr("5");
-		if(ogg_sync_wrote(sync, bytes_read)) throw "Internal error in libogg!";
-		dcerr("6");
+		if(page_state==-1)
+			dcerr("libogg: sync lost, skipping some bytes");
+		else if(page_state!=1) {
+			buffer = ogg_sync_buffer(sync, BLOCK_SIZE);
+			int bytes_read = ds->read( buffer, BLOCK_SIZE );
+			if(!bytes_read) {
+				dcerr("EOF while looking for a page!");
+				done = true;
+				break;
+			}
+			if(ogg_sync_wrote(sync, bytes_read)) throw "Internal error in libogg!";
+		}
 	}
-	dcerr("Got a OGG page!");
-
+	if(page_state) {
+		dcerr("Got OGG page nr " << ogg_page_pageno(page));
+		dcerr("  begin-of-stream=" << ogg_page_bos(page));
+		dcerr("  end-of-stream=" << ogg_page_eos(page));
+		dcerr("  version=" << ogg_page_version(page));
+		dcerr("  continued=" << ogg_page_continued(page));
+		dcerr("  completed=" << ogg_page_packets(page));
+		dcerr("  granule-pos="<< ogg_page_granulepos(page));
+		dcerr("  serialno="<< ogg_page_serialno(page));
+		if(ogg_page_bos(page)) {
+			dcerr("Page is a BOS! :D");
+		}
+		else {
+			dcerr("Page is not BOS!");
+		}
+	}
+	done = true; //decode just 1 page
+	}
 	/* Un-initialize libogg */
 	dcerr("Un-initializing libogg");
 	delete page;
 	ogg_sync_destroy(sync); sync = NULL; //ogg_sync_destroy delete's it for us?!
 	/* return to indicate success/failure */
 	dcerr("");
-	return this;
+	return decoder;
 }
