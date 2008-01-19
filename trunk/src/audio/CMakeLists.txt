@@ -68,6 +68,13 @@ IF(LIBOGG_FOUND) # Xiph.org OGG decoder (demuxer really)
 	ADD_DEFINITIONS(-DLIBOGG_DECODER)
 ENDIF(LIBOGG_FOUND)
 
+# we can always compile the raw decoder, no libs needed for that
+SET(DECODER_SOURCE_FILES ${DECODER_SOURCE_FILES}
+	decoder_raw.h
+	decoder_raw.cpp
+)
+#ADD_DEFINITIONS(-DRAW_DECODER) // we should not need definitions for these
+
 # Finally declare all files to CMake
 ADD_LIBRARY(mpmp_audio
 	backend_interface.h
