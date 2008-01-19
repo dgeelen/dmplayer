@@ -186,7 +186,14 @@ void network_handler::stop()
 	udp_qsock.close(); // kill the sockets to abort any blocking socket operations
 	udp_rsock.close();
 	udp_ssock.close();
+
+	#ifndef __linux__
+	/* There appears to be something funny going on under linux
+	 * wrt closing blocking sockets, so until that is resolved
+	 * we don't join on this threads.
+	 */
 	if (thread_receive_packet_handler) thread_receive_packet_handler->join();
+	#endif
 	if (thread_send_packet_handler) thread_send_packet_handler->join();
 }
 /** End class network_handler **/
