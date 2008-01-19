@@ -1,5 +1,5 @@
 #include <cstdlib>
-#include "decoder_libogg.h"
+#include "decoder_ogg.h"
 #include "../error-handling.h"
 
 OGGDecoder::OGGDecoder() : IDecoder() {
