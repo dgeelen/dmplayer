@@ -11,6 +11,7 @@ class AudioController : public IDecoder {
 		~AudioController();
 		IDecoder* tryDecode(IDataSource*);
 		void test_functie(std::string file);
+		uint32 doDecode(char* buf, uint32 max, uint32 req);
 	private:
 		IBackend* backend;
 };

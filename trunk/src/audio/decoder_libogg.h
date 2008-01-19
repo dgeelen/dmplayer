@@ -10,6 +10,7 @@ class OGGDecoder : public IDecoder {
 		OGGDecoder();
 		~OGGDecoder();
 		IDecoder* tryDecode(IDataSource* ds);
+		uint32 doDecode(char* buf, uint32 max, uint32 req) { return 0; }; //FIXME: implement in .cpp file
 	private:
 		ogg_sync_state* sync;
 		ogg_page* page;
