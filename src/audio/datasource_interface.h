@@ -1,6 +1,8 @@
 #ifndef DATASOURCE_INTERFACE_H
 #define DATASOURCE_INTERFACE_H
 
+#include <cstdio> // for NULL
+
 class IDataSource {
 	public:
 		IDataSource() {};
