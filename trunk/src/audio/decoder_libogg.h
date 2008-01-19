@@ -14,6 +14,7 @@ class OGGDecoder : public IDecoder {
 	private:
 		ogg_sync_state* sync;
 		ogg_page* page;
+		ogg_stream_state* stream;
 		char* buffer;
 };
 
