@@ -51,12 +51,22 @@ IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
 		dcerr("  serialno="<< ogg_page_serialno(page));
 		if(ogg_page_bos(page)) {
 			dcerr("Page is a BOS! :D");
-		}
+			/* We found a begin of stream page, let's see what's inside? */
+			stream = new ogg_stream_state;
+			ogg_packet* p = new ogg_packet;
+			if(ogg_stream_init(stream, ogg_page_serialno(page))) throw "libogg: could not initialize stream";
+			if(ogg_stream_pagein(stream, page)) dcerr("Could not submit page to stream");
+			while(ogg_stream_packetout(stream, p)!=0) {
+				dcerr("New packet");
+			}
+			delete p;
+			delete stream;
+			}
 		else {
 			dcerr("Page is not BOS!");
 		}
 	}
-	done = true; //decode just 1 page
+// 	done = true; //decode just 1 page
 	}
 	/* Un-initialize libogg */
 	dcerr("Un-initializing libogg");
