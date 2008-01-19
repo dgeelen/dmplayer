@@ -8,6 +8,7 @@ find_package(LibOGG)
 
 SET(BACKEND_SOURCE_FILES "")
 SET(DECODER_SOURCE_FILES "")
+SET(DECODER_NAMES "")
 SET(BACKEND_LIBRARIES "")
 SET(DECODER_LIBRARIES "")
 
@@ -49,37 +50,43 @@ ENDIF(LIBAO_FOUND)
 
 # Now set up all decoders
 IF(MAD_FOUND) # MAD MP3 decoder
-	SET(DECODER_SOURCE_FILES ${DECODER_SOURCE_FILES}
-		decoder_mad.h
-		decoder_mad.cpp
-	)
+	SET(DECODER_NAMES ${DECODER_NAMES} Mad)
 	SET(DECODER_LIBRARIES ${DECODER_LIBRARIES} ${MAD_LIBRARY})
 	INCLUDE_DIRECTORIES(${MAD_INCLUDE_DIR})
-	ADD_DEFINITIONS(-DMAD_DECODER)
 ENDIF(MAD_FOUND)
 
 IF(LIBOGG_FOUND) # Xiph.org OGG decoder (demuxer really)
-	SET(DECODER_SOURCE_FILES ${DECODER_SOURCE_FILES}
-		decoder_libogg.h
-		decoder_libogg.cpp
-	)
+	SET(DECODER_NAMES ${DECODER_NAMES} Mad)
 	SET(DECODER_LIBRARIES ${DECODER_LIBRARIES} ${LIBOGG_LIBRARY})
 	INCLUDE_DIRECTORIES(${LIBOGG_INCLUDE_DIR})
-	ADD_DEFINITIONS(-DLIBOGG_DECODER)
 ENDIF(LIBOGG_FOUND)
 
 # we can always compile the raw decoder, no libs needed for that
-SET(DECODER_SOURCE_FILES ${DECODER_SOURCE_FILES}
-	decoder_raw.h
-	decoder_raw.cpp
-)
+SET(DECODER_NAMES ${DECODER_NAMES} Raw)
 #ADD_DEFINITIONS(-DRAW_DECODER) // we should not need definitions for these
+
+# configure all decoders
+SET(FName ${CMAKE_CURRENT_BINARY_DIR}/decoder_linker.inc)
+FILE(WRITE "${FName}" "\n")
+MESSAGE("${FName}")
+FOREACH(name ${DECODER_NAMES})
+	STRING(TOLOWER ${name} lname)
+	FILE(APPEND "${FName}" "#include \"decoder_${lname}.h\"\n")
+	FILE(APPEND "${FName}" "REGISTER_DECODER_CLASS(${name}Decoder);\n")
+	SET(DECODER_SOURCE_FILES ${DECODER_SOURCE_FILES}
+		decoder_${lname}.h
+		decoder_${lname}.cpp
+	)
+ENDFOREACH(name)
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Finally declare all files to CMake
 ADD_LIBRARY(mpmp_audio
 	backend_interface.h
 	datasource_interface.h
 	decoder_interface.h
+	decoder_interface.cpp
 	audio_controller.h
 	audio_controller.cpp
 	datasource_filereader.h
@@ -96,5 +103,5 @@ SET_TARGET_PROPERTIES(mpmp_audio PROPERTIES LINKER_LANGUAGE CXX)
 # Define libraries that we link against
 TARGET_LINK_LIBRARIES(mpmp_audio
 	${BACKEND_LIBRARIES}
-	${BACKEND_LIBRARIES}
+	${DECODER_LIBRARIES}
 )

@@ -3,6 +3,8 @@
 
 #include "datasource_interface.h"
 #include "../types.h"
+#include <vector>
+#include <boost/function.hpp>
 
 class IDecoder {
 	private:
@@ -16,5 +18,7 @@ class IDecoder {
 
 		virtual uint32 doDecode(char* buf, uint32 max, uint32 req = 0) = 0;
 };
+
+extern std::vector<boost::function<IDecoder* (IDataSource*)> > decoderlist;
 
 #endif//DECODER_INTERFACE_H
