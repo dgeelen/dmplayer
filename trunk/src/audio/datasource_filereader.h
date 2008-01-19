@@ -12,7 +12,7 @@ class FileReaderDataSource: public IDataSource
 
 		void reset();
 
-		int read(char* const & buffer, int len);
+		int read(char* const buffer, int len);
 	private:
 		FILE* FileHandle;
 };
