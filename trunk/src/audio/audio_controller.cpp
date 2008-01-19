@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <iostream>
 #include "audio_controller.h"
 #include "backend_interface.h"
 #include "../error-handling.h"
@@ -14,6 +15,8 @@
 
 /* FOR TESTING PURPOSES ONLY */
 #include "datasource_filereader.h"
+
+using namespace std;
 
 AudioController::AudioController() : IDecoder() {
 	curdecoder = NULL;
@@ -62,6 +65,9 @@ uint32 AudioController::doDecode(char* buf, uint32 max, uint32 req)
 }
 
 void AudioController::test_functie(std::string file) {
+	try {
+	FileReaderDataSource* ds = new FileReaderDataSource(file);
+	//*
 	FileReaderDataSource* FRDS = new FileReaderDataSource(file);
 	for (unsigned int i = 0; i < decoderlist.size(); ++i) {
 		IDecoder* decoder = decoderlist[i](FRDS);
@@ -69,5 +75,14 @@ void AudioController::test_functie(std::string file) {
 			curdecoder = decoder;
 			return;
 		}
+	}
+	/*/
+	OGGDecoder* decoder = new OGGDecoder();
+	curdecoder = decoder;
+	decoder->tryDecode(ds);
+	/**/
+	}
+	catch(...) {
+		cout << "Error while trying to play '"<<file<<"'\n";
 	}
 }
