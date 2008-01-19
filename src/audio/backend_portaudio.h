@@ -5,20 +5,9 @@
 
 #include "portaudio.h"
 
-#define TABLE_SIZE   (200)
-typedef struct
-{
-	float sine[TABLE_SIZE];
-	int left_phase;
-	int right_phase;
-	IDecoder* decoder;
-}
-paTestData;
-
 class PortAudioBackend : public IBackend{
 	private:
 		PortAudioStream *stream;
-		paTestData data;
 	public:
 		PortAudioBackend(IDecoder* dec);
 		virtual ~PortAudioBackend();
