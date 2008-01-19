@@ -13,11 +13,11 @@
 				return s;
 			}
 		}
-		#define dcerr(x) std::cerr << std::setiosflags(std::ios::left) \
+		#define dcerr(x) std::cerr << std::setiosflags(std::ios::right) \
 		                           << std::setw(28) << DCERR::file_basename(__FILE__) \
 		                           << std::setw(5) << __LINE__ << ' ' \
-		                           << std::setw(28) << __FUNCTION__ << ' ' \
-		                           << std::setiosflags(std::ios::right) \
+		                           << std::setw(28) << __FUNCTION__ << "(): " \
+		                           << std::setiosflags(std::ios::left) \
 		                           << x \
 		                           << '\n'
 	#else
