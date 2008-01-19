@@ -20,7 +20,7 @@ class PortAudioBackend : public IBackend{
 		paTestData data;
 	public:
 		PortAudioBackend(IDecoder* dec);
-		virtual ~PortAudioBackend() {};
+		virtual ~PortAudioBackend();
 };
 
 #endif//BACKEND_PORTAUDIO_H

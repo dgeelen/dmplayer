@@ -70,3 +70,9 @@ PortAudioBackend::PortAudioBackend(IDecoder* dec)
     err = Pa_StartStream( stream );
 	if (err != paNoError) throw "error! PortAudioBackend::PortAudioBackend";
 };
+
+PortAudioBackend::~PortAudioBackend()
+{
+	PaError err = Pa_StopStream(stream);
+	Pa_Terminate();
+}
