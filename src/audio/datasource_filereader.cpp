@@ -27,8 +27,7 @@ void FileReaderDataSource::reset()
   *
   * @todo: document this function
   */
-int FileReaderDataSource::read(char* const & buffer, int len)
+int FileReaderDataSource::read(char* const buffer, int len)
 {
 	return fread (buffer, 1, len, FileHandle);
 }
-
