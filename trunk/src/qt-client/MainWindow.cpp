@@ -61,7 +61,7 @@ void MainWindow::UpdateServerList(std::vector<server_info> sl)
 {
 	serverlist->clear();
 
-	for (int i = 0; i < sl.size(); ++i) {
+	for (uint i = 0; i < sl.size(); ++i) {
 		QTreeWidgetItem* rwi = new QTreeWidgetItem(serverlist, 0);
 		rwi->setText(0, sl[i].name.c_str());
 		rwi->setText(1, STRFORMAT("%i ms", sl[i].ping_micro_secs).c_str());
