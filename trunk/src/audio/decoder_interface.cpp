@@ -9,7 +9,7 @@ std::vector<boost::function<IDecoder* (IDataSource*)> > decoderlist;
 #define UNIQUE_NAMESPACE UNIQUE_NAMESPACE_HELPER1(ns, __LINE__)
 
 #define REGISTER_DECODER_FUNCTION(func) namespace UNIQUE_NAMESPACE { static int x = (decoderlist.push_back(func), 10); }
-#define REGISTER_DECODER_CLASS(cls) REGISTER_DECODER_FUNCTION(boost::bind(& cls ## ::tryDecode, new cls(), _1) )
+#define REGISTER_DECODER_CLASS(cls) REGISTER_DECODER_FUNCTION(boost::bind(& cls ::tryDecode, new cls(), _1) )
 
 #include <decoder_linker.inc>
 
