@@ -89,22 +89,22 @@ class QtBooster {
 
 			// exctract signiature information
 			const QList<QByteArray> args = mm.parameterTypes();
-			for (int i = 0; i < args.size(); ++i)
+			for (unsigned int i = 0; i < args.size(); ++i)
 				sig.push_back(args[i].data());
 
 			assert(sig.size() <= 11);
 
 			// convert to char pointer store
 			int tlen = 0;
-			for (int i = 0; i < sig.size(); ++i)
+			for (unsigned int i = 0; i < sig.size(); ++i)
 				tlen += sig[i].size() +1;
 
 			sigstore = new char[tlen];
 
 			int tpos = 0;
-			for (int i = 0; i < sig.size(); ++i) {
+			for (unsigned int i = 0; i < sig.size(); ++i) {
 				csig[i] = sigstore + tpos;
-				for (int j = 0; j < sig[i].size(); ++j)
+				for (unsigned int j = 0; j < sig[i].size(); ++j)
 					sigstore[tpos++] = sig[i][j];
 				sigstore[tpos++] = 0;
 			}
