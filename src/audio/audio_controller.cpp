@@ -59,7 +59,13 @@ IDecoder* AudioController::tryDecode(IDataSource* ds) {
 	return this;
 }
 
+uint32 AudioController::doDecode(char* buf, uint32 max, uint32 req)
+{
+	return 0;
+}
+
 void AudioController::test_functie(std::string file) {
+/*
 	std::cerr << "blaat1 \n";
 	MadDecoder* DE = new MadDecoder();
 	std::cerr << "blaat2 \n";
@@ -67,4 +73,5 @@ void AudioController::test_functie(std::string file) {
 	std::cerr << "blaat3 \n";
 	PortAudioBackend* BE = new PortAudioBackend(DE);
 	std::cerr << "blaat4 \n";
+*/
 }
