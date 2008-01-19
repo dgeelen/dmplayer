@@ -40,6 +40,7 @@
 		public:
 			network_handler(uint16 tcp_port_number);
 			network_handler(uint16 tcp_port_number, std::string server_name);
+			~network_handler();
 			void receive_packet_handler();
 			void send_packet_handler();
 			bool is_running();
@@ -59,6 +60,10 @@
 			void stop();
 			uint64 last_ping_time;
 			uint32 ping_cookie;
+			volatile bool are_we_done;
+			udp_socket udp_ssock;
+			udp_socket udp_rsock;
+			udp_socket udp_qsock;
 		};
 
 
