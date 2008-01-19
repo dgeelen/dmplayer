@@ -43,6 +43,8 @@ tcp_listen_socket::tcp_listen_socket(const ipv4_addr addr, const uint16 portnumb
 		throw(ss.str().c_str());	}
 }
 
+extern int close (int __fd);
+
 udp_socket::udp_socket(const ipv4_addr addr, const uint16 portnumber) {
 	sock = socket( AF_INET, SOCK_DGRAM, 0 );
 
@@ -105,7 +107,7 @@ uint32 udp_socket::receive( ipv4_addr* from_addr, uint16* from_port, packet& p )
 	return retval;
 }
 
-void udp_socket::close()
+void udp_socket::close(void)
 {
 	if (sock != INVALID_SOCKET) {
 		closesocket(sock);
