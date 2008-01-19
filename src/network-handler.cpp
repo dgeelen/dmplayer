@@ -36,6 +36,7 @@ network_handler::network_handler(uint16 tcp_port_number) {
 }
 
 void network_handler::init() {
+	are_we_done = false;
 	dcerr("network_handler(): Initializing...");
 	thread_send_packet_handler = NULL;
 	thread_receive_packet_handler = NULL;
@@ -63,18 +64,18 @@ void network_handler::send_packet_handler() {
 	ipv4_addr broadcast_addr;
 	broadcast_addr.full = INADDR_BROADCAST;
 	uint16 port_number = 0;
-	udp_socket udp_ssock = udp_socket( broadcast_addr, 0);
+	udp_qsock = udp_socket( broadcast_addr, 0);
 
 	dcerr("Network send thread: starting ping loop");
 	packet request_servers_packet;
-	while(receive_packet_handler_running) {
+	while(!are_we_done && receive_packet_handler_running) {
 		dcerr("Requesting server list...");
 		ping_cookie=rand();
 		request_servers_packet.reset();
 		request_servers_packet.serialize<uint8>(PT_QUERY_SERVERS);
 		request_servers_packet.serialize<uint32>(ping_cookie);
 		last_ping_time = get_time_us();
-		udp_ssock.send(broadcast_addr, UDP_PORT_NUMBER, request_servers_packet);
+		udp_qsock.send(broadcast_addr, UDP_PORT_NUMBER, request_servers_packet);
 		usleep(1000000); //TODO: Make this depend on the number of actual clients? (prevents network spam)
 
 		vector<server_info> vsi;
@@ -109,8 +110,8 @@ void network_handler::receive_packet_handler() {
 	ipv4_addr listen_addr;
 	uint16 port_number = 0;
 // 	tcp_listen_socket tcp_sock = tcp_listen_socket(listen_addr, tcp_port_number);
-	udp_socket udp_rsock = udp_socket( listen_addr, rsock_port);
-	udp_socket udp_ssock = udp_socket( listen_addr, ssock_port);
+	udp_rsock = udp_socket( listen_addr, rsock_port);
+	udp_ssock = udp_socket( listen_addr, ssock_port);
 	dcerr("Network IO thread: Listening on " << listen_addr << ":" << port_number);
 
 
@@ -119,7 +120,7 @@ void network_handler::receive_packet_handler() {
 	packet received_packet;
 	uint32 message_length;
 
-	while(receive_packet_handler_running) {
+	while(!are_we_done && receive_packet_handler_running) {
 		message_length = udp_rsock.receive( &listen_addr, &port_number, received_packet );
 		if(message_length == SOCKET_ERROR)
 			dcerr("network_handler: Network reports error #" << NetGetLastError());
@@ -170,7 +171,7 @@ void network_handler::start() {
 	try {
 		thread_receive_packet_handler = new boost::thread(error_handler(boost::bind(&network_handler::receive_packet_handler, this)));
 		if(!server_mode)
-			thread_receive_packet_handler = new boost::thread(error_handler(boost::bind(&network_handler::send_packet_handler, this)));
+			thread_send_packet_handler = new boost::thread(error_handler(boost::bind(&network_handler::send_packet_handler, this)));
 	}
 	catch(...) {
 		receive_packet_handler_running = false;
@@ -178,12 +179,23 @@ void network_handler::start() {
 	}
 }
 
-void network_handler::stop() {
+void network_handler::stop()
+{
 	if(thread_receive_packet_handler==NULL && thread_send_packet_handler==NULL) return;
 	dcerr("Stopping network IO thread");
-	//TODO: Wait for thread to finish
+	are_we_done = true; // signal the threads the end is near
+	udp_qsock.close(); // kill the sockets to abort any blocking socket operations
+	udp_rsock.close();
+	udp_ssock.close();
+	thread_receive_packet_handler->join();
+	thread_send_packet_handler->join();
 }
 /** End class network_handler **/
+
+network_handler::~network_handler()
+{
+	stop();
+}
 
 /** Begin ostream operators **/
 ostream& operator<<(std::ostream& os, const server_info& si) {
