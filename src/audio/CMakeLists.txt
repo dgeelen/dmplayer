@@ -71,7 +71,7 @@ FILE(WRITE "${FName}" "\n")
 MESSAGE("${FName}")
 FOREACH(name ${DECODER_NAMES})
 	STRING(TOLOWER ${name} lname)
-	FILE(APPEND "${FName}" "#include \"decoder_${lname}.h\"\n")
+	FILE(APPEND "${FName}" "#include <decoder_${lname}.h>\n")
 	FILE(APPEND "${FName}" "REGISTER_DECODER_CLASS(${name}Decoder);\n")
 	SET(DECODER_SOURCE_FILES ${DECODER_SOURCE_FILES}
 		decoder_${lname}.h
@@ -80,6 +80,7 @@ FOREACH(name ${DECODER_NAMES})
 ENDFOREACH(name)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 # Finally declare all files to CMake
 ADD_LIBRARY(mpmp_audio
