@@ -11,12 +11,13 @@ using namespace std;
 #define BLOCK_SIZE 1024*8
 
 OGGDecoder::OGGDecoder() : IDecoder() {
+	datasource = NULL;
 	initialize();
 }
 
 OGGDecoder::OGGDecoder(IDataSource* ds) : IDecoder() {
-	initialize();
 	datasource = ds;
+	initialize();
 }
 
 OGGDecoder::~OGGDecoder() {
@@ -218,7 +219,7 @@ IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
 	}
 	IDecoder* result = NULL;
 
-	for(int i=0; i<stream_ids.size(); ++i) {
+	for(unsigned int i=0; i<stream_ids.size(); ++i) {
 		dcerr("found a stream with ID " << stream_ids[i]);
 		OGGDecoder* oggd = new OGGDecoder(ds);
 		OGGStreamDataSource* oggs = new OGGStreamDataSource(oggd, stream_ids[i]);
