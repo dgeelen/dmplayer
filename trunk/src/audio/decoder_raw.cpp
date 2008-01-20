@@ -1,23 +1,28 @@
 #include "decoder_raw.h"
+#include "../error-handling.h"
 #include <string>
 
 RawDecoder::RawDecoder()
 {
+	dcerr("");
 	source = NULL;
 }
 
 RawDecoder::RawDecoder(IDataSource* source)
 {
+	dcerr("");
 	this->source = source;
 	//tryDecode(source);
 }
 
 RawDecoder::~RawDecoder()
 {
+	dcerr("");
 }
 
 IDecoder* RawDecoder::tryDecode(IDataSource* datasource)
 {
+	dcerr("");
 	datasource->reset();
 	char hdr[48];
 	uint8* uhdr = (uint8*)hdr;
@@ -46,6 +51,7 @@ IDecoder* RawDecoder::tryDecode(IDataSource* datasource)
 
 uint32 RawDecoder::doDecode(char* buf, uint32 max, uint32 req)
 {
+	dcerr("");
 	uint32 res = 0;
 	do {
 		uint32 read = source->read(buf, max);
