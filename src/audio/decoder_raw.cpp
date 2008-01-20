@@ -48,7 +48,7 @@ uint32 RawDecoder::doDecode(char* buf, uint32 max, uint32 req)
 {
 	uint32 res = 0;
 	do {
-		uint32 read = source->read(buf, max);
+		uint32 read = source->read(buf+res, max-res);
 		if (read == 0) return res;
 		res += read;
 	} while (res < req);
