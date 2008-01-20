@@ -2,7 +2,7 @@
 #include "../error-handling.h"
 #include <boost/bind.hpp>
 
-#define BUF_SIZE 1024*800 /* 8K buffers =~ 0.0464399sec of buffer) */
+#define BUF_SIZE 1024*8 /* 8K buffers =~ 0.0464399sec of buffer) */
 LibAOBackend::LibAOBackend(IDecoder* dec)	: IBackend(dec) {
 	ao_initialize();
 	int default_driver = ao_default_driver_id();
