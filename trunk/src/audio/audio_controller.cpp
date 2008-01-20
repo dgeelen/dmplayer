@@ -73,6 +73,7 @@ void AudioController::test_functie(std::string file) {
 		IDecoder* decoder = decoderlist[i](FRDS);
 		if (decoder) {
 			curdecoder = decoder;
+			dcerr("Found a decoder");
 			return;
 		}
 	}
@@ -82,7 +83,7 @@ void AudioController::test_functie(std::string file) {
 	decoder->tryDecode(ds);
 	/**/
 	}
-	catch(...) {
-		cout << "Error while trying to play '"<<file<<"'\n";
+	catch(char* error_msg) {
+		cout << "Error while trying to play '"<<file<<"':\n" << error_msg;
 	}
 }
