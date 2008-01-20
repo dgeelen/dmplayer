@@ -18,7 +18,7 @@ class OGGStreamDataSource: public IDataSource
 		bool is_exhausted;
 		bool exhausted();
 		long getpos();
-		int read(char* const buffer, int len);
+		int read(char* const buffer, unsigned long len);
 		ogg_packet* read();
 	private:
 		OGGDecoder* decoder;

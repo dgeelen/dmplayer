@@ -24,7 +24,6 @@ long FileReaderDataSource::getpos() {
   */
 void FileReaderDataSource::reset()
 {
-	dcerr("");
 	fseek (FileHandle , 0 , SEEK_SET);
 }
 
@@ -36,7 +35,7 @@ bool FileReaderDataSource::exhausted() {
   *
   * @todo: document this function
   */
-int FileReaderDataSource::read(char* const buffer, int len)
+int FileReaderDataSource::read(char* const buffer, unsigned long len)
 {
 	return fread (buffer, 1, len, FileHandle);
 }
