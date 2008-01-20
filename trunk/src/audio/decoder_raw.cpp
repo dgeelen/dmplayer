@@ -1,28 +1,23 @@
 #include "decoder_raw.h"
-#include "../error-handling.h"
 #include <string>
 
 RawDecoder::RawDecoder()
 {
-	dcerr("");
 	source = NULL;
 }
 
 RawDecoder::RawDecoder(IDataSource* source)
 {
-	dcerr("");
 	this->source = source;
 	//tryDecode(source);
 }
 
 RawDecoder::~RawDecoder()
 {
-	dcerr("");
 }
 
 IDecoder* RawDecoder::tryDecode(IDataSource* datasource)
 {
-	dcerr("");
 	datasource->reset();
 	char hdr[48];
 	uint8* uhdr = (uint8*)hdr;
@@ -41,7 +36,7 @@ IDecoder* RawDecoder::tryDecode(IDataSource* datasource)
 
 	if (fmt != 1)       return NULL;
 	if (channels != 2)  return NULL; // TODO: mono->stereo filter?
-	if (srate != 22050) return NULL; // TODO: samplerate conversion filter?
+	if (srate != 44100) return NULL; // TODO: samplerate conversion filter?
 	if (bits != 16)     return NULL; // TODO: bps conversion filter?
 	// or, return a decoder with the info from the header, so the controller
 	// can change the backend output, or put in the conversion filters?
@@ -51,7 +46,6 @@ IDecoder* RawDecoder::tryDecode(IDataSource* datasource)
 
 uint32 RawDecoder::doDecode(char* buf, uint32 max, uint32 req)
 {
-	dcerr("");
 	uint32 res = 0;
 	do {
 		uint32 read = source->read(buf, max);
