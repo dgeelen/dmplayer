@@ -1,5 +1,6 @@
 #include "decoder_mad.h"
 #include "mad.h"
+#include "../error-handling.h"
 
 MadDecoder::~MadDecoder()
 {
@@ -13,6 +14,7 @@ MadDecoder::MadDecoder()
 
 IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
 {
+	dcerr("");
 /*	mad_stream Stream;
 	mad_frame Frame;
 	mad_synth Synth;
