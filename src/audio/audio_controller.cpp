@@ -66,22 +66,15 @@ uint32 AudioController::doDecode(char* buf, uint32 max, uint32 req)
 
 void AudioController::test_functie(std::string file) {
 	try {
-	FileReaderDataSource* ds = new FileReaderDataSource(file);
-	//*
-	FileReaderDataSource* FRDS = new FileReaderDataSource(file);
-	for (unsigned int i = 0; i < decoderlist.size(); ++i) {
-		IDecoder* decoder = decoderlist[i](FRDS);
-		if (decoder) {
-			curdecoder = decoder;
-			dcerr("Found a decoder");
-			return;
+		FileReaderDataSource* ds = new FileReaderDataSource(file);
+		for (unsigned int i = 0; i < decoderlist.size(); ++i) {
+			IDecoder* decoder = decoderlist[i](ds);
+			if (decoder) {
+				curdecoder = decoder;
+				dcerr("Found a decoder; decoder #"<<i);
+				return;
+			}
 		}
-	}
-	/*/
-	OGGDecoder* decoder = new OGGDecoder();
-	curdecoder = decoder;
-	decoder->tryDecode(ds);
-	/**/
 	}
 	catch(char* error_msg) {
 		cout << "Error while trying to play '"<<file<<"':\n" << error_msg;
