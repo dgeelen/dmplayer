@@ -3,7 +3,7 @@
 
 #include "decoder_interface.h"
 #include "datasource_interface.h"
-#include <ogg.h>
+#include <ogg/ogg.h>
 #include <map>
 #include <list>
 
