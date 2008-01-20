@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include "decoder_ogg.h"
+#include "datasource_oggstream.h"
 #include "../error-handling.h"
 #include <string.h>
 #include <vector>
@@ -10,30 +11,34 @@ using namespace std;
 #define BLOCK_SIZE 1024*8
 
 OGGDecoder::OGGDecoder() : IDecoder() {
+	dcerr("");
 	initialize();
 }
 
 OGGDecoder::OGGDecoder(IDataSource* ds) : IDecoder() {
+	dcerr("");
 	initialize();
 	datasource = ds;
 }
 
 OGGDecoder::~OGGDecoder() {
+	dcerr("");
 	uninitialize();
 	/* TODO: Discard unclaimed packets */
 }
 
 void OGGDecoder::uninitialize() {
-	if(stream) {
-		ogg_stream_destroy(stream);
-		/* delete stream; Done by libogg?! */
-		stream = NULL;
-	}
+	dcerr("");
+// 	if(stream) { /*FIXME: Streams are in some struct */
+// 		ogg_stream_destroy(stream);
+// 		/* delete stream; Done by libogg?! */
+// 		stream = NULL;
+// 	}
 
-	if(page) {
-		delete page;
-		page=NULL;
-	}
+// 	if(page) {
+// 		delete page;
+// 		page=NULL;
+// 	}
 
 	if(sync) {
 		ogg_sync_destroy(sync);
@@ -48,6 +53,7 @@ void OGGDecoder::uninitialize() {
  * @return The next ogg_packet in the stream idenified by stream_id, or an empty packet if none is available
  */
 ogg_packet* OGGDecoder::get_packet_from_stream(long stream_id) {
+	dcerr("");
 	if(!streams.count(stream_id)) {
 		dcerr("No such stream: "<<stream_id);
 		return NULL;
@@ -73,11 +79,12 @@ ogg_packet* OGGDecoder::get_packet_from_stream(long stream_id) {
  * @param stream_id
  */
 void OGGDecoder::read_next_packet_from_stream(long stream_id) {
+	dcerr("");
 	stream_decoding_state& state = streams[stream_id];
 	bool done = state.exhausted;
 	ogg_packet* packet = new ogg_packet;
 	while(!done) {
-		int result = ogg_stream_packetout(stream, packet);
+		int result = ogg_stream_packetout(state.stream_state, packet);
 		switch(result) {
 			case 0 : { // Stream needs more data to construct a packet
 				if(datasource->exhausted()) {
@@ -112,6 +119,7 @@ void OGGDecoder::read_next_packet_from_stream(long stream_id) {
  * @param stream_id
  */
 void OGGDecoder::read_next_page_for_stream(long stream_id) {
+	dcerr("");
 	bool done = streams[stream_id].exhausted;
 	while(!done) {
 		ogg_page* page = read_page();
@@ -132,13 +140,14 @@ void OGGDecoder::read_next_page_for_stream(long stream_id) {
  * @return an ogg_page there was another page in the datasource, NULL otherwise
  */
 ogg_page* OGGDecoder::read_page() {
+	dcerr("");
 	ogg_page* page = new ogg_page();
 	bool done = false;
 	while(!done) {
 		int page_state = ogg_sync_pageout(sync, page);
 		switch(page_state) {
 			case 0: { // needs more data to construct a page
-				buffer = ogg_sync_buffer(sync, BLOCK_SIZE);
+				char* buffer = ogg_sync_buffer(sync, BLOCK_SIZE);
 				int bytes_read = datasource->read( buffer, BLOCK_SIZE );
 				if(ogg_sync_wrote(sync, bytes_read)) throw "Internal error in libogg!";
 				if(datasource->exhausted()) {
@@ -148,8 +157,11 @@ ogg_page* OGGDecoder::read_page() {
 				break;
 			}
 			case -1: { // Non-fatal error while extracting page
+				// Note that unlike in the case of extracting a packet
+				// it appears we do not yet have a page in this case
 				dcerr("Warning: lost sync in pages, skipping some bytes");
-			} /* Fallthrough intentional */
+				break;
+			}
 			case 1 : { // Successfully extracted a page
 				done=true;
 				break;
@@ -165,26 +177,30 @@ ogg_page* OGGDecoder::read_page() {
 }
 
 void OGGDecoder::initialize() {
+	dcerr("");
 	sync = new ogg_sync_state();
-	page = new ogg_page();
-	stream = new ogg_stream_state();
+// 	page = new ogg_page();
+// 	stream = new ogg_stream_state();
 	ogg_sync_init(sync);
 }
 
 void OGGDecoder::reset() {
+	dcerr("");
 	uninitialize();
+	if(datasource) datasource->reset();
 	initialize();
 }
 
 //NOTE: We do not (yet, if ever) support concatenated streams
 IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
+	dcerr("");
 	reset();
 	ds->reset();
 	datasource = ds;
 	vector<long> stream_ids;
 	ogg_page* page;
 	bool done = false;
-	while(!done) {
+	while(!done && ds->getpos() < 1024*16 ) {
 		page = read_page();
 		if(page) {
 			if(ogg_page_bos(page)) {
@@ -195,17 +211,53 @@ IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
 			}
 			delete page;
 		}
+		else {
+			done = true;
+		}
 	}
+	IDecoder* result = NULL;
 	for(int i=0; i<stream_ids.size(); ++i) {
 		dcerr("found a stream with ID " << stream_ids[i]);
+		OGGDecoder oggd(ds);
+		OGGStreamDataSource oggs(&oggd, stream_ids[i]);
+		for (unsigned int i = 0; i < decoderlist.size(); ++i) {
+			IDecoder* dc = decoderlist[i](&oggs);
+			if (dc) {
+				result = dc;
+				break;
+			}
+		}
+		if(result) break;
 	}
 	datasource = NULL;
-	return NULL;
+	return result;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+
+
 
 	FILE* dump = fopen("ogg_out.dump", "wb");
 	ds->reset();
 	IDecoder* decoder = NULL;
-	/* Initialize libogg */
+	/* Initialize libogg * /
 	dcerr("Initializing libogg");
 	sync = new ogg_sync_state();
 	page = new ogg_page();
@@ -213,7 +265,7 @@ IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
 	ogg_sync_init(sync);
 
 	dcerr("Attempting to read a page");
-	/*bool*/ done = false;
+	/*bool* / done = false;
 	int stream_count = 0;
 	unsigned long total_bytes_read = 0;
 	while(!done) {
@@ -250,7 +302,7 @@ IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
 		dcerr("  serialno="<< ogg_page_serialno(page));
 		if(ogg_page_bos(page)) {
 			dcerr("Page is a BOS! :D");
-			/* We found a begin of stream page, let's see what's inside? */
+			/* We found a begin of stream page, let's see what's inside? * /
 			++stream_count;
 			if(ogg_stream_init(stream, ogg_page_serialno(page))) throw "libogg: could not initialize stream";
 			if(ogg_stream_pagein(stream, page)) dcerr("Could not submit page to stream");
@@ -281,12 +333,13 @@ IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
 	}
 	}
 	dcerr("Found and processed a total of "<<stream_count<<" streams");
-	/* Un-initialize libogg */
+	/* Un-initialize libogg * /
 	dcerr("Un-initializing libogg");
 	delete stream;
 	delete page;
 	ogg_sync_destroy(sync); sync = NULL; //ogg_sync_destroy delete's it for us?!
-	/* return to indicate success/failure */
+	/* return to indicate success/failure * /
 	dcerr("");
 	return decoder;
+*/
 }
