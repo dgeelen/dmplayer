@@ -48,5 +48,11 @@ IDecoder* OGGVorbisFileDecoder::tryDecode(IDataSource* datasource)
 
 uint32 OGGVorbisFileDecoder::doDecode(char* buf, uint32 max, uint32 req)
 {
-	return ov_read(oggFile, buf, max, 0, 2, 1, &bitStream);
+	uint32 res = 0;
+	do {
+		int32 read = ov_read(oggFile, buf+res, max-res, 0, 2, 1, &bitStream);
+		if (read <= 0) return res;
+		res += read;
+	} while (res < req);
+	return res;
 }
