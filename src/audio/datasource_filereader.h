@@ -11,7 +11,7 @@ class FileReaderDataSource: public IDataSource
 		~FileReaderDataSource() {};
 
 		void reset();
-
+		bool exhausted();
 		int read(char* const buffer, int len);
 	private:
 		FILE* FileHandle;

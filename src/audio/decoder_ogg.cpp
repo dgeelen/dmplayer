@@ -6,20 +6,164 @@
 #include <stdio.h>
 
 using namespace std;
-
-OGGDecoder::OGGDecoder() : IDecoder() {
-	ogg_sync_state* sync = NULL;
-}
-
-OGGDecoder::~OGGDecoder() {
-
-}
-
 //FIXME: Does this mean min_file_size == 8k?
 #define BLOCK_SIZE 1024*8
 
+OGGDecoder::OGGDecoder() : IDecoder() {
+	initialize();
+}
+
+OGGDecoder::OGGDecoder(IDataSource* ds) : IDecoder() {
+	initialize();
+	datasource = ds;
+}
+
+OGGDecoder::~OGGDecoder() {
+	uninitialize();
+}
+
+void OGGDecoder::uninitialize() {
+	if(stream) {
+		ogg_stream_destroy(stream);
+		/* delete stream; Done by libogg?! */
+		stream = NULL;
+	}
+
+	if(page) {
+		delete page;
+		page=NULL;
+	}
+
+	if(sync) {
+		ogg_sync_destroy(sync);
+		/* delete sync; Done by libogg?! */
+		sync = NULL;
+	}
+}
+
+/**
+ * Returns the next packet in stream_id
+ * @param stream_id Stream idenifier
+ * @return The next ogg_packet in the stream idenified by stream_id, or an empty packet if none is available
+ */
+ogg_packet* OGGDecoder::get_packet_from_stream(long stream_id) {
+	if(!streams.count(stream_id)) {
+		dcerr("No such stream: "<<stream_id);
+		return NULL;
+	}
+	if(!streams[stream_id].packets.size()) { // time to read another packet
+		read_next_packet_from_stream(stream_id);
+		if(!streams[stream_id].packets.size()) { // Stream is exhausted, return empty packet
+			dcerr("Stream is empty: "<<stream_id);
+			ogg_packet* p = new ogg_packet();
+			p->packet= NULL;
+			p->bytes =0;
+			return p;
+		}
+	}
+	ogg_packet* packet = streams[stream_id].packets.front();
+	streams[stream_id].packets.pop_front();
+	return packet;
+}
+
+/**
+ * Reads a packet from stream_id if possible and places it in the packet list for stream_id
+ * @param stream_id
+ */
+void OGGDecoder::read_next_packet_from_stream(long stream_id) {
+	stream_decoding_state& state = streams[stream_id];
+	bool done = state.exhausted;
+	ogg_packet* packet = new ogg_packet;
+	while(!done) {
+		int result = ogg_stream_packetout(stream, packet);
+		switch(result) {
+			case 0 : { // Stream needs more data to construct a packet
+				if(datasource->exhausted()) {
+					state.exhausted = true;
+					done=true;
+					break;
+				}
+				read_next_page_for_stream(stream_id);
+				break;
+			}
+			case -1: { // Non-fatal error while extracting packet
+				dcerr("Warning: lost sync in packets, skipping some bytes");
+			} /* Fallthrough intentional */
+			case 1 : { // Successfully extracted a packet
+				if(packet->e_o_s) state.exhausted = true;
+				streams[stream_id].packets.push_back(packet);
+				done=true;
+				break;
+			}
+			default: {
+				dcerr("Internal error");
+				throw "Invalid return value";
+				break;
+			}
+		}
+	}
+}
+
+/**
+ * Reads pages and submits them to the appropriate stream until a page
+ * belonging to stream_id is read and submitted
+ * @param stream_id
+ */
+void OGGDecoder::read_next_page_for_stream(long stream_id) {
+	bool done = streams[stream_id].exhausted;
+	ogg_page* page = new ogg_page();
+	while(!done) {
+		int page_state = ogg_sync_pageout(sync, page);
+		switch(page_state) {
+			case 0: { // needs more data to construct a page
+				buffer = ogg_sync_buffer(sync, BLOCK_SIZE);
+				int bytes_read = datasource->read( buffer, BLOCK_SIZE );
+				done=datasource->exhausted();
+				if(ogg_sync_wrote(sync, bytes_read)) throw "Internal error in libogg!";
+				break;
+			}
+			case -1: { // Non-fatal error while extracting page
+				dcerr("Warning: lost sync in pages, skipping some bytes");
+			} /* Fallthrough intentional */
+			case 1 : { // Successfully extracted a page
+				long page_serial = ogg_page_serialno(page);
+				if(ogg_page_bos(page)) { // This page belongs to a new stream
+					streams[page_serial] = stream_decoding_state();
+					if(ogg_stream_init(streams[page_serial].stream_state, page_serial)) throw "libogg: could not initialize stream";
+				}
+				if(ogg_stream_pagein(streams[page_serial].stream_state, page)) throw "Could not submit page to stream";
+				done = page_serial == stream_id;
+				break;
+			}
+			default: {
+				dcerr("Internal error");
+				throw "Invalid return value";
+				break;
+			}
+		}
+	}
+	delete page;
+}
+
+void OGGDecoder::initialize() {
+	sync = new ogg_sync_state();
+	page = new ogg_page();
+	stream = new ogg_stream_state();
+	ogg_sync_init(sync);
+}
+
+void OGGDecoder::reset() {
+	uninitialize();
+	initialize();
+}
+
 //NOTE: We do not (yet, if ever) support concatenated streams
 IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
+	reset();
+	ds->reset();
+	return NULL;
+
+
 	FILE* dump = fopen("ogg_out.dump", "wb");
 	ds->reset();
 	IDecoder* decoder = NULL;

@@ -12,11 +12,12 @@ class OGGStreamDataSource: public IDataSource
 {
 	public:
 		OGGStreamDataSource( OGGDecoder* decoder, long stream_id );
-		~OGGStreamDataSource() {};
+		~OGGStreamDataSource();
 
 		void reset();
-
-		int read(char* const buffer, int len);
+		bool exhausted();
+		int read(char* const buffer, int len) = 0;
+		ogg_packet* read();
 	private:
 		OGGDecoder* decoder;
 		long stream_id;

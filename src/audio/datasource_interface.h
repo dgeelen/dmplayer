@@ -8,6 +8,7 @@ class IDataSource {
 		IDataSource() {};
 		virtual ~IDataSource() {};
 
+		virtual bool exhausted() = 0;
 		virtual void reset() = 0;
 
 		virtual int read(char* const buffer, int len) = 0;

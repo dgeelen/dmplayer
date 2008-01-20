@@ -23,6 +23,10 @@ void FileReaderDataSource::reset()
 	fseek (FileHandle , 0 , SEEK_SET);
 }
 
+bool FileReaderDataSource::exhausted() {
+	return feof(FileHandle);
+}
+
 /** @brief read
   *
   * @todo: document this function
