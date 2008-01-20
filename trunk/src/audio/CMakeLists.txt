@@ -5,6 +5,7 @@ find_package(PortAudio)
 find_package(Mad)
 find_package(LibAO)
 find_package(LibOGG)
+find_package(LibVorbis)
 
 SET(BACKEND_SOURCE_FILES "")
 SET(DECODER_SOURCE_FILES "")
@@ -60,6 +61,12 @@ IF(LIBOGG_FOUND) # Xiph.org OGG decoder (demuxer really)
 	SET(DECODER_LIBRARIES ${DECODER_LIBRARIES} ${LIBOGG_LIBRARY})
 	INCLUDE_DIRECTORIES(${LIBOGG_INCLUDE_DIR})
 ENDIF(LIBOGG_FOUND)
+
+IF(LIBVORBIS_FOUND) # Xiph.org OGG decoder (demuxer really)
+	SET(DECODER_NAMES ${DECODER_NAMES} Vorbis)
+	SET(DECODER_LIBRARIES ${DECODER_LIBRARIES} ${LIBVORBIS_LIBRARY})
+	INCLUDE_DIRECTORIES(${LIBVORBIS_INCLUDE_DIR})
+ENDIF(LIBVORBIS_FOUND)
 
 # we can always compile the raw decoder, no libs needed for that
 SET(DECODER_NAMES ${DECODER_NAMES} Raw)
