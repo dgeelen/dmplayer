@@ -14,7 +14,6 @@ MadDecoder::MadDecoder()
 
 IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
 {
-	dcerr("");
 /*	mad_stream Stream;
 	mad_frame Frame;
 	mad_synth Synth;
