@@ -20,6 +20,7 @@ OGGDecoder::OGGDecoder(IDataSource* ds) : IDecoder() {
 
 OGGDecoder::~OGGDecoder() {
 	uninitialize();
+	/* TODO: Discard unclaimed packets */
 }
 
 void OGGDecoder::uninitialize() {
@@ -63,6 +64,7 @@ ogg_packet* OGGDecoder::get_packet_from_stream(long stream_id) {
 	}
 	ogg_packet* packet = streams[stream_id].packets.front();
 	streams[stream_id].packets.pop_front();
+	/* TODO: Discard packets from other streams? */
 	return packet;
 }
 
@@ -111,28 +113,45 @@ void OGGDecoder::read_next_packet_from_stream(long stream_id) {
  */
 void OGGDecoder::read_next_page_for_stream(long stream_id) {
 	bool done = streams[stream_id].exhausted;
+	while(!done) {
+		ogg_page* page = read_page();
+		if(page) {
+			long page_serial = ogg_page_serialno(page);
+			if(ogg_page_bos(page)) { // This page belongs to a new stream
+				streams[page_serial] = stream_decoding_state();
+				if(ogg_stream_init(streams[page_serial].stream_state, page_serial)) throw "libogg: could not initialize stream";
+			}
+			if(ogg_stream_pagein(streams[page_serial].stream_state, page)) throw "Could not submit page to stream";
+			done = page_serial == stream_id;
+		}
+	}
+}
+
+/**
+ * Read the next page from the datasource
+ * @return an ogg_page there was another page in the datasource, NULL otherwise
+ */
+ogg_page* OGGDecoder::read_page() {
 	ogg_page* page = new ogg_page();
+	bool done = false;
 	while(!done) {
 		int page_state = ogg_sync_pageout(sync, page);
 		switch(page_state) {
 			case 0: { // needs more data to construct a page
 				buffer = ogg_sync_buffer(sync, BLOCK_SIZE);
 				int bytes_read = datasource->read( buffer, BLOCK_SIZE );
-				done=datasource->exhausted();
 				if(ogg_sync_wrote(sync, bytes_read)) throw "Internal error in libogg!";
+				if(datasource->exhausted()) {
+					delete page;
+					return NULL;
+				}
 				break;
 			}
 			case -1: { // Non-fatal error while extracting page
 				dcerr("Warning: lost sync in pages, skipping some bytes");
 			} /* Fallthrough intentional */
 			case 1 : { // Successfully extracted a page
-				long page_serial = ogg_page_serialno(page);
-				if(ogg_page_bos(page)) { // This page belongs to a new stream
-					streams[page_serial] = stream_decoding_state();
-					if(ogg_stream_init(streams[page_serial].stream_state, page_serial)) throw "libogg: could not initialize stream";
-				}
-				if(ogg_stream_pagein(streams[page_serial].stream_state, page)) throw "Could not submit page to stream";
-				done = page_serial == stream_id;
+				done=true;
 				break;
 			}
 			default: {
@@ -142,7 +161,7 @@ void OGGDecoder::read_next_page_for_stream(long stream_id) {
 			}
 		}
 	}
-	delete page;
+	return page;
 }
 
 void OGGDecoder::initialize() {
@@ -161,8 +180,27 @@ void OGGDecoder::reset() {
 IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
 	reset();
 	ds->reset();
+	datasource = ds;
+	vector<long> stream_ids;
+	ogg_page* page;
+	bool done = false;
+	while(!done) {
+		page = read_page();
+		if(page) {
+			if(ogg_page_bos(page)) {
+				stream_ids.push_back(ogg_page_serialno(page));
+			}
+			else {
+				done = true;
+			}
+			delete page;
+		}
+	}
+	for(int i=0; i<stream_ids.size(); ++i) {
+		dcerr("found a stream with ID " << stream_ids[i]);
+	}
+	datasource = NULL;
 	return NULL;
-
 
 	FILE* dump = fopen("ogg_out.dump", "wb");
 	ds->reset();
@@ -175,7 +213,7 @@ IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
 	ogg_sync_init(sync);
 
 	dcerr("Attempting to read a page");
-	bool done = false;
+	/*bool*/ done = false;
 	int stream_count = 0;
 	unsigned long total_bytes_read = 0;
 	while(!done) {
