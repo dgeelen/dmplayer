@@ -14,12 +14,17 @@
 	reset();
 }
 
+long FileReaderDataSource::getpos() {
+	return ftell(FileHandle);
+}
+
 /** @brief reset
   *
   * @todo: document this function
   */
 void FileReaderDataSource::reset()
 {
+	dcerr("");
 	fseek (FileHandle , 0 , SEEK_SET);
 }
 
