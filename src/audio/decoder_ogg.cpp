@@ -11,24 +11,20 @@ using namespace std;
 #define BLOCK_SIZE 1024*8
 
 OGGDecoder::OGGDecoder() : IDecoder() {
-	dcerr("");
 	initialize();
 }
 
 OGGDecoder::OGGDecoder(IDataSource* ds) : IDecoder() {
-	dcerr("");
 	initialize();
 	datasource = ds;
 }
 
 OGGDecoder::~OGGDecoder() {
-	dcerr("");
 	uninitialize();
 	/* TODO: Discard unclaimed packets */
 }
 
 void OGGDecoder::uninitialize() {
-	dcerr("");
 // 	if(stream) { /*FIXME: Streams are in some struct */
 // 		ogg_stream_destroy(stream);
 // 		/* delete stream; Done by libogg?! */
@@ -53,10 +49,14 @@ void OGGDecoder::uninitialize() {
  * @return The next ogg_packet in the stream idenified by stream_id, or an empty packet if none is available
  */
 ogg_packet* OGGDecoder::get_packet_from_stream(long stream_id) {
-	dcerr("");
 	if(!streams.count(stream_id)) {
-		dcerr("No such stream: "<<stream_id);
-		return NULL;
+		if(all_bos_pages_handled) {
+			dcerr("No such stream: "<<stream_id);
+			return NULL;
+		}
+		else {
+			read_next_page_for_stream(stream_id);
+		}
 	}
 	if(!streams[stream_id].packets.size()) { // time to read another packet
 		read_next_packet_from_stream(stream_id);
@@ -79,7 +79,6 @@ ogg_packet* OGGDecoder::get_packet_from_stream(long stream_id) {
  * @param stream_id
  */
 void OGGDecoder::read_next_packet_from_stream(long stream_id) {
-	dcerr("");
 	stream_decoding_state& state = streams[stream_id];
 	bool done = state.exhausted;
 	ogg_packet* packet = new ogg_packet;
@@ -119,15 +118,20 @@ void OGGDecoder::read_next_packet_from_stream(long stream_id) {
  * @param stream_id
  */
 void OGGDecoder::read_next_page_for_stream(long stream_id) {
-	dcerr("");
-	bool done = streams[stream_id].exhausted;
+	bool done = false;
+	if(streams.count(stream_id)) done = streams[stream_id].exhausted;
 	while(!done) {
 		ogg_page* page = read_page();
 		if(page) {
 			long page_serial = ogg_page_serialno(page);
 			if(ogg_page_bos(page)) { // This page belongs to a new stream
 				streams[page_serial] = stream_decoding_state();
+				streams[page_serial].exhausted = false;
+				streams[page_serial].stream_state = new ogg_stream_state();
 				if(ogg_stream_init(streams[page_serial].stream_state, page_serial)) throw "libogg: could not initialize stream";
+			}
+			else {
+				all_bos_pages_handled = true;
 			}
 			if(ogg_stream_pagein(streams[page_serial].stream_state, page)) throw "Could not submit page to stream";
 			done = page_serial == stream_id;
@@ -140,7 +144,6 @@ void OGGDecoder::read_next_page_for_stream(long stream_id) {
  * @return an ogg_page there was another page in the datasource, NULL otherwise
  */
 ogg_page* OGGDecoder::read_page() {
-	dcerr("");
 	ogg_page* page = new ogg_page();
 	bool done = false;
 	while(!done) {
@@ -177,15 +180,14 @@ ogg_page* OGGDecoder::read_page() {
 }
 
 void OGGDecoder::initialize() {
-	dcerr("");
 	sync = new ogg_sync_state();
 // 	page = new ogg_page();
 // 	stream = new ogg_stream_state();
 	ogg_sync_init(sync);
+	all_bos_pages_handled = false;
 }
 
 void OGGDecoder::reset() {
-	dcerr("");
 	uninitialize();
 	if(datasource) datasource->reset();
 	initialize();
@@ -193,7 +195,6 @@ void OGGDecoder::reset() {
 
 //NOTE: We do not (yet, if ever) support concatenated streams
 IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
-	dcerr("");
 	reset();
 	ds->reset();
 	datasource = ds;
@@ -216,130 +217,22 @@ IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
 		}
 	}
 	IDecoder* result = NULL;
+
 	for(int i=0; i<stream_ids.size(); ++i) {
 		dcerr("found a stream with ID " << stream_ids[i]);
-		OGGDecoder oggd(ds);
-		OGGStreamDataSource oggs(&oggd, stream_ids[i]);
+		OGGDecoder* oggd = new OGGDecoder(ds);
+		OGGStreamDataSource* oggs = new OGGStreamDataSource(oggd, stream_ids[i]);
 		for (unsigned int i = 0; i < decoderlist.size(); ++i) {
-			IDecoder* dc = decoderlist[i](&oggs);
+			IDecoder* dc = decoderlist[i](oggs);
 			if (dc) {
 				result = dc;
 				break;
 			}
 		}
 		if(result) break;
+		delete oggs;
+		delete oggd;
 	}
 	datasource = NULL;
 	return result;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-
-
-
-	FILE* dump = fopen("ogg_out.dump", "wb");
-	ds->reset();
-	IDecoder* decoder = NULL;
-	/* Initialize libogg * /
-	dcerr("Initializing libogg");
-	sync = new ogg_sync_state();
-	page = new ogg_page();
-	stream = new ogg_stream_state;
-	ogg_sync_init(sync);
-
-	dcerr("Attempting to read a page");
-	/*bool* / done = false;
-	int stream_count = 0;
-	unsigned long total_bytes_read = 0;
-	while(!done) {
-	int page_state=0;
-	while(page_state!=1) {
-		page_state = ogg_sync_pageout(sync, page);
-		if(page_state==-1)
-			dcerr("libogg: sync lost, skipping some bytes");
-		else if(page_state!=1) {
-			buffer = ogg_sync_buffer(sync, BLOCK_SIZE);
-			int bytes_read = ds->read( buffer, BLOCK_SIZE );
-			if(!bytes_read) {
-				dcerr("EOF while looking for a page!");
-				done = true;
-				break;
-			}
-			total_bytes_read+=bytes_read;
-			if(total_bytes_read >= 16*1024) { // Only inspect the first 16k of a file
-				dcerr("Aborting search for OGG pages after "<<total_bytes_read<< " bytes");
-				done=true;
-				break;
-			}
-			if(ogg_sync_wrote(sync, bytes_read)) throw "Internal error in libogg!";
-		}
-	}
-	if(page_state) {
-		dcerr("Got OGG page nr " << ogg_page_pageno(page));
-		dcerr("  begin-of-stream=" << ogg_page_bos(page));
-		dcerr("  end-of-stream=" << ogg_page_eos(page));
-		dcerr("  version=" << ogg_page_version(page));
-		dcerr("  continued=" << ogg_page_continued(page));
-		dcerr("  completed=" << ogg_page_packets(page));
-		dcerr("  granule-pos="<< ogg_page_granulepos(page));
-		dcerr("  serialno="<< ogg_page_serialno(page));
-		if(ogg_page_bos(page)) {
-			dcerr("Page is a BOS! :D");
-			/* We found a begin of stream page, let's see what's inside? * /
-			++stream_count;
-			if(ogg_stream_init(stream, ogg_page_serialno(page))) throw "libogg: could not initialize stream";
-			if(ogg_stream_pagein(stream, page)) dcerr("Could not submit page to stream");
-			dcerr("Constructing buffer from packets");
-			vector<ogg_packet*> packets;
-			unsigned long total_length = 0;
-			ogg_packet* packet = new ogg_packet;
-			while(ogg_stream_packetout(stream, packet)!=0) {
-				packets.push_back(packet);
-				total_length += packet->bytes;
-				packet = new ogg_packet;
-			}
-			unsigned char header_data[total_length];
-			unsigned char *copy_to = header_data;
-			for(int i=0; i<packets.size(); ++i) {
-				memcpy(copy_to, packets[i]->packet, packets[i]->bytes);
-				copy_to+=packets[i]->bytes;
-				ogg_packet_clear(packets[i]);
-				delete packets[i];
-			}
-			dcerr("Constructed a buffer of " << total_length << " bytes");
-			if(!strncmp((const char*)&header_data[0], "\01vorbis",7)) dcerr("This looks like a vorbis stream!");
-		}
-		else { //All BOS pages appear in the beginning of the stream
-			dcerr("Page is not BOS!, ending search");
-			done=true;
-		}
-	}
-	}
-	dcerr("Found and processed a total of "<<stream_count<<" streams");
-	/* Un-initialize libogg * /
-	dcerr("Un-initializing libogg");
-	delete stream;
-	delete page;
-	ogg_sync_destroy(sync); sync = NULL; //ogg_sync_destroy delete's it for us?!
-	/* return to indicate success/failure * /
-	dcerr("");
-	return decoder;
-*/
 }

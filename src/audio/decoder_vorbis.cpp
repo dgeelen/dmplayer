@@ -10,6 +10,5 @@ VorbisDecoder::~VorbisDecoder() {
 }
 
 IDecoder* VorbisDecoder::tryDecode(IDataSource* ds) {
-	dcerr("");
 	return NULL;
 }

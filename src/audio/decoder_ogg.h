@@ -30,7 +30,7 @@ class OGGDecoder : public IDecoder {
 // 		ogg_stream_state* stream;
 // 		char* buffer;
 		std::map<long, struct stream_decoding_state > streams;
-
+		bool all_bos_pages_handled;
 		ogg_page* read_page();
 		void read_next_page_for_stream(long stream_id);
 		void read_next_packet_from_stream(long stream_id);
