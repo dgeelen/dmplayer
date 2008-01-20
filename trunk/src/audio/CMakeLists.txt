@@ -60,9 +60,14 @@ IF(LIBOGG_FOUND) # Xiph.org OGG decoder (demuxer really)
 	SET(DECODER_NAMES ${DECODER_NAMES} OGG)
 	SET(DECODER_LIBRARIES ${DECODER_LIBRARIES} ${LIBOGG_LIBRARY})
 	INCLUDE_DIRECTORIES(${LIBOGG_INCLUDE_DIR})
+	# The OGG decoder has a bundled datasource, since it
+	# is not really a decoder but a demuxer
+	SET(DATASOURCE_OGGSTREAM_SOURCE_FILES
+		datasource_oggstream.cpp datasource_oggstream.h
+	)
 ENDIF(LIBOGG_FOUND)
 
-IF(LIBVORBIS_FOUND) # Xiph.org OGG decoder (demuxer really)
+IF(LIBVORBIS_FOUND) # Xiph.org Vorbis decoder
 	SET(DECODER_NAMES ${DECODER_NAMES} Vorbis)
 	SET(DECODER_LIBRARIES ${DECODER_LIBRARIES} ${LIBVORBIS_LIBRARY})
 	INCLUDE_DIRECTORIES(${LIBVORBIS_INCLUDE_DIR})
@@ -102,6 +107,7 @@ ADD_LIBRARY(mpmp_audio
 
 	${BACKEND_SOURCE_FILES}
 	${DECODER_SOURCE_FILES}
+	${DATASOURCE_OGGSTREAM_SOURCE_FILES} #FIXME: Do this properly
 )
 
 # Set link properties of mpmp_audio (only needed when ADD_LIBRARY(mpmp_audio) above
