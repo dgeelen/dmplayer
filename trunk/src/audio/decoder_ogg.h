@@ -1,5 +1,5 @@
-#ifndef DECODER_LIBOGG_H
-#define DECODER_LIBOGG_H
+#ifndef DECODER_OGG_H
+#define DECODER_OGG_H
 
 #include "decoder_interface.h"
 #include "datasource_interface.h"
@@ -18,4 +18,4 @@ class OGGDecoder : public IDecoder {
 		char* buffer;
 };
 
-#endif//DECODER_LIBOGG_H
+#endif//DECODER_OGG_H

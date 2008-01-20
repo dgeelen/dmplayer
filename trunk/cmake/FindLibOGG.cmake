@@ -1,8 +1,8 @@
 SET(LIBOGG_FOUND FALSE)
 
 Find_Path(LIBOGG_INCLUDE_DIR
-  ogg.h
-  /usr/include/ogg /usr/local/include/ogg
+  ogg/ogg.h
+  /usr/include /usr/local/include
   )
 
 Find_Library(LIBOGG_LIBRARY
