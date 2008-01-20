@@ -36,7 +36,7 @@ IDecoder* RawDecoder::tryDecode(IDataSource* datasource)
 
 	if (fmt != 1)       return NULL;
 	if (channels != 2)  return NULL; // TODO: mono->stereo filter?
-	if (srate != 44100) return NULL; // TODO: samplerate conversion filter?
+	//if (srate != 22050) return NULL; // TODO: samplerate conversion filter?
 	if (bits != 16)     return NULL; // TODO: bps conversion filter?
 	// or, return a decoder with the info from the header, so the controller
 	// can change the backend output, or put in the conversion filters?
