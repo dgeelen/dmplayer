@@ -1,8 +1,5 @@
 #include "datasource_httpstream.h"
 
-//hax
-#include "decoder_oggvorbisfile.h"
-
 #include <sstream>
 
 using namespace std;

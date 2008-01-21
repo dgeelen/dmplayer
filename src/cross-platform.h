@@ -46,6 +46,7 @@
 		#include <arpa/inet.h>
 		#include <errno.h> // for errno in NetGetLastError() macro
 		#include <netipx/ipx.h>
+		#include <netdb.h>
 
 		#define closesocket(x) ::close(x)
 		#define NetGetLastError() errno
