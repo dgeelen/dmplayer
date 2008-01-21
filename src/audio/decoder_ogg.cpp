@@ -189,6 +189,7 @@ ogg_page* OGGDecoder::read_page() {
 
 //NOTE: We do not (yet, if ever) support concatenated streams
 IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
+	return NULL; // disabled until it doesn't crash
 	reset();
 	ds->reset();
 	datasource = ds;
