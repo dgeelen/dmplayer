@@ -19,7 +19,7 @@ class OGGDecoder : public IDecoder {
 		OGGDecoder(IDataSource* ds);
 		~OGGDecoder();
 		IDecoder* tryDecode(IDataSource* ds);
-		uint32 doDecode(char* buf, uint32 max, uint32 req) { return 0; }; //FIXME: implement in .cpp file
+		uint32 doDecode(unsigned char* const buf, uint32 max, uint32 req) { return 0; }; //FIXME: implement in .cpp file
 
 		/* Functions for DataSources */
 		ogg_packet* get_packet_from_stream(long stream_id);

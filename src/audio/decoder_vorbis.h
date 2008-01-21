@@ -9,9 +9,17 @@ class VorbisDecoder : public IDecoder {
 	public:
 		VorbisDecoder();
 		~VorbisDecoder();
+		void reset();
 		IDecoder* tryDecode(IDataSource* ds);
-		uint32 doDecode(char* buf, uint32 max, uint32 req) { return 0; }; //FIXME: implement in .cpp file
+		uint32 doDecode(unsigned char* const buf, uint32 max, uint32 req) { return 0; }; //FIXME: implement in .cpp file
 	private:
+		vorbis_dsp_state* dsp_state;
+		vorbis_block* block;
+		vorbis_info* info;
+		vorbis_comment* comment;
+
+		/* Reconstructing packets */
+		ogg_packet* packet;
 };
 
 #endif//DECODER_LIBOGG_H

@@ -16,7 +16,7 @@ class IDecoder {
 		void SetBufferSize(int bufsize) {buffersize = bufsize;};
 		int GetBufferSize() {return buffersize;};
 
-		virtual uint32 doDecode(char* buf, uint32 max, uint32 req = 0) = 0;
+		virtual uint32 doDecode(uint8* buf, uint32 max, uint32 req = 0) = 0;
 };
 
 extern std::vector<boost::function<IDecoder* (IDataSource*)> > decoderlist;

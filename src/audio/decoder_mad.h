@@ -16,7 +16,7 @@ class MadDecoder : public IDecoder{
 		MadDecoder();
 		~MadDecoder();
 		IDecoder* tryDecode(IDataSource* datasource);
-		uint32 doDecode(char* buf, uint32 max, uint32 req) { return 0; }; //FIXME: implement in .cpp file
+		uint32 doDecode(unsigned char* const buf, uint32 max, uint32 req) { return 0; }; //FIXME: implement in .cpp file
 };
 
 #endif // DECODER_MAD_H_INCLUDED

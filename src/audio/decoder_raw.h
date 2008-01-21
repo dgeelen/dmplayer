@@ -12,7 +12,7 @@ class RawDecoder : public IDecoder{
 		RawDecoder(IDataSource* source);
 		~RawDecoder();
 		IDecoder* tryDecode(IDataSource* datasource);
-		uint32 doDecode(char* buf, uint32 max, uint32 req);
+		uint32 doDecode(unsigned char* const buf, uint32 max, uint32 req);
 };
 
 #endif//DECODER_RAW_H

@@ -17,7 +17,7 @@ class LibAOBackend : public IBackend {
 		ao_device *device;
 		ao_sample_format format;
 		int   playing_buffer;
-		char* audio_buffer[2];
+		uint8* audio_buffer[2];
 		bool  play_back;
 
 		boost::barrier* fill_buffer_barrier;

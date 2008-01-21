@@ -33,7 +33,7 @@ bool OGGStreamDataSource::exhausted() {
  * @param len Size of buffer
  * @return buffer is filled with as much data as is contained in 1 packet
  */
-unsigned long OGGStreamDataSource::read(char* const buffer, unsigned long len) {
+uint32 OGGStreamDataSource::read(uint8* const buffer, uint32 len) {
 	ogg_packet* packet = decoder->get_packet_from_stream(stream_id);
 	if(packet) {
 		if(packet->bytes > len) dcerr("Warning: packet won't fit buffer!");

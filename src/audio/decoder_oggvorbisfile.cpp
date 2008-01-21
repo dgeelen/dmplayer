@@ -3,7 +3,7 @@
 size_t dsread(void* data, size_t s1, size_t s2, void* ds) {
 	IDataSource* rds = (IDataSource*)ds;
 	size_t s = s1*s2;
-	return rds->read((char*)data, s);
+	return rds->read((uint8*)data, s);
 }
 
 static ov_callbacks OV_CALLBACKS_IDATASOURCE = {
@@ -46,11 +46,11 @@ IDecoder* OGGVorbisFileDecoder::tryDecode(IDataSource* datasource)
 	return new OGGVorbisFileDecoder(oggFile);
 }
 
-uint32 OGGVorbisFileDecoder::doDecode(char* buf, uint32 max, uint32 req)
+uint32 OGGVorbisFileDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 {
 	uint32 res = 0;
 	do {
-		int32 read = ov_read(oggFile, buf+res, max-res, 0, 2, 1, &bitStream);
+		int32 read = ov_read(oggFile, ((char*)buf)+res, max-res, 0, 2, 1, &bitStream);
 		if (read <= 0) return res;
 		res += read;
 	} while (res < req);

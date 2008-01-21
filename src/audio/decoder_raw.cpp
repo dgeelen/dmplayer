@@ -19,7 +19,7 @@ RawDecoder::~RawDecoder()
 IDecoder* RawDecoder::tryDecode(IDataSource* datasource)
 {
 	datasource->reset();
-	char hdr[48];
+	uint8 hdr[48];
 	uint8* uhdr = (uint8*)hdr;
 	if (datasource->read(hdr, 48) != 48) return NULL;
 #define STRCHECK(x, str) for (unsigned int i = 0; i < strlen(str); ++i) if (hdr[x+i] != str[i]) return NULL;
@@ -44,7 +44,7 @@ IDecoder* RawDecoder::tryDecode(IDataSource* datasource)
 	return new RawDecoder(datasource);
 }
 
-uint32 RawDecoder::doDecode(char* buf, uint32 max, uint32 req)
+uint32 RawDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 {
 	uint32 res = 0;
 	do {
