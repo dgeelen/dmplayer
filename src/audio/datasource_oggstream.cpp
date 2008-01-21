@@ -1,5 +1,9 @@
+
+
 #include "datasource_oggstream.h"
 #include "../error-handling.h"
+#include <algorithm>
+using namespace std;
 
 OGGStreamDataSource::OGGStreamDataSource( OGGDecoder* decoder, long stream_id ) {
 	this->decoder = decoder;
@@ -23,28 +27,22 @@ bool OGGStreamDataSource::exhausted() {
 	return is_exhausted;
 }
 
+/**
+ * Returns at most 1 packet of data per call
+ * @param buffer Where to store packet data
+ * @param len Size of buffer
+ * @return buffer is filled with as much data as is contained in 1 packet
+ */
 unsigned long OGGStreamDataSource::read(char* const buffer, unsigned long len) {
-	dcerr("do NOT use int OGGStreamDataSource.read(char*, int), use ogg_packet* OGGStreamDataSource.read() instead");
-	is_exhausted = true;
-
-/*
-	// Simply to test dumping the output of the OGGDecoder (seems to work)
-	long to_read = len;
-	long n=0;
-	while(to_read>0) {
-		ogg_packet* packet = read();
-		if(packet) {
-		unsigned long l = std::min(to_read, packet->bytes);
-		memcpy(buffer+n, packet->packet, l);
-		to_read-=packet->bytes;
-		n+=packet->bytes;
-		}
-		else to_read=0;
+	ogg_packet* packet = decoder->get_packet_from_stream(stream_id);
+	if(packet) {
+		if(packet->bytes > len) dcerr("Warning: packet won't fit buffer!");
+		int n = min((unsigned long)packet->bytes, len);
+		memcpy(buffer, packet->packet, n);
+		delete packet;
+		return n;
 	}
-	fwrite(buffer, 1, n, dump);
-	return n;
-*/
-	return 0;
+	else return 0;
 }
 
 ogg_packet* OGGStreamDataSource::read() {
