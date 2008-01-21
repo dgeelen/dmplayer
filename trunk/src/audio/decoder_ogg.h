@@ -26,9 +26,6 @@ class OGGDecoder : public IDecoder {
 		void reset();
 	private:
 		ogg_sync_state* sync;
-// 		ogg_page* page;
-// 		ogg_stream_state* stream;
-// 		char* buffer;
 		std::map<long, struct stream_decoding_state > streams;
 		bool all_bos_pages_handled;
 		ogg_page* read_page();
@@ -39,10 +36,6 @@ class OGGDecoder : public IDecoder {
 
 		void uninitialize();
 		void initialize();
-
-		int feed_data();
-		int next_page();
-		int try_next_page();
 };
 
 #endif//DECODER_OGG_H

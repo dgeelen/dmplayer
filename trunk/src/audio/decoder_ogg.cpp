@@ -22,26 +22,32 @@ OGGDecoder::OGGDecoder(IDataSource* ds) : IDecoder() {
 
 OGGDecoder::~OGGDecoder() {
 	uninitialize();
-	/* TODO: Discard unclaimed packets */
 }
 
 void OGGDecoder::uninitialize() {
-// 	if(stream) { /*FIXME: Streams are in some struct */
-// 		ogg_stream_destroy(stream);
-// 		/* delete stream; Done by libogg?! */
-// 		stream = NULL;
-// 	}
-
-// 	if(page) {
-// 		delete page;
-// 		page=NULL;
-// 	}
-
+	for(map<long, struct stream_decoding_state >::iterator i = streams.begin(); i!=streams.end(); ++i) {
+		stream_decoding_state& s = i->second;
+		for(list<ogg_packet*>::iterator j=s.packets.begin(); j!=s.packets.end(); ++j) {
+			delete *j;
+		}
+		ogg_stream_destroy(s.stream_state);
+	}
 	if(sync) {
-		ogg_sync_destroy(sync);
-		/* delete sync; Done by libogg?! */
+		delete sync;
 		sync = NULL;
 	}
+}
+
+void OGGDecoder::initialize() {
+	sync = new ogg_sync_state();
+	ogg_sync_init(sync);
+	all_bos_pages_handled = false;
+}
+
+void OGGDecoder::reset() {
+	uninitialize();
+	if(datasource) datasource->reset();
+	initialize();
 }
 
 /**
@@ -136,6 +142,7 @@ void OGGDecoder::read_next_page_for_stream(long stream_id) {
 			}
 			if(ogg_stream_pagein(streams[page_serial].stream_state, page)) throw "Could not submit page to stream";
 			done = page_serial == stream_id;
+			delete page;
 		}
 	}
 }
@@ -178,20 +185,6 @@ ogg_page* OGGDecoder::read_page() {
 		}
 	}
 	return page;
-}
-
-void OGGDecoder::initialize() {
-	sync = new ogg_sync_state();
-// 	page = new ogg_page();
-// 	stream = new ogg_stream_state();
-	ogg_sync_init(sync);
-	all_bos_pages_handled = false;
-}
-
-void OGGDecoder::reset() {
-	uninitialize();
-	if(datasource) datasource->reset();
-	initialize();
 }
 
 //NOTE: We do not (yet, if ever) support concatenated streams
