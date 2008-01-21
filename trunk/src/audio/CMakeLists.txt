@@ -111,6 +111,8 @@ ADD_LIBRARY(mpmp_audio
 	audio_controller.cpp
 	datasource_filereader.h
 	datasource_filereader.cpp
+	datasource_httpstream.h
+	datasource_httpstream.cpp
 
 	${BACKEND_SOURCE_FILES}
 	${DECODER_SOURCE_FILES}
