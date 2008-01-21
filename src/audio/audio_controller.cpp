@@ -15,6 +15,7 @@
 
 /* FOR TESTING PURPOSES ONLY */
 #include "datasource_filereader.h"
+#include "datasource_httpstream.h"
 
 using namespace std;
 
@@ -71,8 +72,27 @@ uint32 AudioController::doDecode(uint8* buf, uint32 max, uint32 req)
 }
 
 void AudioController::test_functie(std::string file) {
-	try {
-		FileReaderDataSource* ds = new FileReaderDataSource(file);
+	IDataSource* ds = NULL;
+	if (ds == NULL) {
+		try {
+			ds = new FileReaderDataSource(file);
+		} catch (...) {
+			ds = NULL;
+		}
+	}
+
+	if (ds == NULL) {
+		try {
+			ds = new HTTPStreamDataSource(file);
+		} catch (...) {
+			ds = NULL;
+		}
+	}
+
+	if (ds == NULL) 
+		dcerr("Error opening :" << file);
+	else
+	{
 		for (unsigned int i = 0; i < decoderlist.size(); ++i) {
 			IDecoder* decoder = decoderlist[i](ds);
 			if (decoder) {
@@ -81,8 +101,5 @@ void AudioController::test_functie(std::string file) {
 				return;
 			}
 		}
-	}
-	catch(char* error_msg) {
-		cout << "Error while trying to play '"<<file<<"':\n" << error_msg;
 	}
 }
