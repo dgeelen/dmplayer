@@ -14,7 +14,7 @@ class OGGVorbisFileDecoder : public IDecoder{
 		OGGVorbisFileDecoder();
 		~OGGVorbisFileDecoder();
 		IDecoder* tryDecode(IDataSource* datasource);
-		uint32 doDecode(char* buf, uint32 max, uint32 req);
+		uint32 doDecode(uint8* buf, uint32 max, uint32 req);
 };
 
 #endif//DECODER_OGGVORBISFILE_H

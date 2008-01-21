@@ -58,7 +58,7 @@ IDecoder* AudioController::tryDecode(IDataSource* ds) {
 	return this;
 }
 
-uint32 AudioController::doDecode(char* buf, uint32 max, uint32 req)
+uint32 AudioController::doDecode(uint8* buf, uint32 max, uint32 req)
 {
 	uint32 read = 0;
 	if (curdecoder)

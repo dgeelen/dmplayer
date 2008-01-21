@@ -20,7 +20,7 @@ LibAOBackend::LibAOBackend(IDecoder* dec)	: IBackend(dec) {
 	playing_buffer = 0;
 	char x;
 	for(int i=0; i<2; ++i) {
-		audio_buffer[i] = new char[BUF_SIZE];
+		audio_buffer[i] = new uint8[BUF_SIZE];
 		for(int j=0; j<BUF_SIZE; ++j) {
 			audio_buffer[i][j]= ++x;
 		}
@@ -84,12 +84,12 @@ void LibAOBackend::ao_play_thread() {
 		fill_buffer_barrier->wait();
 		{ //Play buffer a
 			boost::mutex::scoped_lock lk_a( buffer_a_mutex ); // After this we have buffer A
-			ao_play( device, audio_buffer[0], BUF_SIZE);
+			ao_play( device, (char*)audio_buffer[0], BUF_SIZE);
 		}
 		fill_buffer_barrier->wait();
 		{ //Play buffer b
 			boost::mutex::scoped_lock lk_b( buffer_b_mutex ); // After this we have buffer B
-			ao_play( device, audio_buffer[1], BUF_SIZE);
+			ao_play( device, (char*)audio_buffer[1], BUF_SIZE);
 		}
 	}
 }

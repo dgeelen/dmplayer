@@ -18,7 +18,7 @@ IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
 	mad_frame Frame;
 	mad_synth Synth;
 */	INPUT_BUFFER = new char[INPUT_BUFFER_SIZE];
-	datasource->read(INPUT_BUFFER, INPUT_BUFFER_SIZE);
+	datasource->read((uint8*)INPUT_BUFFER, INPUT_BUFFER_SIZE);
 
 
 
