@@ -86,7 +86,6 @@ HTTPStreamDataSource::HTTPStreamDataSource(std::string url)
 		++hpos;
 	} while (hend != 4);
 	headers[hpos] = 0;
-	//tconn->receive((uint8*)buf, 1024);
 	datarpos = 0;
 	datawpos = 0;
 	datalen = 0;
@@ -99,6 +98,7 @@ unsigned long HTTPStreamDataSource::read(uint8* buffer, uint32 len)
 	torecv = min(torecv, HTTP_STREAM_BUFFER_SIZE-datawpos);
 	torecv = min(torecv, HTTP_STREAM_BUFFER_SIZE-(datalen+1));
 	torecv = min(torecv, HTTP_STREAM_RECV_CHUNK);
+	torecv = min(torecv, len);
 	if (torecv) {
 		uint arecv = conn->receive(data+datawpos, torecv);
 		datalen += arecv;
@@ -108,12 +108,13 @@ unsigned long HTTPStreamDataSource::read(uint8* buffer, uint32 len)
 			dataofs += HTTP_STREAM_BUFFER_SIZE;
 		}
 	}
-	
+
 	uint toread = HTTP_STREAM_BUFFER_SIZE-1;
 	toread = min(toread, HTTP_STREAM_BUFFER_SIZE-datarpos);
 	toread = min(toread, datalen);
 	memcpy(buffer, data+datarpos, toread);
 	datarpos += toread;
+	datalen -= toread;
 	if (datarpos == HTTP_STREAM_BUFFER_SIZE)
 		datarpos = 0;
 	return toread;
@@ -122,5 +123,6 @@ unsigned long HTTPStreamDataSource::read(uint8* buffer, uint32 len)
 void HTTPStreamDataSource::reset()
 {
 	if (dataofs != 0) throw "error!";
+	datalen += datarpos;
 	datarpos = 0;
 }
