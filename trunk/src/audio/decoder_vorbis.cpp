@@ -42,6 +42,7 @@ VorbisDecoder::~VorbisDecoder() {
 }
 
 IDecoder* VorbisDecoder::tryDecode(IDataSource* ds) {
+	return NULL; // disabled until it doesn't crash
 	dcerr("");
 	reset();
 	ds->reset();
