@@ -89,7 +89,7 @@ class QtBooster {
 
 			// exctract signiature information
 			const QList<QByteArray> args = mm.parameterTypes();
-			for (unsigned int i = 0; i < args.size(); ++i)
+			for (int i = 0; i < args.size(); ++i)
 				sig.push_back(args[i].data());
 
 			assert(sig.size() <= 11);
