@@ -17,7 +17,7 @@ HTTPStreamDataSource::~HTTPStreamDataSource()
 
 HTTPStreamDataSource::HTTPStreamDataSource(std::string url)
 {
-	if (strnicmp(url.c_str(), "http://", 7) != 0) throw "not a valid url";
+	if (_strnicmp(url.c_str(), "http://", 7) != 0) throw "not a valid url";
 
 	string hoststr = url.substr(7);
 	int colonpos = hoststr.find_first_of(':');

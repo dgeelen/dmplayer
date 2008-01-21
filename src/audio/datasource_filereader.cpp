@@ -28,7 +28,7 @@ void FileReaderDataSource::reset()
 }
 
 bool FileReaderDataSource::exhausted() {
-	return feof(FileHandle);
+	return feof(FileHandle) != 0;
 }
 
 /** @brief read
