@@ -1,12 +1,14 @@
 #include "backend_portaudio.h"
 
-#define SAMPLE_RATE   (44100/2)
-#define FRAMES_PER_BUFFER  (64)
+#define SAMPLE_RATE    (44100)
+#define FRAMES_PER_BUFFER (64)  /* number of frames(=samples) per buffer */
+#define NUM_BUFFERS        (0)  /* number of buffers, if zero then use default minimum */
+
 #define OUTPUT_DEVICE Pa_GetDefaultOutputDeviceID()
 
-static int patestCallback(   void *inputBuffer, void *outputBuffer,
-                             unsigned long framesPerBuffer,
-                             PaTimestamp outTime, void *userData )
+static int pa_callback( void *inputBuffer, void *outputBuffer,
+                        unsigned long framesPerBuffer,
+                        PaTimestamp outTime, void *userData )
 {
 	IDecoder* decoder = (IDecoder*)userData;
 	char *out = (char*)outputBuffer;
@@ -24,7 +26,7 @@ PortAudioBackend::PortAudioBackend(IDecoder* dec)
 
 	err = Pa_OpenStream(
 		&stream,
-		paNoDevice,        /* default input device */
+		paNoDevice,        /* no input device */
 		0,                 /* no input */
 		paInt16,           /* 16 bit signed input */
 		NULL,
@@ -34,9 +36,9 @@ PortAudioBackend::PortAudioBackend(IDecoder* dec)
 		NULL,
 		SAMPLE_RATE,
 		FRAMES_PER_BUFFER,
-		0,                 /* number of buffers, if zero then use default minimum */
+		NUM_BUFFERS,
 		paClipOff,         /* we won't output out of range samples so don't bother clipping them */
-		patestCallback,
+		pa_callback,
 		dec );
 
 	if (err != paNoError) throw "error! PortAudioBackend::PortAudioBackend";
