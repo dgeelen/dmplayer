@@ -26,6 +26,31 @@ udp_socket::udp_socket()
 	sock = INVALID_SOCKET;
 }
 
+tcp_socket::tcp_socket( const ipv4_addr addr, const uint16 port )
+{
+	sock = socket( AF_INET, SOCK_STREAM, 0 );
+
+	if (sock == INVALID_SOCKET) throw "failed to create tcp socket";
+
+	sockaddr_in addr_in;
+	addr_in.sin_family = AF_INET;
+	addr_in.sin_addr.s_addr = addr.full;
+	addr_in.sin_port = htons( port );
+
+	int res = ::connect(sock, (sockaddr*)&addr_in, sizeof(addr_in));
+	if (res == SOCKET_ERROR) throw "failed to bind tcp socket";
+}
+
+uint32 tcp_socket::send( const uint8* buf, const uint32 len )
+{
+	return ::send(sock, (char*)buf, len, 0);
+}
+
+uint32 tcp_socket::receive( const uint8* buf, const uint32 len )
+{
+	return ::recv(sock, (char*)buf, len, 0);
+}
+
 tcp_listen_socket::tcp_listen_socket(const ipv4_addr addr, const uint16 portnumber)
 {
 	sock = socket( AF_INET, SOCK_STREAM, 0 );
