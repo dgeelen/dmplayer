@@ -23,7 +23,7 @@ bool OGGStreamDataSource::exhausted() {
 	return is_exhausted;
 }
 
-int OGGStreamDataSource::read(char* const buffer, unsigned long len) {
+unsigned long OGGStreamDataSource::read(char* const buffer, unsigned long len) {
 	dcerr("do NOT use int OGGStreamDataSource.read(char*, int), use ogg_packet* OGGStreamDataSource.read() instead");
 	is_exhausted = true;
 
