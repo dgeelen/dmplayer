@@ -60,8 +60,14 @@ IDecoder* AudioController::tryDecode(IDataSource* ds) {
 
 uint32 AudioController::doDecode(char* buf, uint32 max, uint32 req)
 {
-	if (!curdecoder) return 0;
-	return curdecoder->doDecode(buf, max, req);
+	uint32 read = 0;
+	if (curdecoder)
+		read = curdecoder->doDecode(buf, max, req);
+	if (read < req) {
+		memset(buf+read, 0, req-read);
+		read = req;
+	}
+	return read;
 }
 
 void AudioController::test_functie(std::string file) {

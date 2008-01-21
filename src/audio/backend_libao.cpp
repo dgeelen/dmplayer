@@ -68,18 +68,12 @@ void LibAOBackend::decoder_read_thread() {
 	while(play_back) {
 		{ //Fill buffer a
 			boost::mutex::scoped_lock lk_a( buffer_a_mutex ); // After this we have buffer A
-			if(decoder) {
-				int fill = decoder->doDecode(audio_buffer[0], BUF_SIZE, BUF_SIZE);
-				if(fill < BUF_SIZE) memset(audio_buffer[0] + fill, 0, BUF_SIZE - fill);
-			}
+			if(decoder) decoder->doDecode(audio_buffer[0], BUF_SIZE, BUF_SIZE);
 		}
 		fill_buffer_barrier->wait();
 		{ //Fill buffer b
 			boost::mutex::scoped_lock lk_b( buffer_b_mutex ); // After this we have buffer B
-			if(decoder) {
-				int fill = decoder->doDecode(audio_buffer[1], BUF_SIZE, BUF_SIZE);
-				if(fill < BUF_SIZE) memset(audio_buffer[1] + fill, 0, BUF_SIZE - fill);
-			}
+			if(decoder) decoder->doDecode(audio_buffer[1], BUF_SIZE, BUF_SIZE);
 		}
 		fill_buffer_barrier->wait();
 	}
