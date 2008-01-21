@@ -94,8 +94,11 @@ unsigned long HTTPStreamDataSource::read(uint8* buffer, uint32 len)
 	uint torecv = HTTP_STREAM_BUFFER_SIZE-1;
 	torecv = min(torecv, HTTP_STREAM_BUFFER_SIZE-datawpos);
 	torecv = min(torecv, HTTP_STREAM_BUFFER_SIZE-(datalen+1));
-	torecv = min(torecv, HTTP_STREAM_RECV_CHUNK);
-	torecv = min(torecv, len);
+
+	torecv = (torecv < HTTP_STREAM_RECV_CHUNK) ? torecv : HTTP_STREAM_RECV_CHUNK;
+//	torecv = min(torecv, HTTP_STREAM_RECV_CHUNK);
+	torecv = (torecv < len) ? torecv : len;
+//	torecv = min(torecv, len);
 	if (torecv) {
 		uint arecv = conn->receive(data+datawpos, torecv);
 		datalen += arecv;
