@@ -8,11 +8,17 @@
 class VorbisDecoder : public IDecoder {
 	public:
 		VorbisDecoder();
+		VorbisDecoder(IDataSource* ds);
 		~VorbisDecoder();
 		void reset();
 		IDecoder* tryDecode(IDataSource* ds);
-		uint32 doDecode(uint8* buf, uint32 max, uint32 req) { return 0; }; //FIXME: implement in .cpp file
+		uint32 doDecode(uint8* buf, uint32 max, uint32 req);
 	private:
+		IDataSource* datasource;
+		void initialize();
+		void uninitialize();
+		void construct_next_packet();
+		bool read_vorbis_headers();
 		vorbis_dsp_state* dsp_state;
 		vorbis_block* block;
 		vorbis_info* info;
