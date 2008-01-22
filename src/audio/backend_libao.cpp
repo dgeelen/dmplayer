@@ -3,7 +3,7 @@
 #include <boost/bind.hpp>
 
 #define BUF_SIZE 1024*8 /* 8K buffers =~ 0.0464399sec of buffer) */
-LibAOBackend::LibAOBackend(IDecoder* dec)	: IBackend(dec) {
+LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec) {
 	ao_initialize();
 	int default_driver = ao_default_driver_id();
 	format.bits = 16;
