@@ -3,7 +3,7 @@
 #include <boost/bind.hpp>
 
 #define BUF_SIZE 1024*8 /* 8K buffers =~ 0.0464399sec of buffer) */
-LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec) {
+LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec), fill_buffer_barrier(2) {
 	ao_initialize();
 	int default_driver = ao_default_driver_id();
 	format.bits = 16;
@@ -30,7 +30,6 @@ LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec) {
 	decoder = dec;
 
 	/* Start output thread */
-	fill_buffer_barrier = new boost::barrier::barrier(2);
 	play_back = true;
 	try {
 		thread_decoder_read_thread = NULL;
@@ -64,33 +63,20 @@ LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec) {
 
  */
 void LibAOBackend::decoder_read_thread() {
-	int filled_buffer = 1-playing_buffer;
 	while(play_back) {
-		{ //Fill buffer a
-			boost::mutex::scoped_lock lk_a( buffer_a_mutex ); // After this we have buffer A
-			if(decoder) decoder->doDecode(audio_buffer[0], BUF_SIZE, BUF_SIZE);
-		}
-		fill_buffer_barrier->wait();
-		{ //Fill buffer b
-			boost::mutex::scoped_lock lk_b( buffer_b_mutex ); // After this we have buffer B
-			if(decoder) decoder->doDecode(audio_buffer[1], BUF_SIZE, BUF_SIZE);
-		}
-		fill_buffer_barrier->wait();
+		if(decoder) decoder->doDecode(audio_buffer[0], BUF_SIZE, BUF_SIZE);
+		fill_buffer_barrier.wait();
+		if(decoder) decoder->doDecode(audio_buffer[1], BUF_SIZE, BUF_SIZE);
+		fill_buffer_barrier.wait();
 	}
 }
 
 void LibAOBackend::ao_play_thread() {
 	while(play_back) {
-		fill_buffer_barrier->wait();
-		{ //Play buffer a
-			boost::mutex::scoped_lock lk_a( buffer_a_mutex ); // After this we have buffer A
-			ao_play( device, (char*)audio_buffer[0], BUF_SIZE);
-		}
-		fill_buffer_barrier->wait();
-		{ //Play buffer b
-			boost::mutex::scoped_lock lk_b( buffer_b_mutex ); // After this we have buffer B
-			ao_play( device, (char*)audio_buffer[1], BUF_SIZE);
-		}
+		fill_buffer_barrier.wait();
+		ao_play( device, (char*)audio_buffer[0], BUF_SIZE);
+		fill_buffer_barrier.wait();
+		ao_play( device, (char*)audio_buffer[1], BUF_SIZE);
 	}
 }
 
@@ -98,7 +84,6 @@ LibAOBackend::~LibAOBackend() {
 	play_back=false;
 	if (thread_ao_play_thread) thread_ao_play_thread->join();
 	if (thread_decoder_read_thread) thread_decoder_read_thread->join();
-	delete fill_buffer_barrier;
 	ao_close(device);
 	ao_shutdown();
 }
