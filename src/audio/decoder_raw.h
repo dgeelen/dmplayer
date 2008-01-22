@@ -9,7 +9,7 @@ class RawDecoder : public IDecoder{
 		IDataSource* source;
 	public:
 		RawDecoder();
-		RawDecoder(IDataSource* source);
+		RawDecoder(Audio_Format af, IDataSource* source);
 		~RawDecoder();
 		IDecoder* tryDecode(IDataSource* datasource);
 		uint32 doDecode(uint8* buf, uint32 max, uint32 req);

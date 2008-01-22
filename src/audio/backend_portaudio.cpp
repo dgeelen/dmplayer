@@ -18,7 +18,7 @@ static int pa_callback( void *inputBuffer, void *outputBuffer,
 	return 0;
 }
 
-PortAudioBackend::PortAudioBackend(IDecoder* dec)
+PortAudioBackend::PortAudioBackend(AudioController* dec)
 	: IBackend(dec)
 {
 	PaError err = Pa_Initialize();

@@ -6,13 +6,26 @@
 #include <vector>
 #include <boost/function.hpp>
 
+struct Audio_Format{
+	int SampleRate;
+	int Channels;
+	int Bitrate;
+	int BitsPerSample;
+	bool SignedSample;
+	bool LittleEndian;
+};
+
 class IDecoder {
 	private:
 		int buffersize;
+		Audio_Format audioformat;
+
 	public:
-		IDecoder() {};
+		IDecoder(Audio_Format af) {audioformat = af;};
 		virtual ~IDecoder() {};
 		virtual IDecoder* tryDecode(IDataSource*) = 0;
+		const Audio_Format getAudioFormat() {return audioformat;};
+
 		void SetBufferSize(int bufsize) {buffersize = bufsize;};
 		int GetBufferSize() {return buffersize;};
 

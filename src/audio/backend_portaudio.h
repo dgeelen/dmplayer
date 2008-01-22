@@ -9,7 +9,7 @@ class PortAudioBackend : public IBackend{
 	private:
 		PortAudioStream *stream;
 	public:
-		PortAudioBackend(IDecoder* dec);
+		PortAudioBackend(AudioController* dec);
 		virtual ~PortAudioBackend();
 };
 

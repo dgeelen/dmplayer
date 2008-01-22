@@ -19,7 +19,7 @@
 
 using namespace std;
 
-AudioController::AudioController() : IDecoder() {
+AudioController::AudioController() {
 	curdecoder = NULL;
 	#ifdef PORTAUDIO_BACKEND
 	backend = NULL;
@@ -52,11 +52,6 @@ AudioController::AudioController() : IDecoder() {
 
 AudioController::~AudioController() {
 	delete backend;
-}
-
-IDecoder* AudioController::tryDecode(IDataSource* ds) {
-	//TODO:
-	return this;
 }
 
 uint32 AudioController::doDecode(uint8* buf, uint32 max, uint32 req)

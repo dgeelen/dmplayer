@@ -1,13 +1,13 @@
 #ifndef BACKEND_INTERFACE_H
 #define BACKEND_INTERFACE_H
 
-#include "decoder_interface.h"
+#include "audio_controller.h"
 
 class IBackend {
-private:
-		IDecoder* source;
+	private:
+		AudioController* source;
 	public:
-		IBackend(IDecoder* i) : source(i) {};
+		IBackend(AudioController* i) : source(i) {};
 		virtual ~IBackend() {};
 };
 
