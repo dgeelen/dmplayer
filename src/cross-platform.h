@@ -21,23 +21,24 @@
 // ??: http://www.cmake.org/pipermail/cmake-commits/2007-March/001026.html
 
 	#if defined(__WIN32__) || defined(WIN32)
-		// borland/msvs win32 specifics..
+		// defines needed for any windows header we will include
+		#define WIN32_LEAN_AND_MEAN
+		#define NOMINMAX
+
+		// assume winsock on win32 for now
 		#define HAVE_WINSOCK
-		//#define HAVE_WSNWLINK_H
+
+		// usleep
+		#include <windows.h>
 		#define usleep(x) Sleep(x/1000)
 	#else
+		// for usleep
 		#include <unistd.h>
 	#endif
 
 	#if defined(HAVE_WINSOCK)
-		#define WIN32_LEAN_AND_MEAN
 		#include <Winsock2.h>
-		#include <Wsipx.h>
 		#include <ws2tcpip.h>
-
-		#ifdef HAVE_WSNWLINK_H
-//			# include <wsnwlink.h>
-		#endif
 
 		#define NetGetLastError() WSAGetLastError()
 		#define sipx_family sa_family
