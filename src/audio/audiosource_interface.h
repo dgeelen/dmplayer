@@ -9,6 +9,18 @@ struct AudioFormat{
 	int BitsPerSample;
 	bool SignedSample;
 	bool LittleEndian;
+	
+	bool operator==(const AudioFormat& af) const {
+		if (SampleRate    != af.SampleRate   ) return false;
+		if (Channels      != af.Channels     ) return false;
+		if (BitsPerSample != af.BitsPerSample) return false;
+		if (SignedSample  != af.SignedSample ) return false;
+		if (LittleEndian  != af.LittleEndian ) return false;
+		return true;
+	}
+	bool operator!=(const AudioFormat& af) const  {
+		return !(*this == af);
+	}
 };
 
 class IAudioSource {

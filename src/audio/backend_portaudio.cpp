@@ -24,6 +24,12 @@ PortAudioBackend::PortAudioBackend(AudioController* dec)
 	PaError err = Pa_Initialize();
 	if (err != paNoError) throw "error! PortAudioBackend::PortAudioBackend";
 
+	af.SampleRate = SAMPLE_RATE;
+	af.Channels = 2;
+	af.BitsPerSample = 16;
+	af.SignedSample = true;
+	af.LittleEndian = true;
+
 	err = Pa_OpenStream(
 		&stream,
 		paNoDevice,        /* no input device */
