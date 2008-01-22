@@ -4,13 +4,11 @@
 using namespace std;
 
 VorbisDecoder::VorbisDecoder() : IDecoder() {
-	dcerr("");
 	datasource = NULL;
 	initialize();
 }
 
 VorbisDecoder::VorbisDecoder(IDataSource* ds) : IDecoder() {
-	dcerr(ds);
 	datasource = ds;
 	initialize();
 	datasource->reset();
@@ -22,7 +20,6 @@ VorbisDecoder::VorbisDecoder(IDataSource* ds) : IDecoder() {
 }
 
 void VorbisDecoder::initialize() {
-	dcerr("");
 	dsp_state = new vorbis_dsp_state();
 	block = new vorbis_block();
 	info = new vorbis_info();
@@ -40,7 +37,6 @@ void VorbisDecoder::initialize() {
 }
 
 void VorbisDecoder::uninitialize() {
-	dcerr("");
 	if(packet) {
 		delete packet->packet;
 		packet->packet = NULL;
@@ -68,14 +64,12 @@ void VorbisDecoder::uninitialize() {
 }
 
 void VorbisDecoder::reset() {
-	dcerr("");
 	uninitialize();
 	if(datasource) datasource->reset();
 	initialize();
 }
 
 VorbisDecoder::~VorbisDecoder() {
-	dcerr("");
 	uninitialize();
 }
 
@@ -157,14 +151,16 @@ uint32 VorbisDecoder::doDecode(uint8* buffer, uint32 max, uint32 req) {
 		else {
 			construct_next_packet();
 			if(!packet->bytes) done=true;
-			if(vorbis_synthesis(block, packet)==0) vorbis_synthesis_blockin(dsp_state, block); //FIXME: Else?
+			if(vorbis_synthesis(block, packet)==0) {
+				vorbis_synthesis_blockin(dsp_state, block); //FIXME: Else?
+			}
+			else dcerr("Warning: could not vorbis_synthesis_blockin()");
 		}
 	}
 	return samples_decoded*bytes_per_sample;
 }
 
 IDecoder* VorbisDecoder::tryDecode(IDataSource* ds) {
-	dcerr("");
 	datasource=ds;
 	reset();
 
