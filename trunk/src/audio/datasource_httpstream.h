@@ -26,7 +26,7 @@ class HTTPStreamDataSource : public IDataSource {
 		virtual bool exhausted() { return false; };
 		virtual void reset();
 
-		virtual uint32 read(uint8* buffer, uint32 len);
+		virtual uint32 getData(uint8* buffer, uint32 len);
 };
 
 #endif//DECODER_OGGVORBISFILE_H

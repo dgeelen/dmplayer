@@ -74,7 +74,7 @@ VorbisDecoder::~VorbisDecoder() {
 }
 
 void VorbisDecoder::construct_next_packet() {
-	packet->bytes = datasource->read(packet->packet, 1<<16);
+	packet->bytes = datasource->getData(packet->packet, 1<<16);
 	packet->b_o_s = max(--(packet->b_o_s), (long int)0);
 	packet->e_o_s = datasource->exhausted();
 	packet->granulepos++;

@@ -13,7 +13,7 @@ class IDataSource {
 		virtual bool exhausted() = 0;
 		virtual void reset() = 0;
 
-		virtual uint32 read(uint8* buffer, uint32 len) = 0;
+		virtual uint32 getData(uint8* buffer, uint32 len) = 0;
 };
 
 #endif//DATASOURCE_INTERFACE_H

@@ -165,7 +165,7 @@ ogg_page* OGGDecoder::read_page(uint32 time_out) {
 		switch(page_state) {
 			case 0: { // needs more data to construct a page
 				char* buffer = ogg_sync_buffer(sync, BLOCK_SIZE);
-				long bytes_read = datasource->read( (uint8*)buffer, BLOCK_SIZE );
+				long bytes_read = datasource->getData( (uint8*)buffer, BLOCK_SIZE );
 				if(ogg_sync_wrote(sync, bytes_read)) throw "Internal error in libogg!";
 				if(datasource->exhausted() || (datasource->getpos() >= (int)time_out )) {
 					delete page;

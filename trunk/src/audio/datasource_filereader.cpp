@@ -36,7 +36,7 @@ bool FileReaderDataSource::exhausted() {
   *
   * @todo: document this function
   */
-uint32 FileReaderDataSource::read(uint8* const buffer, uint32 len)
+uint32 FileReaderDataSource::getData(uint8* const buffer, uint32 len)
 {
 	return fread (buffer, 1, len, FileHandle);
 }

@@ -3,7 +3,7 @@
 size_t dsread(void* data, size_t s1, size_t s2, void* ds) {
 	IDataSource* rds = (IDataSource*)ds;
 	size_t s = s1*s2;
-	return rds->read((uint8*)data, s);
+	return rds->getData((uint8*)data, s);
 }
 
 static ov_callbacks OV_CALLBACKS_IDATASOURCE = {

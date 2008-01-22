@@ -40,7 +40,7 @@ IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
 	IDecoder* result;
 	BytesInInput = 0;
 	while (BytesInInput < INPUT_BUFFER_SIZE && !datasource->exhausted())
-		BytesInInput += datasource->read(input_buffer+BytesInInput, INPUT_BUFFER_SIZE-BytesInInput);
+		BytesInInput += datasource->getData(input_buffer+BytesInInput, INPUT_BUFFER_SIZE-BytesInInput);
 
 	Stream.next_frame = input_buffer; // make sure while loop is entered at least once
 
@@ -90,7 +90,7 @@ uint32 MadDecoder::getData(uint8* buf, uint32 len)
 
 		{	//Fill the inputbuffer as full as possible
 			uint toRead = INPUT_BUFFER_SIZE - BytesInInput;
-			uint Read = datasource->read(input_buffer + BytesInInput, toRead);
+			uint Read = datasource->getData(input_buffer + BytesInInput, toRead);
 			BytesInInput += Read;
 			eos = datasource->exhausted();
 		}
