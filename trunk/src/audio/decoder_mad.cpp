@@ -10,7 +10,7 @@ MadDecoder::~MadDecoder()
 	mad_stream_finish(&Stream);
 }
 
-MadDecoder::MadDecoder()
+MadDecoder::MadDecoder() : IDecoder(Audio_Format())
 {
 	mad_stream_init(&Stream);
 	mad_frame_init(&Frame);
@@ -21,7 +21,7 @@ MadDecoder::MadDecoder()
 	eos = false;
 }
 
-MadDecoder::MadDecoder(IDataSource* ds)
+MadDecoder::MadDecoder(Audio_Format af, IDataSource* ds) : IDecoder(af)
 {
 	mad_stream_init(&Stream);
 	mad_frame_init(&Frame);
@@ -56,8 +56,16 @@ IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
 			BytesLeft = input_buffer+BytesInInput-Stream.next_frame;
 			mad_stream_buffer(&Stream, input_buffer+BytesInInput-BytesLeft, BytesLeft);
 			mad_frame_decode(&Frame, &Stream);
-			if (Stream.error == MAD_ERROR_NONE)
-				result = new MadDecoder(datasource);
+			if (Stream.error == MAD_ERROR_NONE){
+				Audio_Format af;
+				af.Bitrate = Frame.header.bitrate;
+				af.SampleRate = Frame.header.samplerate;
+				af.Channels = MAD_NCHANNELS(&Frame.header);
+				af.BitsPerSample = 16;
+				af.LittleEndian = true;
+				af.SignedSample = true;
+				result = new MadDecoder(af, datasource);
+			}
 		}
 		if (Stream.error == MAD_ERROR_BUFLEN)
 			break;
@@ -88,15 +96,17 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 			eos = datasource->exhausted();
 		}
 
-		//Buffer is sent to MAD to decode to a stream
-		mad_stream_buffer(&Stream, input_buffer, BytesInInput);
-		Stream.error = MAD_ERROR_NONE;
+		if (Stream.buffer == NULL || Stream.next_frame) {
 
+			//Buffer is sent to MAD to decode to a stream
+			mad_stream_buffer(&Stream, input_buffer, BytesInInput);
+			Stream.error = MAD_ERROR_NONE;
+		}
 		//Decode the frame here
+
 		if(mad_frame_decode(&Frame, &Stream)){
-			if (!MAD_RECOVERABLE(Stream.error)) {
-				dcerr("Unrecoverable error");
-			}
+			/// TODO: error handling
+
 		}
 
 		if (Stream.next_frame) {
@@ -109,12 +119,10 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 		// Decoding this frame has been succesful
 
 		mad_timer_add(&Timer, Frame.header.duration);
-		if (Stream.error == MAD_ERROR_NONE)
-			mad_synth_frame(&Synth, &Frame);
-		else 
-			Synth.pcm.length = 0;
+		mad_synth_frame(&Synth, &Frame);
 
-		// [hackmode] Because Mads output is 24 bit PCM, we need to convert everything to 16 bit
+		// [hackmode]
+		// Because Mads output is 24 bit PCM, we need to convert everything to 16 bit
 		int i;
 		for(i = 0; i < Synth.pcm.length && BytesOut+4 <= max; ++i)
 		{
@@ -129,7 +137,7 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 				//Right channel. If the stream is monophonic, then right = left
 				*Sampler = MadFixedToSshort(Synth.pcm.samples[1][i]);
 			}
-				else *Sampler = *Samplel;
+			else *Sampler = *Samplel;
 			BytesOut += 4;
 		}
 
@@ -149,8 +157,7 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 				//Right channel. If the stream is monophonic, then right = left
 				*Sampler = MadFixedToSshort(Synth.pcm.samples[1][i]);
 			}
-			else
-				*Samplel = *Sampler;
+			else *Samplel = *Sampler;
 
 			/// Here we put the other part of the sample in the output buffer.
 			int x = req - BytesOut;
