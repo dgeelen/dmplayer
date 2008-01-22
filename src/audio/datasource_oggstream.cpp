@@ -8,19 +8,24 @@ using namespace std;
 OGGStreamDataSource::OGGStreamDataSource( OGGDecoder* decoder, long stream_id ) {
 	this->decoder = decoder;
 	this->stream_id = stream_id;
+	is_exhausted = false;
+	total_bytes_read=0;
 	reset();
 }
 
 OGGStreamDataSource::~OGGStreamDataSource() {
+	total_bytes_read=0;
 	is_exhausted = false;
 };
 
 void OGGStreamDataSource::reset() {
+	is_exhausted = false;
+	total_bytes_read=0;
 	this->decoder->reset();
 }
 
 long OGGStreamDataSource::getpos() {
-	return 0;
+	return total_bytes_read;
 }
 
 bool OGGStreamDataSource::exhausted() {
@@ -40,9 +45,11 @@ uint32 OGGStreamDataSource::read(uint8* const buffer, uint32 len) {
 		int n = min((unsigned long)packet->bytes, len);
 		memcpy(buffer, packet->packet, n);
 		delete packet;
+		total_bytes_read+=n;
 		return n;
 	}
-	else return 0;
+	is_exhausted = true;
+	return 0;
 }
 
 ogg_packet* OGGStreamDataSource::read() {
