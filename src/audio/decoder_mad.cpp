@@ -31,22 +31,37 @@ MadDecoder::MadDecoder(IDataSource* ds)
 	BytesInInput = 0;
 	eos = false;
 	datasource = ds;
+	datasource->reset();
 }
 
 IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
 {
 	datasource->reset();
 	IDecoder* result;
-	BytesInInput = datasource->read(input_buffer, INPUT_BUFFER_SIZE);
+	BytesInInput = 0;
+	while (BytesInInput < INPUT_BUFFER_SIZE)
+		BytesInInput += datasource->read(input_buffer+BytesInInput, INPUT_BUFFER_SIZE-BytesInInput);
 
-	mad_stream_buffer(&Stream, input_buffer, BytesInInput);
+	Stream.next_frame = input_buffer; // make sure while loop is entered at least once
 
-	if(!Stream.error){
-		result = new MadDecoder(datasource);
+	//return new MadDecoder(datasource);
+
+	result = NULL;
+	while (!result && Stream.next_frame < input_buffer+BytesInInput) {
+		uint32 BytesLeft = input_buffer+BytesInInput-Stream.next_frame;
+		mad_stream_buffer(&Stream, input_buffer+BytesInInput-BytesLeft, BytesLeft);
+		Stream.error = MAD_ERROR_NONE;
+		mad_frame_decode(&Frame, &Stream);
+		if (Stream.error == MAD_ERROR_NONE) {
+			BytesLeft = input_buffer+BytesInInput-Stream.next_frame;
+			mad_stream_buffer(&Stream, input_buffer+BytesInInput-BytesLeft, BytesLeft);
+			mad_frame_decode(&Frame, &Stream);
+			if (Stream.error == MAD_ERROR_NONE)
+				result = new MadDecoder(datasource);
+		}
+		if (Stream.error == MAD_ERROR_BUFLEN)
+			break;
 	}
-	else result = NULL;
-	datasource->reset();
-	mad_stream_finish(&Stream);
 
 	return result;
 }
