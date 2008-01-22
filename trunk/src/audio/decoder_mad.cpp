@@ -39,7 +39,7 @@ IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
 	datasource->reset();
 	IDecoder* result;
 	BytesInInput = 0;
-	while (BytesInInput < INPUT_BUFFER_SIZE)
+	while (BytesInInput < INPUT_BUFFER_SIZE && !datasource->exhausted())
 		BytesInInput += datasource->read(input_buffer+BytesInInput, INPUT_BUFFER_SIZE-BytesInInput);
 
 	Stream.next_frame = input_buffer; // make sure while loop is entered at least once
@@ -118,7 +118,10 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 		// Decoding this frame has been succesful
 
 		mad_timer_add(&Timer, Frame.header.duration);
-		mad_synth_frame(&Synth, &Frame);
+		if (!Stream.error)
+			mad_synth_frame(&Synth, &Frame);
+		else
+			Synth.pcm.length = 0;
 
 		// [hackmode]
 		// Because Mads output is 24 bit PCM, we need to convert everything to 16 bit
