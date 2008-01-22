@@ -10,7 +10,7 @@ MadDecoder::~MadDecoder()
 	mad_stream_finish(&Stream);
 }
 
-MadDecoder::MadDecoder() : IDecoder(Audio_Format())
+MadDecoder::MadDecoder() : IDecoder(AudioFormat())
 {
 	mad_stream_init(&Stream);
 	mad_frame_init(&Frame);
@@ -21,7 +21,7 @@ MadDecoder::MadDecoder() : IDecoder(Audio_Format())
 	eos = false;
 }
 
-MadDecoder::MadDecoder(Audio_Format af, IDataSource* ds) : IDecoder(af)
+MadDecoder::MadDecoder(AudioFormat af, IDataSource* ds) : IDecoder(af)
 {
 	mad_stream_init(&Stream);
 	mad_frame_init(&Frame);
@@ -57,7 +57,7 @@ IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
 			mad_stream_buffer(&Stream, input_buffer+BytesInInput-BytesLeft, BytesLeft);
 			mad_frame_decode(&Frame, &Stream);
 			if (Stream.error == MAD_ERROR_NONE){
-				Audio_Format af;
+				AudioFormat af;
 				af.Bitrate = Frame.header.bitrate;
 				af.SampleRate = Frame.header.samplerate;
 				af.Channels = MAD_NCHANNELS(&Frame.header);

@@ -10,12 +10,12 @@ using namespace std;
 //FIXME: Does this mean min_file_size == 8k?
 #define BLOCK_SIZE 1024*8
 
-OGGDecoder::OGGDecoder() : IDecoder() {
+OGGDecoder::OGGDecoder() : IDecoder(AudioFormat()) {
 	datasource = NULL;
 	initialize();
 }
 
-OGGDecoder::OGGDecoder(IDataSource* ds) : IDecoder() {
+OGGDecoder::OGGDecoder(IDataSource* ds) : IDecoder(AudioFormat()) {
 	datasource = ds;
 	initialize();
 }

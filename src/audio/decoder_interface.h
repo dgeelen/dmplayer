@@ -6,7 +6,7 @@
 #include <vector>
 #include <boost/function.hpp>
 
-struct Audio_Format{
+struct AudioFormat{
 	int SampleRate;
 	int Channels;
 	int Bitrate;
@@ -18,13 +18,13 @@ struct Audio_Format{
 class IDecoder {
 	private:
 		int buffersize;
-		Audio_Format audioformat;
+		AudioFormat audioformat;
 
 	public:
-		IDecoder(Audio_Format af) {audioformat = af;};
+		IDecoder(AudioFormat af) {audioformat = af;};
 		virtual ~IDecoder() {};
 		virtual IDecoder* tryDecode(IDataSource*) = 0;
-		const Audio_Format getAudioFormat() {return audioformat;};
+		const AudioFormat getAudioFormat() {return audioformat;};
 
 		void SetBufferSize(int bufsize) {buffersize = bufsize;};
 		int GetBufferSize() {return buffersize;};
