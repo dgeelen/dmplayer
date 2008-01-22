@@ -1,12 +1,12 @@
 #include "decoder_raw.h"
 #include <string>
 
-RawDecoder::RawDecoder()
+RawDecoder::RawDecoder() : IDecoder(Audio_Format())
 {
 	source = NULL;
 }
 
-RawDecoder::RawDecoder(IDataSource* source)
+RawDecoder::RawDecoder(Audio_Format af, IDataSource* source) : IDecoder(af)
 {
 	this->source = source;
 	//tryDecode(source);
@@ -40,8 +40,14 @@ IDecoder* RawDecoder::tryDecode(IDataSource* datasource)
 	if (bits != 16)     return NULL; // TODO: bps conversion filter?
 	// or, return a decoder with the info from the header, so the controller
 	// can change the backend output, or put in the conversion filters?
+	Audio_Format af;
+	af.Channels = channels;
+	af.SampleRate = srate;
+	af.BitsPerSample = bits;
+	af.LittleEndian = true;
+	af.SignedSample = true;
 
-	return new RawDecoder(datasource);
+	return new RawDecoder(af, datasource);
 }
 
 uint32 RawDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
