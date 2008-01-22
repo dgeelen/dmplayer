@@ -15,8 +15,11 @@ HTTPStreamDataSource::~HTTPStreamDataSource()
 
 HTTPStreamDataSource::HTTPStreamDataSource(std::string url)
 {
+	#ifdef __linux__
+	if (strncmp(url.c_str(), "http://", 7) != 0) throw "not a valid url";
+	#else
 	if (_strnicmp(url.c_str(), "http://", 7) != 0) throw "not a valid url";
-
+	#endif
 	string hoststr = url.substr(7);
 	int colonpos = hoststr.find_first_of(':');
 	int slashpos = hoststr.find_first_of('/');
@@ -63,7 +66,7 @@ HTTPStreamDataSource::HTTPStreamDataSource(std::string url)
 		ss << "Host: " << hoststr << ":" << port << "\r\n";
 		ss << "User-Agent: mpmpd-vunknown\r\n";
 		// we can't handle metadata yet, so don't ask for it
-		//ss << "Icy-MetaData: 1\r\n"; 
+		//ss << "Icy-MetaData: 1\r\n";
 		ss << "Connection: close\r\n";
 		ss << "\r\n";
 		sendmsg = ss.str();
