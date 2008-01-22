@@ -105,8 +105,12 @@ void AudioController::test_functie(std::string file) {
 			if (decoder) {
 				curdecoder = decoder;
 				dcerr("Found a decoder; decoder #"<<i);
-				return;
+				break;
 			}
 		}
+	}
+
+	if (curdecoder->getAudioFormat() != backend->getAudioFormat()) {
+		// TODO: conversion filter stuff
 	}
 }

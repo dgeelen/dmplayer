@@ -15,7 +15,7 @@ class AudioController {
 		uint32 getData(uint8* buf, uint32 len);
 	private:
 		IBackend* backend;
-		IDecoder* curdecoder;
+		IAudioSource* curdecoder;
 };
 
 #endif//AUDIO_CONTROLLER_H

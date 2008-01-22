@@ -6,8 +6,11 @@
 class IBackend {
 	private:
 		AudioController* source;
+	protected:
+		AudioFormat af;
 	public:
 		IBackend(AudioController* i) : source(i) {};
+		AudioFormat getAudioFormat() { return af;} ;
 		virtual ~IBackend() {};
 };
 
