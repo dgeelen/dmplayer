@@ -12,27 +12,27 @@ MadDecoder::~MadDecoder()
 
 MadDecoder::MadDecoder()
 {
-    mad_stream_init(&Stream);
-    mad_frame_init(&Frame);
-    mad_synth_init(&Synth);
-    mad_timer_reset(&Timer);
-    BytesInOutput = 0;
-    BytesInInput = 0;
-    eos = false;
+	mad_stream_init(&Stream);
+	mad_frame_init(&Frame);
+	mad_synth_init(&Synth);
+	mad_timer_reset(&Timer);
+	BytesInOutput = 0;
+	BytesInInput = 0;
+	eos = false;
 }
 
 MadDecoder::MadDecoder(IDataSource* ds)
 {
-    mad_stream_init(&Stream);
-    mad_frame_init(&Frame);
-    mad_synth_init(&Synth);
-    mad_timer_reset(&Timer);
-    BytesInOutput = 0;
-    BytesInInput = 0;
-    eos = false;
-    datasource = ds;
-    INPUT_BUFFER = new char[INPUT_BUFFER_SIZE];
-    OUTPUT_BUFFER = new char[OUTPUT_BUFFER_SIZE];
+	mad_stream_init(&Stream);
+	mad_frame_init(&Frame);
+	mad_synth_init(&Synth);
+	mad_timer_reset(&Timer);
+	BytesInOutput = 0;
+	BytesInInput = 0;
+	eos = false;
+	datasource = ds;
+	INPUT_BUFFER = new char[INPUT_BUFFER_SIZE];
+	OUTPUT_BUFFER = new char[OUTPUT_BUFFER_SIZE];
 }
 
 IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
