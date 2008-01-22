@@ -58,7 +58,6 @@ IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
 			mad_frame_decode(&Frame, &Stream);
 			if (Stream.error == MAD_ERROR_NONE){
 				AudioFormat af;
-				af.Bitrate = Frame.header.bitrate;
 				af.SampleRate = Frame.header.samplerate;
 				af.Channels = MAD_NCHANNELS(&Frame.header);
 				af.BitsPerSample = 16;
