@@ -18,7 +18,7 @@ class OGGDecoder : public IDecoder {
 		OGGDecoder();
 		~OGGDecoder();
 		IDecoder* tryDecode(IDataSource* ds);
-		uint32 doDecode(uint8* buf, uint32 max, uint32 req); //FIXME: implement in .cpp file
+		uint32 getData(uint8* buf, uint32 max);
 
 		/* Functions for DataSources */
 		ogg_packet* get_packet_from_stream(long stream_id);

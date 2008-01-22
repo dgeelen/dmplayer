@@ -54,14 +54,14 @@ AudioController::~AudioController() {
 	delete backend;
 }
 
-uint32 AudioController::doDecode(uint8* buf, uint32 max, uint32 req)
+uint32 AudioController::getData(uint8* buf, uint32 len)
 {
 	uint32 read = 0;
 	if (curdecoder)
-		read = curdecoder->doDecode(buf, max, req);
-	if (read < req) {
-		memset(buf+read, 0, req-read);
-		read = req;
+		read = curdecoder->getData(buf, len);
+	if (read < len) {
+		memset(buf+read, 0, len-read);
+		read = len;
 	}
 	return read;
 }

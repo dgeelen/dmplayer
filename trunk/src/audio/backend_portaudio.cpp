@@ -14,7 +14,7 @@ static int pa_callback( void *inputBuffer, void *outputBuffer,
 	char *out = (char*)outputBuffer;
 
 	// 2 byte samples + 2 channels -> 2*2=4 -> 4 bytes/frame
-	uint32 act = ac->doDecode((uint8*)out, framesPerBuffer*4, framesPerBuffer*4);
+	uint32 act = ac->getData((uint8*)out, framesPerBuffer*4);
 	return 0;
 }
 

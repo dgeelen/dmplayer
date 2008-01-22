@@ -12,7 +12,7 @@ class VorbisDecoder : public IDecoder {
 		~VorbisDecoder();
 		void reset();
 		IDecoder* tryDecode(IDataSource* ds);
-		uint32 doDecode(uint8* buf, uint32 max, uint32 req);
+		uint32 getData(uint8* buf, uint32 max);
 	private:
 		IDataSource* datasource;
 		void initialize();
