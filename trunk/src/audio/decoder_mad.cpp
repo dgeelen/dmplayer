@@ -88,20 +88,20 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 			eos = datasource->exhausted();
 		}
 
-		if (Stream.buffer == NULL || Stream.next_frame) {
+		//Buffer is sent to MAD to decode to a stream
+		mad_stream_buffer(&Stream, input_buffer, BytesInInput);
+		Stream.error = MAD_ERROR_NONE;
 
-			//Buffer is sent to MAD to decode to a stream
-			mad_stream_buffer(&Stream, input_buffer, BytesInInput);
-			Stream.error = MAD_ERROR_NONE;
-		}
 		//Decode the frame here
-
 		if(mad_frame_decode(&Frame, &Stream)){
-			/// TODO: error handling
+			if (!MAD_RECOVERABLE(Stream.error)) {
+				dcerr("Unrecoverable error");
+			}
 		}
 
 		if (Stream.next_frame) {
-			int BytesLeft = input_buffer + INPUT_BUFFER_SIZE - Stream.next_frame;
+			int BytesLeft = input_buffer + BytesInInput - Stream.next_frame;
+			x += BytesInInput-BytesLeft;
 			BytesInInput = BytesLeft;
 			memmove(input_buffer, Stream.next_frame, BytesLeft);
 		} else {
@@ -110,10 +110,12 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 		// Decoding this frame has been succesful
 
 		mad_timer_add(&Timer, Frame.header.duration);
-		mad_synth_frame(&Synth, &Frame);
+		if (Stream.error == MAD_ERROR_NONE)
+			mad_synth_frame(&Synth, &Frame);
+		else 
+			Synth.pcm.length = 0;
 
-		// [hackmode]
-		// Because Mads output is 24 bit PCM, we need to convert everything to 16 bit
+		// [hackmode] Because Mads output is 24 bit PCM, we need to convert everything to 16 bit
 		int i;
 		for(i = 0; i < Synth.pcm.length && BytesOut+4 <= max; ++i)
 		{
@@ -126,9 +128,9 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 			if (MAD_NCHANNELS(&Frame.header) == 2)
 			{
 				//Right channel. If the stream is monophonic, then right = left
-				*Sampler = 0;//MadFixedToSshort(Synth.pcm.samples[1][i]);
+				*Sampler = MadFixedToSshort(Synth.pcm.samples[1][i]);
 			}
-			else *Sampler = *Samplel;
+				else *Sampler = *Samplel;
 			BytesOut += 4;
 		}
 
@@ -146,10 +148,10 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 			if (MAD_NCHANNELS(&Frame.header) == 2)
 			{
 				//Right channel. If the stream is monophonic, then right = left
-				*Sampler = 0;//MadFixedToSshort(Synth.pcm.samples[1][i]);
+				*Sampler = MadFixedToSshort(Synth.pcm.samples[1][i]);
 			}
 			else
-				Samplel = Sampler;
+				*Samplel = *Sampler;
 
 			/// Here we put the other part of the sample in the output buffer.
 			int x = req - BytesOut;
@@ -172,10 +174,10 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 			if (MAD_NCHANNELS(&Frame.header) == 2)
 			{
 				//Right channel. If the stream is monophonic, then right = left
-				*Sampler = 0;//MadFixedToSshort(Synth.pcm.samples[1][i]);
+				*Sampler = MadFixedToSshort(Synth.pcm.samples[1][i]);
 			}
 			else
-				Samplel = Sampler;
+				*Samplel = *Sampler;
 
 			BytesInOutput += 4;
 		}
