@@ -101,7 +101,6 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 
 		if (Stream.next_frame) {
 			int BytesLeft = input_buffer + BytesInInput - Stream.next_frame;
-			x += BytesInInput-BytesLeft;
 			BytesInInput = BytesLeft;
 			memmove(input_buffer, Stream.next_frame, BytesLeft);
 		} else {
