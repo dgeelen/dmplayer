@@ -1,7 +1,7 @@
 #include "backend_sdlmixer.h"
 #include "SDL.h"
 #include "SDL_mixer.h"
-
+#if 0
 SDLMixerBackend::SDLMixerBackend(IDecoder* dec)	: IBackend(dec) {
 	/* We're going to be requesting certain things from our audio
 	 * device, so we set them up beforehand
@@ -37,3 +37,4 @@ void SDLMixerBackend::test_playback(const char* filename) {
 	Mix_Music* music = Mix_LoadMUS( filename );
 	Mix_PlayMusic(music, 0);
 }
+#endif
