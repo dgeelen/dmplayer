@@ -9,7 +9,6 @@
 struct AudioFormat{
 	int SampleRate;
 	int Channels;
-	int Bitrate;
 	int BitsPerSample;
 	bool SignedSample;
 	bool LittleEndian;
