@@ -226,6 +226,7 @@ void OGGDecoder::read_bos_pages() {
 
 uint32 OGGDecoder::doDecode(uint8* buf, uint32 max, uint32 req) {
 	/* TODO: Pass through */
+	return 0;
 }
 
 //NOTE: We do not (yet, if ever) support concatenated streams
