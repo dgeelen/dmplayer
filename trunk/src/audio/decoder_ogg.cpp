@@ -32,6 +32,7 @@ void OGGDecoder::uninitialize() {
 		}
 		ogg_stream_destroy(s.stream_state);
 	}
+	streams.clear();
 	if(sync) {
 		delete sync;
 		sync = NULL;
@@ -53,7 +54,7 @@ void OGGDecoder::reset() {
 /**
  * Returns the next packet in stream_id
  * @param stream_id Stream idenifier
- * @return The next ogg_packet in the stream idenified by stream_id, or an empty packet if none is available
+ * @return The next ogg_packet in the stream idenified by stream_id, or NULL if none is available
  */
 ogg_packet* OGGDecoder::get_packet_from_stream(long stream_id) {
 	if(!streams.count(stream_id)) {
@@ -69,10 +70,7 @@ ogg_packet* OGGDecoder::get_packet_from_stream(long stream_id) {
 		read_next_packet_from_stream(stream_id);
 		if(!streams[stream_id].packets.size()) { // Stream is exhausted, return empty packet
 			dcerr("Stream is empty: "<<stream_id);
-			ogg_packet* p = new ogg_packet();
-			p->packet= NULL;
-			p->bytes =0;
-			return p;
+			return NULL;
 		}
 	}
 	ogg_packet* packet = streams[stream_id].packets.front();
@@ -105,7 +103,8 @@ void OGGDecoder::read_next_packet_from_stream(long stream_id) {
 				dcerr("Warning: lost sync in packets, skipping some bytes");
 			} /* Fallthrough intentional */
 			case 1 : { // Successfully extracted a packet
-				if(packet->e_o_s) state.exhausted = true;
+				if(packet->e_o_s)
+					state.exhausted = true;
 				streams[stream_id].packets.push_back(packet);
 				done=true;
 				break;
@@ -152,6 +151,10 @@ void OGGDecoder::read_next_page_for_stream(long stream_id) {
  * @return an ogg_page there was another page in the datasource, NULL otherwise
  */
 ogg_page* OGGDecoder::read_page() {
+	read_page((uint32)-1);
+}
+
+ogg_page* OGGDecoder::read_page(uint32 time_out) {
 	ogg_page* page = new ogg_page();
 	bool done = false;
 	while(!done) {
@@ -161,7 +164,7 @@ ogg_page* OGGDecoder::read_page() {
 				char* buffer = ogg_sync_buffer(sync, BLOCK_SIZE);
 				long bytes_read = datasource->read( (uint8*)buffer, BLOCK_SIZE );
 				if(ogg_sync_wrote(sync, bytes_read)) throw "Internal error in libogg!";
-				if(datasource->exhausted()) {
+				if(datasource->exhausted() || (datasource->getpos() >= time_out )) {
 					delete page;
 					return NULL;
 				}
@@ -196,8 +199,8 @@ IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
 	vector<long> stream_ids;
 	ogg_page* page;
 	bool done = false;
-	while(!done && ds->getpos() < 1024*16 ) {
-		page = read_page();
+	while((!done) && (ds->getpos() < 1024*16) ) {
+		page = read_page(1024*16);
 		if(page) {
 			if(ogg_page_bos(page)) {
 				stream_ids.push_back(ogg_page_serialno(page));
