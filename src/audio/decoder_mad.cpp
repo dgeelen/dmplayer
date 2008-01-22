@@ -31,18 +31,15 @@ MadDecoder::MadDecoder(IDataSource* ds)
 	BytesInInput = 0;
 	eos = false;
 	datasource = ds;
-	INPUT_BUFFER = new char[INPUT_BUFFER_SIZE];
-	OUTPUT_BUFFER = new char[OUTPUT_BUFFER_SIZE];
 }
 
 IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
 {
 	datasource->reset();
 	IDecoder* result;
-	char* SMALL_INPUT_BUFFER = new char[INPUT_BUFFER_SIZE];
-	BytesInInput = datasource->read((uint8*) SMALL_INPUT_BUFFER, INPUT_BUFFER_SIZE);
+	BytesInInput = datasource->read(input_buffer, INPUT_BUFFER_SIZE);
 
-	mad_stream_buffer(&Stream, (const unsigned char*)SMALL_INPUT_BUFFER, BytesInInput);
+	mad_stream_buffer(&Stream, input_buffer, BytesInInput);
 
 	if(!Stream.error){
 		result = new MadDecoder(datasource);
@@ -51,7 +48,6 @@ IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
 	datasource->reset();
 	mad_stream_finish(&Stream);
 
-	delete SMALL_INPUT_BUFFER;
 	return result;
 }
 
@@ -62,17 +58,17 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 	// Empty the outputbuffer here if there are still samples left
 	if (BytesInOutput > 0) {
 		int numcopy = std::min(max, BytesInOutput);
-		memcpy(buf, OUTPUT_BUFFER, numcopy);
+		memcpy(buf, output_buffer, numcopy);
 		BytesOut += numcopy;
 		BytesInOutput -= numcopy;
-		memmove(OUTPUT_BUFFER, OUTPUT_BUFFER+numcopy, BytesInOutput);
+		memmove(output_buffer, output_buffer + numcopy, BytesInOutput);
 	}
 
 	while (BytesOut < req) { // There are not enough bytes yet decoded
 
 		{	//Fill the inputbuffer as full as possible
 			uint toRead = INPUT_BUFFER_SIZE - BytesInInput;
-			uint Read = datasource->read((uint8*) INPUT_BUFFER + BytesInInput, toRead);
+			uint Read = datasource->read(input_buffer + BytesInInput, toRead);
 			BytesInInput += Read;
 			eos = datasource->exhausted();
 		}
@@ -80,7 +76,7 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 		if (Stream.buffer == NULL || Stream.next_frame) {
 
 			//Buffer is sent to MAD to decode to a stream
-			mad_stream_buffer(&Stream, (const unsigned char*)INPUT_BUFFER, BytesInInput);
+			mad_stream_buffer(&Stream, input_buffer, BytesInInput);
 			Stream.error = MAD_ERROR_NONE;
 		}
 		//Decode the frame here
@@ -90,9 +86,9 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 		}
 
 		if (Stream.next_frame) {
-			int BytesLeft = INPUT_BUFFER + INPUT_BUFFER_SIZE - (char*)Stream.next_frame;
+			int BytesLeft = input_buffer + INPUT_BUFFER_SIZE - Stream.next_frame;
 			BytesInInput = BytesLeft;
-			memmove(INPUT_BUFFER, Stream.next_frame, BytesLeft);
+			memmove(input_buffer, Stream.next_frame, BytesLeft);
 		} else {
 			BytesInInput = 0;
 		}
@@ -143,7 +139,7 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 			/// Here we put the other part of the sample in the output buffer.
 			int x = req - BytesOut;
 			memcpy(buf+BytesOut, tbuf, x);
-			memcpy(OUTPUT_BUFFER+BytesInOutput, tbuf+x, 4-x);
+			memcpy(output_buffer+BytesInOutput, tbuf+x, 4-x);
 			BytesOut += x;
 			BytesInOutput += (4 - x);
 			++i;
@@ -153,8 +149,8 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 
 			/// Put all that could not fit in buf, in the output buffer.
 
-			signed short* Samplel = (signed short*) (OUTPUT_BUFFER + BytesInOutput);
-			signed short* Sampler = (signed short*) (OUTPUT_BUFFER + BytesInOutput + 2);
+			signed short* Samplel = (signed short*) (output_buffer + BytesInOutput);
+			signed short* Sampler = (signed short*) (output_buffer + BytesInOutput + 2);
 			// Left Channel
 			*Samplel = MadFixedToSshort(Synth.pcm.samples[0][i]);
 
