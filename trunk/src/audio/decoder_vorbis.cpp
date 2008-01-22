@@ -41,8 +41,11 @@ VorbisDecoder::~VorbisDecoder() {
 
 }
 
+uint32 VorbisDecoder::doDecode(uint8* buf, uint32 max, uint32 req) {
+	dcerr("");
+}
+
 IDecoder* VorbisDecoder::tryDecode(IDataSource* ds) {
-	return NULL; // disabled until it doesn't crash
 	dcerr("");
 	reset();
 	ds->reset();
