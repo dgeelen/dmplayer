@@ -16,15 +16,18 @@ struct stream_decoding_state {
 class OGGDecoder : public IDecoder {
 	public:
 		OGGDecoder();
-		OGGDecoder(IDataSource* ds);
 		~OGGDecoder();
 		IDecoder* tryDecode(IDataSource* ds);
-		uint32 doDecode(uint8* buf, uint32 max, uint32 req) { return 0; }; //FIXME: implement in .cpp file
+		uint32 doDecode(uint8* buf, uint32 max, uint32 req); //FIXME: implement in .cpp file
 
 		/* Functions for DataSources */
 		ogg_packet* get_packet_from_stream(long stream_id);
 		void reset();
 	private:
+		void read_bos_pages();
+		OGGDecoder(IDataSource* ds);
+		IDecoder* find_decoder();
+
 		ogg_sync_state* sync;
 		std::map<long, struct stream_decoding_state > streams;
 		bool all_bos_pages_handled;
@@ -34,6 +37,8 @@ class OGGDecoder : public IDecoder {
 		void read_next_packet_from_stream(long stream_id);
 
 		IDataSource* datasource;
+		long current_stream;
+		IDecoder* current_decoder;
 
 		void uninitialize();
 		void initialize();
