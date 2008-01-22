@@ -76,7 +76,7 @@ IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
 
 uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 {
-	long BytesOut = 0;
+	uint32 BytesOut = 0;
 
 	// Empty the outputbuffer here if there are still samples left
 	if (BytesInOutput > 0) {

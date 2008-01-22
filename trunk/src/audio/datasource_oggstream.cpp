@@ -41,7 +41,7 @@ bool OGGStreamDataSource::exhausted() {
 uint32 OGGStreamDataSource::read(uint8* const buffer, uint32 len) {
 	ogg_packet* packet = decoder->get_packet_from_stream(stream_id);
 	if(packet) {
-		if(packet->bytes > len) dcerr("Warning: packet won't fit buffer!");
+		if(packet->bytes > (int)len) dcerr("Warning: packet won't fit buffer!");
 		int n = min((unsigned long)packet->bytes, len);
 		memcpy(buffer, packet->packet, n);
 		delete packet;

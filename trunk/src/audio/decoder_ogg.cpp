@@ -154,7 +154,7 @@ void OGGDecoder::read_next_page_for_stream(long stream_id) {
  * @return an ogg_page there was another page in the datasource, NULL otherwise
  */
 ogg_page* OGGDecoder::read_page() {
-	read_page((uint32)-1);
+	return read_page((uint32)-1);
 }
 
 ogg_page* OGGDecoder::read_page(uint32 time_out) {
@@ -167,7 +167,7 @@ ogg_page* OGGDecoder::read_page(uint32 time_out) {
 				char* buffer = ogg_sync_buffer(sync, BLOCK_SIZE);
 				long bytes_read = datasource->read( (uint8*)buffer, BLOCK_SIZE );
 				if(ogg_sync_wrote(sync, bytes_read)) throw "Internal error in libogg!";
-				if(datasource->exhausted() || (datasource->getpos() >= time_out )) {
+				if(datasource->exhausted() || (datasource->getpos() >= (int)time_out )) {
 					delete page;
 					return NULL;
 				}
@@ -195,6 +195,7 @@ ogg_page* OGGDecoder::read_page(uint32 time_out) {
 
 //NOTE: We do not (yet, if ever) support concatenated streams
 IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
+	return NULL;
 	reset();
 	ds->reset();
 	datasource = ds;

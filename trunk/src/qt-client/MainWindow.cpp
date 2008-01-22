@@ -1,3 +1,4 @@
+#include "../cross-platform.h"
 #include "MainWindow.moc"
 #include <QFileDialog>
 
