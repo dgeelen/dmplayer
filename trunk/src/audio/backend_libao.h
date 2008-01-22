@@ -20,9 +20,7 @@ class LibAOBackend : public IBackend {
 		uint8* audio_buffer[2];
 		bool  play_back;
 
-		boost::barrier* fill_buffer_barrier;
-		boost::mutex buffer_a_mutex;
-		boost::mutex buffer_b_mutex;
+		boost::barrier fill_buffer_barrier;
 		boost::thread* thread_decoder_read_thread;
 		boost::thread* thread_ao_play_thread;
 		void decoder_read_thread();
