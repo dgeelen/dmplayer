@@ -96,24 +96,25 @@ HTTPStreamDataSource::HTTPStreamDataSource(std::string url)
 
 unsigned long HTTPStreamDataSource::read(uint8* buffer, uint32 len)
 {
-	uint32 torecv = HTTP_STREAM_BUFFER_SIZE-1;
-	torecv = min(torecv, HTTP_STREAM_BUFFER_SIZE-datawpos);
-	torecv = min(torecv, HTTP_STREAM_BUFFER_SIZE-(datalen+1));
-	torecv = min(torecv, HTTP_STREAM_RECV_CHUNK);
-	torecv = min(torecv, len);
+	if((len>datalen) || (dataofs>0)) {
+		uint32 torecv = HTTP_STREAM_BUFFER_SIZE-1;
+		torecv = min(torecv, HTTP_STREAM_BUFFER_SIZE-datawpos);
+		torecv = min(torecv, HTTP_STREAM_BUFFER_SIZE-(datalen+1));
+		torecv = min(torecv, HTTP_STREAM_RECV_CHUNK);
+		torecv = min(torecv, len);
 
-	if (torecv) {
-		uint arecv = conn->receive(data+datawpos, torecv);
-		//cout << "REVC = req : " << len << "  try: " <<
-		datalen += arecv;
-		datawpos += arecv;
-		if (datawpos == HTTP_STREAM_BUFFER_SIZE) {
+		if (torecv) {
+			uint arecv = conn->receive(data+datawpos, torecv);
+			//cout << "REVC = req : " << len << "  try: " <<
+			datalen += arecv;
+			datawpos += arecv;
+			if (datawpos == HTTP_STREAM_BUFFER_SIZE) {
 
-			datawpos = 0;
-			dataofs += HTTP_STREAM_BUFFER_SIZE;
+				datawpos = 0;
+				dataofs += 1;
+			}
 		}
 	}
-
 	uint32 toread = HTTP_STREAM_BUFFER_SIZE-1;
 	toread = min(toread, HTTP_STREAM_BUFFER_SIZE-datarpos);
 	toread = min(toread, datalen);
