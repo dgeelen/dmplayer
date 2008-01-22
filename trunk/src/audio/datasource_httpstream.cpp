@@ -1,6 +1,7 @@
 #include "datasource_httpstream.h"
 
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -61,7 +62,8 @@ HTTPStreamDataSource::HTTPStreamDataSource(std::string url)
 		ss << "GET /" << substr << " HTTP/1.0\r\n";
 		ss << "Host: " << hoststr << ":" << port << "\r\n";
 		ss << "User-Agent: mpmpd-vunknown\r\n";
-		ss << "Icy-MetaData: 1\r\n";
+		// we can't handle metadata yet, so don't ask for it
+		//ss << "Icy-MetaData: 1\r\n"; 
 		ss << "Connection: close\r\n";
 		ss << "\r\n";
 		sendmsg = ss.str();
@@ -91,27 +93,29 @@ HTTPStreamDataSource::HTTPStreamDataSource(std::string url)
 
 unsigned long HTTPStreamDataSource::read(uint8* buffer, uint32 len)
 {
-	uint torecv = HTTP_STREAM_BUFFER_SIZE-1;
+	uint32 torecv = HTTP_STREAM_BUFFER_SIZE-1;
 	torecv = min(torecv, HTTP_STREAM_BUFFER_SIZE-datawpos);
 	torecv = min(torecv, HTTP_STREAM_BUFFER_SIZE-(datalen+1));
+	torecv = min(torecv, HTTP_STREAM_RECV_CHUNK);
+	torecv = min(torecv, len);
 
-	torecv = (torecv < HTTP_STREAM_RECV_CHUNK) ? torecv : HTTP_STREAM_RECV_CHUNK;
-//	torecv = min(torecv, HTTP_STREAM_RECV_CHUNK);
-	torecv = (torecv < len) ? torecv : len;
-//	torecv = min(torecv, len);
 	if (torecv) {
 		uint arecv = conn->receive(data+datawpos, torecv);
+		//cout << "REVC = req : " << len << "  try: " <<
 		datalen += arecv;
 		datawpos += arecv;
 		if (datawpos == HTTP_STREAM_BUFFER_SIZE) {
+
 			datawpos = 0;
 			dataofs += HTTP_STREAM_BUFFER_SIZE;
 		}
 	}
 
-	uint toread = HTTP_STREAM_BUFFER_SIZE-1;
+	uint32 toread = HTTP_STREAM_BUFFER_SIZE-1;
 	toread = min(toread, HTTP_STREAM_BUFFER_SIZE-datarpos);
 	toread = min(toread, datalen);
+	toread = min(toread, len);
+
 	memcpy(buffer, data+datarpos, toread);
 	datarpos += toread;
 	datalen -= toread;

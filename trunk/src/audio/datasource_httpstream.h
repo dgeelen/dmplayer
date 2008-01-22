@@ -6,16 +6,16 @@
 
 #include <string>
 
-#define HTTP_STREAM_BUFFER_SIZE 1024*64
-#define HTTP_STREAM_RECV_CHUNK 1024*32
+#define HTTP_STREAM_BUFFER_SIZE ( (uint32) 1024*64 )
+#define HTTP_STREAM_RECV_CHUNK  ( (uint32) 1024*32 )
 
 class HTTPStreamDataSource : public IDataSource {
 	private:
 		uint8 data[HTTP_STREAM_BUFFER_SIZE]; // data buffer
-		uint datarpos;    // read position in buffer
-		uint datawpos;    // write position in buffer
-		uint datalen;     // amount of valid data in buffer
-		uint dataofs;     // current offset to begin of stream of buffer
+		uint32 datarpos;    // read position in buffer
+		uint32 datawpos;    // write position in buffer
+		uint32 datalen;     // amount of valid data in buffer
+		uint32 dataofs;     // current offset to begin of stream of buffer
 		tcp_socket* conn;
 	public:
 		HTTPStreamDataSource();
