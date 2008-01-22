@@ -29,7 +29,7 @@ class MadDecoder : public IDecoder{
 
 		IDataSource* datasource;
 
-		MadDecoder(Audio_Format af, IDataSource* ds);
+		MadDecoder(AudioFormat af, IDataSource* ds);
 	public:
 		MadDecoder();
 		~MadDecoder();

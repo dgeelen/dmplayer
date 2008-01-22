@@ -8,7 +8,7 @@
 class OGGVorbisFileDecoder : public IDecoder{
 	private:
 		OggVorbis_File* oggFile;
-		OGGVorbisFileDecoder(OggVorbis_File* oggFile);
+		OGGVorbisFileDecoder(AudioFormat af, OggVorbis_File* oggFile);
 		int bitStream;
 	public:
 		OGGVorbisFileDecoder();

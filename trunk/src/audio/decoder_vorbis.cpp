@@ -3,12 +3,12 @@
 #include <algorithm>
 using namespace std;
 
-VorbisDecoder::VorbisDecoder() : IDecoder() {
+VorbisDecoder::VorbisDecoder() : IDecoder(AudioFormat()) {
 	datasource = NULL;
 	initialize();
 }
 
-VorbisDecoder::VorbisDecoder(IDataSource* ds) : IDecoder() {
+VorbisDecoder::VorbisDecoder(IDataSource* ds) : IDecoder(AudioFormat()) {
 	datasource = ds;
 	initialize();
 	datasource->reset();

@@ -13,12 +13,12 @@ static ov_callbacks OV_CALLBACKS_IDATASOURCE = {
   (long (*)(void *))                            NULL
 };
 
-OGGVorbisFileDecoder::OGGVorbisFileDecoder()
+OGGVorbisFileDecoder::OGGVorbisFileDecoder() : IDecoder(AudioFormat())
 {
 	this->oggFile = NULL;
 }
 
-OGGVorbisFileDecoder::OGGVorbisFileDecoder(OggVorbis_File* oggFile)
+OGGVorbisFileDecoder::OGGVorbisFileDecoder(AudioFormat af, OggVorbis_File* oggFile) : IDecoder(af)
 {
 	this->oggFile = oggFile;
 }
@@ -43,7 +43,13 @@ IDecoder* OGGVorbisFileDecoder::tryDecode(IDataSource* datasource)
 	}
 	pInfo = ov_info(oggFile, -1);
 
-	return new OGGVorbisFileDecoder(oggFile);
+	AudioFormat af;
+	af.SampleRate = pInfo->rate;
+	af.Channels = pInfo->channels;
+	af.BitsPerSample = 16;
+	af.SignedSample = true;
+	af.LittleEndian = true;
+	return new OGGVorbisFileDecoder(af, oggFile);
 }
 
 uint32 OGGVorbisFileDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
