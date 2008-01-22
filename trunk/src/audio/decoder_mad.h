@@ -6,16 +6,16 @@
 #include "mad.h"
 
 
-#define INPUT_BUFFER_SIZE	(5*8192)
-#define OUTPUT_BUFFER_SIZE	8192 /* Must be an integer multiple of 4. */
+#define INPUT_BUFFER_SIZE   (5*8192)
+#define OUTPUT_BUFFER_SIZE  8192
 
 class MadDecoder : public IDecoder{
 
 	private:
 
 		static signed short MadFixedToSshort(mad_fixed_t Fixed);
-		char* INPUT_BUFFER;
-		char* OUTPUT_BUFFER;
+		uint8 input_buffer[INPUT_BUFFER_SIZE];
+		uint8 output_buffer[OUTPUT_BUFFER_SIZE];
 
 		mad_stream Stream;
 		mad_frame Frame;
