@@ -76,7 +76,13 @@ void AudioController::test_functie(std::string file) {
 	if (ds == NULL) {
 		try {
 			ds = new FileReaderDataSource(file);
-		} catch (...) {
+		}
+		catch (std::string error_msg) {
+			dcerr("Error message: "<<error_msg);
+			ds = NULL;
+		}
+		catch (char* error_msg) {
+			dcerr("Error message: "<<error_msg);
 			ds = NULL;
 		}
 	}
@@ -84,12 +90,18 @@ void AudioController::test_functie(std::string file) {
 	if (ds == NULL) {
 		try {
 			ds = new HTTPStreamDataSource(file);
-		} catch (...) {
+		}
+		catch (std::string error_msg) {
+			dcerr("Error message: "<<error_msg);
+			ds = NULL;
+		}
+		catch (char* error_msg) {
+			dcerr("Error message: "<<error_msg);
 			ds = NULL;
 		}
 	}
 
-	if (ds == NULL) 
+	if (ds == NULL)
 		dcerr("Error opening :" << file);
 	else
 	{
