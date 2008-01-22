@@ -193,48 +193,48 @@ ogg_page* OGGDecoder::read_page(uint32 time_out) {
 	return page;
 }
 
-//NOTE: We do not (yet, if ever) support concatenated streams
-IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
-	return NULL;
-	reset();
-	ds->reset();
-	datasource = ds;
-	vector<long> stream_ids;
-	ogg_page* page;
-	bool done = false;
-	while((!done) && (ds->getpos() < 1024*16) ) {
-		page = read_page(1024*16);
-		if(page) {
-			if(ogg_page_bos(page)) {
-				stream_ids.push_back(ogg_page_serialno(page));
-			}
-			else {
-				done = true;
-			}
-			delete page;
-		}
-		else {
-			done = true;
-		}
-	}
-	IDecoder* result = NULL;
-
-	for(unsigned int i=0; i<stream_ids.size(); ++i) {
-		dcerr("found a stream with ID " << stream_ids[i]);
-		OGGDecoder* oggd = new OGGDecoder(ds);
-		OGGStreamDataSource* oggs = new OGGStreamDataSource(oggd, stream_ids[i]);
+IDecoder* OGGDecoder::find_decoder() {
+	for(map<long, stream_decoding_state>::iterator i = streams.begin(); i!=streams.end(); ++i) {
+		dcerr("found a stream with ID " << i->second.stream_state->serialno);
+		OGGStreamDataSource* oggs = new OGGStreamDataSource(this, i->second.stream_state->serialno);
 		for (unsigned int i = 0; i < decoderlist.size(); ++i) {
 			IDecoder* dc = decoderlist[i](oggs);
 			if (dc) {
-				dcerr("Using decoder #"<<i);
-				result = dc;
+				dcerr("Found decoder for stream 1: "<<i);
+				return dc;
 				break;
 			}
 		}
-		if(result) break;
 		delete oggs;
-		delete oggd;
 	}
+	return NULL;
+}
+
+/* After this all bos pages should be in streams */
+void OGGDecoder::read_bos_pages() {
+	all_bos_pages_handled = false;
+	ogg_page* page;
+	bool done = false;
+	while((!done) && (datasource->getpos() < 1024*16) ) {
+		page = read_page(1024*16);
+		done=true;
+		if(page) if(ogg_page_bos(page)) done = false;
+		delete page;
+	}
+	all_bos_pages_handled = true;
+}
+
+uint32 OGGDecoder::doDecode(uint8* buf, uint32 max, uint32 req) {
+	/* TODO: Pass through */
+}
+
+//NOTE: We do not (yet, if ever) support concatenated streams
+IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
+	datasource = ds;
+	reset();
+	read_bos_pages();
+	current_decoder = find_decoder();
 	datasource = NULL;
-	return result;
+	if(current_decoder) return new OGGDecoder(ds);
+	return NULL;
 }
