@@ -13,7 +13,7 @@ class FileReaderDataSource: public IDataSource
 		void reset();
 		bool exhausted();
 		long getpos();
-		uint32 read(uint8* buffer, uint32 len);
+		uint32 getData(uint8* buffer, uint32 len);
 	private:
 		FILE* FileHandle;
 };

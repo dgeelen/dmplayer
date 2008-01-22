@@ -94,7 +94,7 @@ HTTPStreamDataSource::HTTPStreamDataSource(std::string url)
 	dataofs = 0;
 }
 
-unsigned long HTTPStreamDataSource::read(uint8* buffer, uint32 len)
+unsigned long HTTPStreamDataSource::getData(uint8* buffer, uint32 len)
 {
 	if((len>datalen) || (dataofs>0)) {
 		uint32 torecv = HTTP_STREAM_BUFFER_SIZE-1;
@@ -109,7 +109,6 @@ unsigned long HTTPStreamDataSource::read(uint8* buffer, uint32 len)
 			datalen += arecv;
 			datawpos += arecv;
 			if (datawpos == HTTP_STREAM_BUFFER_SIZE) {
-
 				datawpos = 0;
 				dataofs += 1;
 			}
