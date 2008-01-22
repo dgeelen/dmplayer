@@ -224,7 +224,7 @@ void OGGDecoder::read_bos_pages() {
 	all_bos_pages_handled = true;
 }
 
-uint32 OGGDecoder::doDecode(uint8* buf, uint32 max, uint32 req) {
+uint32 OGGDecoder::getData(uint8* buf, uint32 len) {
 	/* TODO: Pass through */
 	return 0;
 }

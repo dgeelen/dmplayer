@@ -103,6 +103,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 # Finally declare all files to CMake
 ADD_LIBRARY(mpmp_audio
+	audiosource_interface.h
 	backend_interface.h
 	datasource_interface.h
 	decoder_interface.h

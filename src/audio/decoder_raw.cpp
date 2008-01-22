@@ -46,13 +46,13 @@ IDecoder* RawDecoder::tryDecode(IDataSource* datasource)
 	return new RawDecoder(af, datasource);
 }
 
-uint32 RawDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
+uint32 RawDecoder::getData(uint8* buf, uint32 len)
 {
 	uint32 res = 0;
 	do {
-		uint32 read = source->read(buf+res, max-res);
+		uint32 read = source->read(buf+res, len-res);
 		if (read == 0) return res;
 		res += read;
-	} while (res < req);
+	} while (res < len);
 	return res;
 }

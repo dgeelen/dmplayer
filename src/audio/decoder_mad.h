@@ -9,7 +9,7 @@
 #define INPUT_BUFFER_SIZE   (5*8192)
 #define OUTPUT_BUFFER_SIZE  8192
 
-class MadDecoder : public IDecoder{
+class MadDecoder : public IDecoder {
 
 	private:
 
@@ -34,7 +34,7 @@ class MadDecoder : public IDecoder{
 		MadDecoder();
 		~MadDecoder();
 		IDecoder* tryDecode(IDataSource* datasource);
-		uint32 doDecode(uint8* buf, uint32 max, uint32 req);
+		uint32 getData(uint8* buf, uint32 max);
 };
 
 #endif // DECODER_MAD_H_INCLUDED

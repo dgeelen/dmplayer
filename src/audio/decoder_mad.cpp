@@ -73,20 +73,20 @@ IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
 	return result;
 }
 
-uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
+uint32 MadDecoder::getData(uint8* buf, uint32 len)
 {
 	uint32 BytesOut = 0;
 
 	// Empty the outputbuffer here if there are still samples left
 	if (BytesInOutput > 0) {
-		int numcopy = std::min(max, BytesInOutput);
+		int numcopy = std::min(len, BytesInOutput);
 		memcpy(buf, output_buffer, numcopy);
 		BytesOut += numcopy;
 		BytesInOutput -= numcopy;
 		memmove(output_buffer, output_buffer + numcopy, BytesInOutput);
 	}
 
-	while (BytesOut < req) { // There are not enough bytes yet decoded
+	while (BytesOut < len) { // There are not enough bytes yet decoded
 
 		{	//Fill the inputbuffer as full as possible
 			uint toRead = INPUT_BUFFER_SIZE - BytesInInput;
@@ -123,7 +123,7 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 
 		// [hackmode] Because Mads output is 24 bit PCM, we need to convert everything to 16 bit
 		int i;
-		for(i = 0; i < Synth.pcm.length && BytesOut+4 <= max; ++i)
+		for(i = 0; i < Synth.pcm.length && BytesOut+4 <= len; ++i)
 		{
 			///In this loop we send as much as possible to buf
 			signed short* Samplel = (signed short*)(buf+BytesOut);
@@ -140,7 +140,7 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 			BytesOut += 4;
 		}
 
-		if (BytesOut < req && i < Synth.pcm.length) {
+		if (BytesOut < len && i < Synth.pcm.length) {
 
 			/** It is possible that the buffer can not be filled with whole samples,
 				so we put a part of the next sample in buf.
@@ -160,7 +160,7 @@ uint32 MadDecoder::doDecode(uint8* buf, uint32 max, uint32 req)
 				*Samplel = *Sampler;
 
 			/// Here we put the other part of the sample in the output buffer.
-			int x = req - BytesOut;
+			int x = len - BytesOut;
 			memcpy(buf+BytesOut, tbuf, x);
 			memcpy(output_buffer+BytesInOutput, tbuf+x, 4-x);
 			BytesOut += x;

@@ -12,7 +12,7 @@ class AudioController {
 		~AudioController();
 		IDecoder* tryDecode(IDataSource*);
 		void test_functie(std::string file);
-		uint32 doDecode(uint8* buf, uint32 max, uint32 req);
+		uint32 getData(uint8* buf, uint32 len);
 	private:
 		IBackend* backend;
 		IDecoder* curdecoder;

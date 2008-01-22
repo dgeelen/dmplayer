@@ -109,10 +109,10 @@ bool VorbisDecoder::read_vorbis_headers() {
 	return true;
 }
 
-uint32 VorbisDecoder::doDecode(uint8* buffer, uint32 max, uint32 req) {
+uint32 VorbisDecoder::getData(uint8* buffer, uint32 len)
+{
 	const int bytes_per_sample = info->channels * sizeof(ogg_int16_t);
-	const int samples_requested = req / bytes_per_sample;
-	if(max < req) throw "VorbisDecoder: Logic error!";
+	const int samples_requested = len / bytes_per_sample;
 	uint32 samples_decoded = 0;
 	bool done = false;
 	while(!done) {
