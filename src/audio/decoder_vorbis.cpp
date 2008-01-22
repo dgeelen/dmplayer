@@ -126,7 +126,7 @@ uint32 VorbisDecoder::doDecode(uint8* buffer, uint32 max, uint32 req) {
 				float *mono_channel=pcm[channel];
 				for(int i=0; i<samples_todo; ++i) {
 					#if 1
-					int val=mono_channel[i]*32767.f;
+					int val=(int)(mono_channel[i]*32767.f);
 					#else /* optional dither */
 					int val=mono_channel[i]*32767.f+drand48()-0.5f;
 					#endif

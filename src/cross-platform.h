@@ -5,6 +5,8 @@
   /* fix for MSVS (C++ 2005 express edition) */
   #if defined(_MSC_VER)
     #define _CRT_SECURE_NO_DEPRECATE
+	#define _CRT_SECURE_NO_WARNINGS
+	#define _SCL_SECURE_NO_WARNINGS
     #define snprintf _snprintf
   #endif
 
@@ -23,7 +25,9 @@
 	#if defined(__WIN32__) || defined(WIN32)
 		// defines needed for any windows header we will include
 		#define WIN32_LEAN_AND_MEAN
-		#define NOMINMAX
+		#ifndef NOMINMAX
+			#define NOMINMAX
+		#endif
 
 		// assume winsock on win32 for now
 		#define HAVE_WINSOCK

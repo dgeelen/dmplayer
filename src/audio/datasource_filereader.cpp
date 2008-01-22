@@ -1,3 +1,4 @@
+#include "../cross-platform.h"
 #include "datasource_filereader.h"
 #include <iostream>
 #include "../error-handling.h"
