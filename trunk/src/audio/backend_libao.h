@@ -9,10 +9,10 @@
 
 class LibAOBackend : public IBackend {
 	public:
-		LibAOBackend(IDecoder* dec);
+		LibAOBackend(AudioController* dec);
 		virtual ~LibAOBackend();
 	private:
-		IDecoder* decoder;
+		AudioController* decoder;
 
 		ao_device *device;
 		ao_sample_format format;
