@@ -29,7 +29,7 @@ AudioController::AudioController() {
 		dcerr("AudioController: PortAudioBackend is available");
 	} catch(...) {}
 	#endif
-	#ifdef SDL_MIXER_BACKEND
+	#if 0 //SDL_MIXER_BACKEND
 	try {
 		SDLMixerBackend* be = new SDLMixerBackend(this);
 		backend = be;
