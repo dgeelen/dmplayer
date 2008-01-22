@@ -101,6 +101,9 @@ void OGGDecoder::read_next_packet_from_stream(long stream_id) {
 			}
 			case -1: { // Non-fatal error while extracting packet
 				dcerr("Warning: lost sync in packets, skipping some bytes");
+				if((packet->packet==NULL)) { /* Simple test if packet is broken, ifso we ignore it */
+					break;
+				}
 			} /* Fallthrough intentional */
 			case 1 : { // Successfully extracted a packet
 				if(packet->e_o_s)
@@ -174,7 +177,7 @@ ogg_page* OGGDecoder::read_page(uint32 time_out) {
 				// Note that unlike in the case of extracting a packet
 				// it appears we do not yet have a page in this case
 				dcerr("Warning: lost sync in pages, skipping some bytes");
-				break;
+				break; //FIXME: Same test as in lost packet?
 			}
 			case 1 : { // Successfully extracted a page
 				done=true;
@@ -222,6 +225,7 @@ IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
 		for (unsigned int i = 0; i < decoderlist.size(); ++i) {
 			IDecoder* dc = decoderlist[i](oggs);
 			if (dc) {
+				dcerr("Using decoder #"<<i);
 				result = dc;
 				break;
 			}
