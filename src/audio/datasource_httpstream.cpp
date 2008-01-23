@@ -16,7 +16,7 @@ HTTPStreamDataSource::~HTTPStreamDataSource()
 {
 	if (conn) {
 		conn->disconnect();
-		delete conn;
+		conn = NULL;
 	}
 }
 
