@@ -48,6 +48,7 @@ IF(ENABLE_QT_GUI)
 		MainWindow.h
 		../network-handler.h
 		../network-handler.cpp
+		../error-handling.cpp
 		../network-core.cpp
 	)
 
