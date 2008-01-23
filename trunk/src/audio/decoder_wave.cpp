@@ -19,7 +19,6 @@ IDecoderRef WaveDecoder::tryDecode(IDataSourceRef datasource)
 {
 	datasource->reset();
 	uint8 hdr[48];
-	uint8* uhdr = (uint8*)hdr;
 	if (datasource->getData(hdr, 48) != 48) return IDecoderRef();
 #define STRCHECK(x, str) for (unsigned int i = 0; i < strlen(str); ++i) if (hdr[x+i] != str[i]) return IDecoderRef();
 
@@ -28,10 +27,10 @@ IDecoderRef WaveDecoder::tryDecode(IDataSourceRef datasource)
 	STRCHECK(12, "fmt ");
 	STRCHECK(36, "data");
 
-	uint16 fmt      = uhdr[20] + (uhdr[21] << 8);
-	uint16 channels = uhdr[22] + (uhdr[23] << 8);
-	uint32 srate    = uhdr[24] + (uhdr[25] << 8) + (uhdr[26] << 16) + (uhdr[27] << 24);
-	uint16 bits     = uhdr[34] + (uhdr[35] << 8);
+	uint16 fmt      = hdr[20] + (hdr[21] << 8);
+	uint16 channels = hdr[22] + (hdr[23] << 8);
+	uint32 srate    = hdr[24] + (hdr[25] << 8) + (hdr[26] << 16) + (hdr[27] << 24);
+	uint16 bits     = hdr[34] + (hdr[35] << 8);
 
 	if (fmt != 1)       return IDecoderRef();
 
