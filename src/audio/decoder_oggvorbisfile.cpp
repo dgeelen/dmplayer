@@ -18,7 +18,9 @@ OGGVorbisFileDecoder::OGGVorbisFileDecoder() : IDecoder(AudioFormat())
 	this->oggFile = NULL;
 }
 
-OGGVorbisFileDecoder::OGGVorbisFileDecoder(AudioFormat af, OggVorbis_File* oggFile) : IDecoder(af)
+OGGVorbisFileDecoder::OGGVorbisFileDecoder(AudioFormat af, IDataSourceRef ds, OggVorbis_File* oggFile) :
+	IDecoder(af),
+	datasource(ds)
 {
 	this->oggFile = oggFile;
 }
@@ -31,15 +33,15 @@ OGGVorbisFileDecoder::~OGGVorbisFileDecoder()
 	}
 }
 
-IDecoder* OGGVorbisFileDecoder::tryDecode(IDataSource* datasource)
+IDecoderRef OGGVorbisFileDecoder::tryDecode(IDataSourceRef datasource)
 {
 	vorbis_info *pInfo;
 	datasource->reset();
 	OggVorbis_File* oggFile = new OggVorbis_File();
-	if (ov_open_callbacks(datasource, oggFile, NULL, 0, OV_CALLBACKS_IDATASOURCE)) {
+	if (ov_open_callbacks(datasource.get(), oggFile, NULL, 0, OV_CALLBACKS_IDATASOURCE)) {
 		ov_clear(oggFile);
 		delete oggFile;
-		return NULL;
+		return IDecoderRef();
 	}
 	pInfo = ov_info(oggFile, -1);
 
@@ -49,7 +51,7 @@ IDecoder* OGGVorbisFileDecoder::tryDecode(IDataSource* datasource)
 	af.BitsPerSample = 16;
 	af.SignedSample = true;
 	af.LittleEndian = true;
-	return new OGGVorbisFileDecoder(af, oggFile);
+	return IDecoderRef(new OGGVorbisFileDecoder(af, datasource, oggFile));
 }
 
 uint32 OGGVorbisFileDecoder::getData(uint8* buf, uint32 len)

@@ -2,8 +2,9 @@
 
 #include "../error-handling.h"
 #include <boost/bind.hpp>
+#include <boost/function.hpp>
 
-std::vector<boost::function<IDecoder* (IDataSource*)> > decoderlist;
+std::vector<boost::function<IDecoderRef (IDataSourceRef)> > decoderlist;
 
 #define UNIQUE_NAMESPACE_HELPER2(x, y) x ## y
 #define UNIQUE_NAMESPACE_HELPER1(a, b) UNIQUE_NAMESPACE_HELPER2(a,b)
@@ -21,14 +22,14 @@ std::vector<boost::function<IDecoder* (IDataSource*)> > decoderlist;
 #undef REGISTER_DECODER_FUNCTION
 #undef REGISTER_DECODER_CLASS
 
-IDecoder* IDecoder::findDecoder(IDataSource* ds)
+IDecoderRef IDecoder::findDecoder(IDataSourceRef ds)
 {
 	for (unsigned int i = 0; i < decoderlist.size(); ++i) {
-		IDecoder* decoder = decoderlist[i](ds);
+		IDecoderRef decoder = decoderlist[i](ds);
 		if (decoder) {
 			dcerr("Found a decoder; decoder #"<<i);
 			return decoder;
 		}
 	}
-	return NULL;
+	return IDecoderRef(); // NULL reference
 }

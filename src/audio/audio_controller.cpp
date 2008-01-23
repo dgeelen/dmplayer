@@ -21,7 +21,6 @@
 using namespace std;
 
 AudioController::AudioController() {
-	curdecoder = NULL;
 	#ifdef PORTAUDIO_BACKEND
 	backend = NULL;
 	try {
@@ -68,38 +67,38 @@ uint32 AudioController::getData(uint8* buf, uint32 len)
 }
 
 void AudioController::test_functie(std::string file) {
-	IDataSource* ds = NULL;
-	if (ds == NULL) {
+	IDataSourceRef ds;
+	if (!ds) {
 		try {
-			ds = new FileReaderDataSource(file);
+			ds = IDataSourceRef(new FileReaderDataSource(file));
 		}
 		catch (Exception& e) {
 			dcerr("Error message: " << e.what());
-			ds = NULL;
+			ds.reset();
 		}
 	}
 
-	if (ds == NULL) {
+	if (!ds) {
 		try {
-			ds = new HTTPStreamDataSource(file);
+			ds = IDataSourceRef(new HTTPStreamDataSource(file));
 		}
 		catch (Exception& e) {
 			dcerr("Error message: " << e.what());
-			ds = NULL;
+			ds.reset();
 		}
 	}
 
-	if (ds == NULL) {
+	if (!ds) {
 		dcerr("Error opening: " << file);
 		return;
 	}
 
 	curdecoder = IDecoder::findDecoder(ds);
-	if (curdecoder == NULL) {
+	if (!curdecoder) {
 		dcerr("Cannot find decoder for file: " << file);
 		return;
 	}
 
 	if (curdecoder->getAudioFormat() != backend->getAudioFormat())
-		curdecoder = new ReformatFilter(curdecoder, backend->getAudioFormat());
+		curdecoder = IAudioSourceRef(new ReformatFilter(curdecoder, backend->getAudioFormat()));
 }

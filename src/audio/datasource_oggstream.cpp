@@ -5,7 +5,7 @@
 #include <algorithm>
 using namespace std;
 
-OGGStreamDataSource::OGGStreamDataSource( OGGDecoder* decoder, long stream_id ) {
+OGGStreamDataSource::OGGStreamDataSource( OGGDecoderRef decoder, long stream_id ) {
 	this->decoder = decoder;
 	this->stream_id = stream_id;
 	is_exhausted = false;

@@ -7,14 +7,14 @@
 #include "../types.h"
 
 #include <vector>
-#include <boost/function.hpp>
 
+typedef boost::shared_ptr<class IDecoder> IDecoderRef;
 class IDecoder: public IAudioSource {
 	public:
 		IDecoder(AudioFormat af) : IAudioSource(af) {};
-		virtual IDecoder* tryDecode(IDataSource*) = 0;
+		virtual IDecoderRef tryDecode(IDataSourceRef) = 0;
 
-		static IDecoder* findDecoder(IDataSource* ds);
+		static IDecoderRef findDecoder(IDataSourceRef ds);
 };
 
 #endif//DECODER_INTERFACE_H

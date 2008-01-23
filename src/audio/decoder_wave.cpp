@@ -3,25 +3,25 @@
 
 WaveDecoder::WaveDecoder() : IDecoder(AudioFormat())
 {
-	source = NULL;
 }
 
-WaveDecoder::WaveDecoder(AudioFormat af, IDataSource* source) : IDecoder(af)
+WaveDecoder::WaveDecoder(AudioFormat af, IDataSourceRef ds)
+	: IDecoder(af)
+	, source(ds)
 {
-	this->source = source;
 }
 
 WaveDecoder::~WaveDecoder()
 {
 }
 
-IDecoder* WaveDecoder::tryDecode(IDataSource* datasource)
+IDecoderRef WaveDecoder::tryDecode(IDataSourceRef datasource)
 {
 	datasource->reset();
 	uint8 hdr[48];
 	uint8* uhdr = (uint8*)hdr;
-	if (datasource->getData(hdr, 48) != 48) return NULL;
-#define STRCHECK(x, str) for (unsigned int i = 0; i < strlen(str); ++i) if (hdr[x+i] != str[i]) return NULL;
+	if (datasource->getData(hdr, 48) != 48) return IDecoderRef();
+#define STRCHECK(x, str) for (unsigned int i = 0; i < strlen(str); ++i) if (hdr[x+i] != str[i]) return IDecoderRef();
 
 	STRCHECK( 0, "RIFF");
 	STRCHECK( 8, "WAVE");
@@ -33,7 +33,7 @@ IDecoder* WaveDecoder::tryDecode(IDataSource* datasource)
 	uint32 srate    = uhdr[24] + (uhdr[25] << 8) + (uhdr[26] << 16) + (uhdr[27] << 24);
 	uint16 bits     = uhdr[34] + (uhdr[35] << 8);
 
-	if (fmt != 1)       return NULL;
+	if (fmt != 1)       return IDecoderRef();
 
 	AudioFormat af;
 	af.Channels = channels;
@@ -42,7 +42,7 @@ IDecoder* WaveDecoder::tryDecode(IDataSource* datasource)
 	af.LittleEndian = true;
 	af.SignedSample = true;
 
-	return new WaveDecoder(af, datasource);
+	return IDecoderRef(new WaveDecoder(af, datasource));
 }
 
 uint32 WaveDecoder::getData(uint8* buf, uint32 len)

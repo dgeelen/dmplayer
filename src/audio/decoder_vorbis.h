@@ -8,13 +8,13 @@
 class VorbisDecoder : public IDecoder {
 	public:
 		VorbisDecoder();
-		VorbisDecoder(IDataSource* ds);
+		VorbisDecoder(IDataSourceRef ds);
 		~VorbisDecoder();
 		void reset();
-		IDecoder* tryDecode(IDataSource* ds);
+		IDecoderRef tryDecode(IDataSourceRef ds);
 		uint32 getData(uint8* buf, uint32 max);
 	private:
-		IDataSource* datasource;
+		IDataSourceRef datasource;
 		void initialize();
 		void uninitialize();
 		void construct_next_packet();
