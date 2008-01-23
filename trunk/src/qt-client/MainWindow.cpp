@@ -89,6 +89,13 @@ void MainWindow::on_OpenButton_clicked()
 //	trackProgress->setMaximum(handler->Length());
 }
 
+void MainWindow::on_OpenEditButton_clicked()
+{
+	QString fileName = lineEdit->text();
+	std::string str = fileName.toStdString();
+	audiocontroller.test_functie(str);
+}
+
 void MainWindow::on_PreviousButton_clicked()
 {
 	//skip
