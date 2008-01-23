@@ -6,6 +6,7 @@ find_package(Mad)
 find_package(LibAO)
 find_package(LibOGG)
 find_package(LibVorbis)
+find_package(LibFaad2)
 
 SET(BACKEND_SOURCE_FILES "")
 SET(DECODER_SOURCE_FILES "")
@@ -50,6 +51,13 @@ IF(LIBAO_FOUND) # Xiph.org libao backend
 ENDIF(LIBAO_FOUND)
 
 # Now set up all decoders
+
+IF(LIBFAAD2_FOUND) # http://www.audiocoding.com/faad2.html
+	SET(DECODER_NAMES ${DECODER_NAMES} AAC)
+	SET(DECODER_LIBRARIES ${DECODER_LIBRARIES} ${LIBFAAD2_LIBRARY})
+	INCLUDE_DIRECTORIES(${LIBFAAD2_INCLUDE_DIR})
+ENDIF(LIBFAAD2_FOUND)
+
 IF(MAD_FOUND) # MAD MP3 decoder
 	SET(DECODER_NAMES ${DECODER_NAMES} Mad)
 	SET(DECODER_LIBRARIES ${DECODER_LIBRARIES} ${MAD_LIBRARY})
