@@ -3,12 +3,20 @@
 
 #include "../types.h"
 
-struct AudioFormat{
+struct AudioFormat {
 	int SampleRate;
 	int Channels;
 	int BitsPerSample;
 	bool SignedSample;
 	bool LittleEndian;
+
+	AudioFormat() {
+		SampleRate = -1;
+		Channels = 2;
+		BitsPerSample = 16;
+		SignedSample = true;
+		LittleEndian = true;
+	}
 	
 	bool operator==(const AudioFormat& af) const {
 		if (SampleRate    != af.SampleRate   ) return false;
@@ -24,14 +32,14 @@ struct AudioFormat{
 };
 
 class IAudioSource {
-	private:
+	protected:
 		AudioFormat audioformat;
 
 	public:
 		IAudioSource(AudioFormat af) { audioformat = af;};
 		virtual ~IAudioSource() {};
 
-		const AudioFormat getAudioFormat() {return audioformat;};
+		const AudioFormat getAudioFormat() { return audioformat; };
 
 		virtual uint32 getData(uint8* buf, uint32 max) = 0;
 };
