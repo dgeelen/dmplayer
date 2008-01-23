@@ -51,9 +51,9 @@ void xmain()
 	dcerr("Starting network_handler");
 	network_handler nh(listen_port, server_name);
 
-	AudioController* ac = new AudioController();
+	AudioController ac;;
 	if(filename!= "") {
-		ac->test_functie(filename);
+		ac.test_functie(filename);
 	}
 
 	cout << "Press any key to quit\n";
