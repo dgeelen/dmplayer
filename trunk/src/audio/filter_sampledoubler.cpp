@@ -22,6 +22,10 @@ uint32 SampleDoublerFilter::getData(uint8* buf, uint32 len)
 		for (int i = 0; i < read; ) {
 			buf[res++] = buffer[i++];
 			buf[res++] = buffer[i++];
+			buf[res++] = buffer[i++];
+			buf[res++] = buffer[i++];
+			buf[res++] = buffer[i-4];
+			buf[res++] = buffer[i-3];
 			buf[res++] = buffer[i-2];
 			buf[res++] = buffer[i-1];
 		}
