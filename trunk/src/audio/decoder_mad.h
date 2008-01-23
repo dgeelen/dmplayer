@@ -27,13 +27,13 @@ class MadDecoder : public IDecoder {
 		uint32 BytesInOutput;
 		uint32 BytesInInput;
 
-		IDataSource* datasource;
+		IDataSourceRef datasource;
 
-		MadDecoder(AudioFormat af, IDataSource* ds);
+		MadDecoder(AudioFormat af, IDataSourceRef ds);
 	public:
 		MadDecoder();
 		~MadDecoder();
-		IDecoder* tryDecode(IDataSource* datasource);
+		IDecoderRef tryDecode(IDataSourceRef datasource);
 		uint32 getData(uint8* buf, uint32 max);
 };
 

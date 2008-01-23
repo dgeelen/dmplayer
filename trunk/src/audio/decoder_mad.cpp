@@ -21,7 +21,7 @@ MadDecoder::MadDecoder() : IDecoder(AudioFormat())
 	eos = false;
 }
 
-MadDecoder::MadDecoder(AudioFormat af, IDataSource* ds) : IDecoder(af)
+MadDecoder::MadDecoder(AudioFormat af, IDataSourceRef ds) : IDecoder(af)
 {
 	mad_stream_init(&Stream);
 	mad_frame_init(&Frame);
@@ -34,10 +34,10 @@ MadDecoder::MadDecoder(AudioFormat af, IDataSource* ds) : IDecoder(af)
 	datasource->reset();
 }
 
-IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
+IDecoderRef MadDecoder::tryDecode(IDataSourceRef datasource)
 {
 	datasource->reset();
-	IDecoder* result;
+	IDecoderRef result;
 	BytesInInput = 0;
 	while (BytesInInput < INPUT_BUFFER_SIZE && !datasource->exhausted())
 		BytesInInput += datasource->getData(input_buffer+BytesInInput, INPUT_BUFFER_SIZE-BytesInInput);
@@ -46,7 +46,6 @@ IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
 
 	//return new MadDecoder(datasource);
 
-	result = NULL;
 	while (!result && Stream.next_frame < input_buffer+BytesInInput) {
 		uint32 BytesLeft = input_buffer+BytesInInput-Stream.next_frame;
 		mad_stream_buffer(&Stream, input_buffer+BytesInInput-BytesLeft, BytesLeft);
@@ -63,7 +62,7 @@ IDecoder* MadDecoder::tryDecode(IDataSource* datasource)
 				af.BitsPerSample = 16;
 				af.LittleEndian = true;
 				af.SignedSample = true;
-				result = new MadDecoder(af, datasource);
+				result = IDecoderRef(new MadDecoder(af, datasource));
 			}
 		}
 		if (Stream.error == MAD_ERROR_BUFLEN)

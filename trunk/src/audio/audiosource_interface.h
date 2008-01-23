@@ -3,6 +3,8 @@
 
 #include "../types.h"
 
+#include <boost/shared_ptr.hpp>
+
 struct AudioFormat {
 	int SampleRate;
 	int Channels;
@@ -43,5 +45,6 @@ class IAudioSource {
 
 		virtual uint32 getData(uint8* buf, uint32 max) = 0;
 };
+typedef boost::shared_ptr<IAudioSource> IAudioSourceRef;
 
 #endif//AUDIOSOURCE_INTERFACE_H

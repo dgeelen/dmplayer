@@ -8,10 +8,11 @@
 #include "datasource_interface.h"
 #include "decoder_ogg.h"
 
+typedef boost::shared_ptr<class OGGStreamDataSource> OGGStreamDataSourceRef;
 class OGGStreamDataSource: public IDataSource
 {
 	public:
-		OGGStreamDataSource( OGGDecoder* decoder, long stream_id );
+		OGGStreamDataSource( OGGDecoderRef decoder, long stream_id );
 		~OGGStreamDataSource();
 
 		void reset();
@@ -21,7 +22,7 @@ class OGGStreamDataSource: public IDataSource
 		uint32 getData(uint8* buffer, uint32 len);
 		ogg_packet* read();
 	private:
-		OGGDecoder* decoder;
+		OGGDecoderRef decoder;
 		long stream_id;
 		uint32 total_bytes_read;
 };

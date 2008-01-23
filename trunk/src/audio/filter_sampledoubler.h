@@ -5,9 +5,9 @@
 
 class SampleDoublerFilter : public IAudioSource {
 	private:
-		IAudioSource* src;
+		IAudioSourceRef src;
 	public:
-		SampleDoublerFilter(IAudioSource* as);
+		SampleDoublerFilter(IAudioSourceRef as);
 
 		uint32 getData(uint8* buf, uint32 len);
 };

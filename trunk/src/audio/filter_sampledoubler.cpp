@@ -5,7 +5,7 @@
 
 using namespace std;
 
-SampleDoublerFilter::SampleDoublerFilter(IAudioSource* as)
+SampleDoublerFilter::SampleDoublerFilter(IAudioSourceRef as)
 	: IAudioSource(as->getAudioFormat()), src(as)
 {
 	audioformat.SampleRate *= 2;

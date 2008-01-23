@@ -5,9 +5,9 @@
 
 class ReformatFilter : public IAudioSource {
 	private:
-		IAudioSource* src;
+		IAudioSourceRef src;
 	public:
-		ReformatFilter(IAudioSource* as, AudioFormat target);
+		ReformatFilter(IAudioSourceRef as, AudioFormat target);
 
 		uint32 getData(uint8* buf, uint32 len);
 };

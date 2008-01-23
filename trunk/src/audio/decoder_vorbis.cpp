@@ -4,11 +4,10 @@
 using namespace std;
 
 VorbisDecoder::VorbisDecoder() : IDecoder(AudioFormat()) {
-	datasource = NULL;
 	initialize();
 }
 
-VorbisDecoder::VorbisDecoder(IDataSource* ds) : IDecoder(AudioFormat()) {
+VorbisDecoder::VorbisDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 	datasource = ds;
 	initialize();
 	datasource->reset();
@@ -160,11 +159,11 @@ uint32 VorbisDecoder::getData(uint8* buffer, uint32 len)
 	return samples_decoded*bytes_per_sample;
 }
 
-IDecoder* VorbisDecoder::tryDecode(IDataSource* ds) {
+IDecoderRef VorbisDecoder::tryDecode(IDataSourceRef ds) {
 	datasource=ds;
 	reset();
 
 	if(read_vorbis_headers())
-	return new VorbisDecoder(ds);
-	return NULL;
+		return IDecoderRef(new VorbisDecoder(ds));
+	return IDecoderRef();
 }

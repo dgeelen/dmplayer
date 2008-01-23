@@ -11,11 +11,10 @@ using namespace std;
 #define BLOCK_SIZE 1024*8
 
 OGGDecoder::OGGDecoder() : IDecoder(AudioFormat()) {
-	datasource = NULL;
 	initialize();
 }
 
-OGGDecoder::OGGDecoder(IDataSource* ds) : IDecoder(AudioFormat()) {
+OGGDecoder::OGGDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 	datasource = ds;
 	initialize();
 }
@@ -193,15 +192,14 @@ ogg_page* OGGDecoder::read_page(uint32 time_out) {
 	return page;
 }
 
-IDecoder* OGGDecoder::find_decoder() {
+IDecoderRef OGGDecoder::find_decoder() {
 	for(map<long, stream_decoding_state>::iterator i = streams.begin(); i!=streams.end(); ++i) {
 		dcerr("found a stream with ID " << i->second.stream_state->serialno);
-		OGGStreamDataSource* oggs = new OGGStreamDataSource(this, i->second.stream_state->serialno);
-		IDecoder* dc = IDecoder::findDecoder(oggs);
+		OGGStreamDataSourceRef oggs = OGGStreamDataSourceRef(new OGGStreamDataSource(OGGDecoderRef(this), i->second.stream_state->serialno));
+		IDecoderRef dc = IDecoder::findDecoder(oggs);
 		if (dc) return dc;
-		delete oggs;
 	}
-	return NULL;
+	return IDecoderRef();
 }
 
 /* After this all bos pages should be in streams */
@@ -224,12 +222,12 @@ uint32 OGGDecoder::getData(uint8* buf, uint32 len) {
 }
 
 //NOTE: We do not (yet, if ever) support concatenated streams
-IDecoder* OGGDecoder::tryDecode(IDataSource* ds) {
+IDecoderRef OGGDecoder::tryDecode(IDataSourceRef ds) {
 	datasource = ds;
 	reset();
 	read_bos_pages();
 	current_decoder = find_decoder();
-	datasource = NULL;
-	if(current_decoder) return new OGGDecoder(ds);
-	return NULL;
+	datasource.reset();
+	if(current_decoder) return IDecoderRef(new OGGDecoder(ds));
+	return IDecoderRef(); // NULL reference
 }

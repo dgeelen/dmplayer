@@ -6,12 +6,12 @@
 
 class WaveDecoder : public IDecoder {
 	private:
-		IDataSource* source;
+		IDataSourceRef source;
 	public:
 		WaveDecoder();
-		WaveDecoder(AudioFormat af, IDataSource* source);
+		WaveDecoder(AudioFormat af, IDataSourceRef source);
 		~WaveDecoder();
-		IDecoder* tryDecode(IDataSource* datasource);
+		IDecoderRef tryDecode(IDataSourceRef datasource);
 		uint32 getData(uint8* buf, uint32 max);
 };
 

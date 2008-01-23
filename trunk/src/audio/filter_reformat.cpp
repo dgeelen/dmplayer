@@ -7,12 +7,12 @@
 
 using namespace std;
 
-ReformatFilter::ReformatFilter(IAudioSource* as, AudioFormat target)
+ReformatFilter::ReformatFilter(IAudioSourceRef as, AudioFormat target)
 	: IAudioSource(as->getAudioFormat()), src(as)
 {
 	// partially fix sample rate (only multiply by powers of 2)
 	while (src->getAudioFormat().SampleRate < target.SampleRate)
-		src = new SampleDoublerFilter(src);
+		src = IAudioSourceRef(new SampleDoublerFilter(src));
 
 	audioformat = src->getAudioFormat();
 }

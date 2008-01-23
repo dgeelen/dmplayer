@@ -4,6 +4,9 @@
 #include "../types.h"
 #include <cstdio> // for NULL
 
+#include <boost/shared_ptr.hpp>
+
+typedef boost::shared_ptr<class IDataSource> IDataSourceRef;
 class IDataSource {
 	public:
 		IDataSource() {};

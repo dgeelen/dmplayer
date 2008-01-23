@@ -13,11 +13,12 @@ struct stream_decoding_state {
 	std::list<ogg_packet*> packets;
 };
 
+typedef boost::shared_ptr<class OGGDecoder> OGGDecoderRef;
 class OGGDecoder : public IDecoder {
 	public:
 		OGGDecoder();
 		~OGGDecoder();
-		IDecoder* tryDecode(IDataSource* ds);
+		IDecoderRef tryDecode(IDataSourceRef ds);
 		uint32 getData(uint8* buf, uint32 max);
 
 		/* Functions for DataSources */
@@ -25,8 +26,8 @@ class OGGDecoder : public IDecoder {
 		void reset();
 	private:
 		void read_bos_pages();
-		OGGDecoder(IDataSource* ds);
-		IDecoder* find_decoder();
+		OGGDecoder(IDataSourceRef ds);
+		IDecoderRef find_decoder();
 
 		ogg_sync_state* sync;
 		std::map<long, struct stream_decoding_state > streams;
@@ -36,9 +37,9 @@ class OGGDecoder : public IDecoder {
 		void read_next_page_for_stream(long stream_id);
 		void read_next_packet_from_stream(long stream_id);
 
-		IDataSource* datasource;
+		IDataSourceRef datasource;
 		long current_stream;
-		IDecoder* current_decoder;
+		IDecoderRef current_decoder;
 
 		void uninitialize();
 		void initialize();
