@@ -140,3 +140,7 @@ void HTTPStreamDataSource::reset()
 	datalen += datarpos;
 	datarpos = 0;
 }
+
+long HTTPStreamDataSource::getpos() {
+	return datarpos;
+}

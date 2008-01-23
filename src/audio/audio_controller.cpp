@@ -101,4 +101,5 @@ void AudioController::test_functie(std::string file) {
 
 	if (curdecoder->getAudioFormat() != backend->getAudioFormat())
 		curdecoder = IAudioSourceRef(new ReformatFilter(curdecoder, backend->getAudioFormat()));
+	if(!curdecoder) dcerr("All decoders failed!");
 }

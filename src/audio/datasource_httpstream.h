@@ -6,7 +6,7 @@
 
 #include <string>
 
-#define HTTP_STREAM_BUFFER_SIZE ( (uint32) 1024*64 )
+#define HTTP_STREAM_BUFFER_SIZE ( (uint32) 1024*64*2 )
 #define HTTP_STREAM_RECV_CHUNK  ( (uint32) 1024*32 )
 
 class HTTPStreamDataSource : public IDataSource {
@@ -22,7 +22,7 @@ class HTTPStreamDataSource : public IDataSource {
 		HTTPStreamDataSource(std::string url);
 		~HTTPStreamDataSource();
 
-		virtual long getpos() { return 0; };
+		long getpos();
 		virtual bool exhausted() { return false; };
 		virtual void reset();
 
