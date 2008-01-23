@@ -45,7 +45,7 @@ AudioController::AudioController() {
 	} catch(...) {}
 	#endif
 	if(backend == NULL) {
-		throw "AudioController(): Could not find a suitable backend!";
+		throw SoundException("AudioController(): Could not find a suitable backend!");
 	}
 
 	/* Now we have a backend */
@@ -73,12 +73,8 @@ void AudioController::test_functie(std::string file) {
 		try {
 			ds = new FileReaderDataSource(file);
 		}
-		catch (std::string error_msg) {
-			dcerr("Error message: "<<error_msg);
-			ds = NULL;
-		}
-		catch (char* error_msg) {
-			dcerr("Error message: "<<error_msg);
+		catch (Exception& e) {
+			dcerr("Error message: " << e.what());
 			ds = NULL;
 		}
 	}
@@ -87,12 +83,8 @@ void AudioController::test_functie(std::string file) {
 		try {
 			ds = new HTTPStreamDataSource(file);
 		}
-		catch (std::string error_msg) {
-			dcerr("Error message: "<<error_msg);
-			ds = NULL;
-		}
-		catch (char* error_msg) {
-			dcerr("Error message: "<<error_msg);
+		catch (Exception& e) {
+			dcerr("Error message: " << e.what());
 			ds = NULL;
 		}
 	}

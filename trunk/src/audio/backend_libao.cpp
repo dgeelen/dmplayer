@@ -13,7 +13,7 @@ LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec), fill_buffer_ba
 	device = ao_open_live(default_driver, &format, NULL /* no options */);
 	if (device == NULL) {
 		dcerr("LibAOBackend: Error opening device!");
-		throw "LibAOBackend: Error opening device!";
+		throw SoundException("LibAOBackend: Error opening device!");
 	}
 
 	/* Initialize playback buffers, we use double buffering */
@@ -38,7 +38,7 @@ LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec), fill_buffer_ba
 		thread_ao_play_thread = new boost::thread(ErrorHandler(boost::bind(&LibAOBackend::ao_play_thread, this)));
 	}
 	catch(...) {
-		throw "LibAOBackend: Could not start output thread!";
+		throw ThreadException("LibAOBackend: Could not start output thread!");
 	}
 }
 

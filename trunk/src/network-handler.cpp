@@ -40,7 +40,7 @@ void network_handler::init() {
 	dcerr("network_handler(): Initializing...");
 	thread_send_packet_handler = NULL;
 	thread_receive_packet_handler = NULL;
-	if(!singleton) throw("Error: network_handler() is a singleton class!");
+	if(!singleton) throw LogicError("Error: network_handler() is a singleton class!");
 	singleton=false;
 	#ifdef HAVE_WINSOCK //NOTE: This is done only once, network_handler is a singleton class
 	{
@@ -48,7 +48,7 @@ void network_handler::init() {
 		WSADATA wsaData;
 		wVersionRequested = MAKEWORD( 2, 0 );
 		if (WSAStartup( wVersionRequested, &wsaData ) != 0)
-			throw("Error: could not initialize WIN8SOCK!");
+			throw NetworkException("Error: could not initialize WIN8SOCK!");
 	}
 	#endif
 	start();
@@ -175,7 +175,7 @@ void network_handler::start() {
 	}
 	catch(...) {
 		receive_packet_handler_running = false;
-		throw("Could not start one or more threads!");
+		throw ThreadException("Could not start one or more threads!");
 	}
 }
 

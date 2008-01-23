@@ -11,7 +11,7 @@
 {
 	FileHandle = fopen(FileName.c_str(), "rb");
 	if (FileHandle == NULL)
-		throw "Could not open " + FileName;
+		throw FileException(std::string("Could not open ") + FileName);
 	reset();
 }
 

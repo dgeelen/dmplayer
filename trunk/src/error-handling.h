@@ -40,6 +40,14 @@ class ReturnValueException: public Exception {
 			name(const name& e)       : base(e.what()) {};\
 	}
 
+DEFINE_EXCEPTION(IOException, Exception);
+DEFINE_EXCEPTION(SoundException, IOException);
+DEFINE_EXCEPTION(FileException, IOException);
+DEFINE_EXCEPTION(NetworkException, IOException);
+DEFINE_EXCEPTION(HTTPException, NetworkException);
+DEFINE_EXCEPTION(LogicError, Exception);
+DEFINE_EXCEPTION(ThreadException, Exception);
+
 class ErrorHandler {
 	public:
 		ErrorHandler(boost::function<void()> f, bool silent = false);
