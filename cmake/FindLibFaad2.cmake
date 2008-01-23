@@ -1,0 +1,16 @@
+SET(LIBFAAD2_FOUND FALSE)
+
+Find_Path(LIBFAAD2_INCLUDE_DIR
+  faad.h
+  /usr/include /usr/local/include
+  )
+
+Find_Library(LIBFAAD2_LIBRARY
+  faad
+  /usr/lib /usr/local/lib
+  )
+
+IF(LIBFAAD2_INCLUDE_DIR AND LIBFAAD2_LIBRARY)
+  SET(LIBFAAD2_FOUND TRUE)
+  MESSAGE(STATUS "Found faad2 library")
+ENDIF(LIBFAAD2_INCLUDE_DIR AND LIBFAAD2_LIBRARY)
