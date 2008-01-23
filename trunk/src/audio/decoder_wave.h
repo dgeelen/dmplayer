@@ -1,16 +1,16 @@
-#ifndef DECODER_RAW_H
-#define DECODER_RAW_H
+#ifndef DECODER_WAVE_H
+#define DECODER_WAVE_H
 
 #include "decoder_interface.h"
 #include "datasource_interface.h"
 
-class RawDecoder : public IDecoder{
+class WaveDecoder : public IDecoder {
 	private:
 		IDataSource* source;
 	public:
-		RawDecoder();
-		RawDecoder(AudioFormat af, IDataSource* source);
-		~RawDecoder();
+		WaveDecoder();
+		WaveDecoder(AudioFormat af, IDataSource* source);
+		~WaveDecoder();
 		IDecoder* tryDecode(IDataSource* datasource);
 		uint32 getData(uint8* buf, uint32 max);
 };
