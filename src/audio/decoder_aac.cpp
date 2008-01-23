@@ -38,8 +38,8 @@ AACDecoder::AACDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 	}
 	if(pos<0) throw "This does not appear to be an AAC stream";
 
-	uint32_t sample_rate;
-	uint8_t channels;
+	uint32 sample_rate;
+	uint8 channels;
 	long bytes_used = faacDecInit(decoder_handle, buffer, BLOCK_SIZE, &sample_rate, &channels);
 	if(bytes_used<0) {
 		dcerr("Error while initializing libfaad2");
@@ -50,11 +50,11 @@ AACDecoder::AACDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 		buffer_fill -= bytes_used;
 		fill_buffer();
 	}
-	audio_format.SampleRate = sample_rate;
-	audio_format.Channels = channels;
-	audio_format.BitsPerSample=16;
-	audio_format.LittleEndian=true;
-	audio_format.SignedSample=true; //FIXME: ???
+	audioformat.SampleRate = sample_rate;
+	audioformat.Channels = channels;
+	audioformat.BitsPerSample=16;
+	audioformat.LittleEndian=true;
+	audioformat.SignedSample=true; //FIXME: ???
 }
 
 
@@ -73,7 +73,7 @@ void AACDecoder::initialize() {
 	sample_buffer_size=0;
 	sample_buffer_index=0;
 	sample_buffer = NULL;
-	decoder_capabilities = faacDecGetCapabilities();
+	//decoder_capabilities = faacDecGetCapabilities();
 // 	printCaps(decoder_capabilities);
 	decoder_handle = faacDecOpen();
 	decoder_config = faacDecGetCurrentConfiguration(decoder_handle);
@@ -139,7 +139,7 @@ static char *aac_error_message[] = {
 };
 
 uint32 AACDecoder::getData(uint8* buf, uint32 len) {
-	const int bytes_per_sample = audio_format.BitsPerSample/8;
+	const int bytes_per_sample = audioformat.BitsPerSample/8;
 	uint32 bytes_todo = len;
 	uint32 bytes_done = 0;
 	uint8* ptr = buf;
