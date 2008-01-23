@@ -1,4 +1,5 @@
 #include "backend_portaudio.h"
+#include "../error-handling.h"
 
 #define SAMPLE_RATE    (44100)
 #define FRAMES_PER_BUFFER (64)  /* number of frames(=samples) per buffer */
@@ -22,7 +23,7 @@ PortAudioBackend::PortAudioBackend(AudioController* dec)
 	: IBackend(dec)
 {
 	PaError err = Pa_Initialize();
-	if (err != paNoError) throw "error! PortAudioBackend::PortAudioBackend";
+	if (err != paNoError) throw SoundException("PortAudioBackend initialisation failed");
 
 	af.SampleRate = SAMPLE_RATE;
 	af.Channels = 2;
@@ -47,10 +48,10 @@ PortAudioBackend::PortAudioBackend(AudioController* dec)
 		pa_callback,
 		dec );
 
-	if (err != paNoError) throw "error! PortAudioBackend::PortAudioBackend";
+	if (err != paNoError) throw SoundException("failed to open portaudio stream");
 
 	err = Pa_StartStream( stream );
-	if (err != paNoError) throw "error! PortAudioBackend::PortAudioBackend";
+	if (err != paNoError) throw SoundException("failed to start portaudio stream");
 };
 
 PortAudioBackend::~PortAudioBackend()

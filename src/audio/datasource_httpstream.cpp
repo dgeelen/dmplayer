@@ -1,5 +1,7 @@
 #include "datasource_httpstream.h"
 
+#include "../error-handling.h"
+
 #include <sstream>
 #include <algorithm>
 
@@ -16,9 +18,9 @@ HTTPStreamDataSource::~HTTPStreamDataSource()
 HTTPStreamDataSource::HTTPStreamDataSource(std::string url)
 {
 	#ifdef __linux__
-	if (strncmp(url.c_str(), "http://", 7) != 0) throw "not a valid url";
+	if (strncmp(url.c_str(), "http://", 7) != 0) throw HTTPException("not a valid url");
 	#else
-	if (_strnicmp(url.c_str(), "http://", 7) != 0) throw "not a valid url";
+	if (_strnicmp(url.c_str(), "http://", 7) != 0) throw HTTPException("not a valid url");
 	#endif
 	string hoststr = url.substr(7);
 	int colonpos = hoststr.find_first_of(':');
@@ -51,7 +53,7 @@ HTTPStreamDataSource::HTTPStreamDataSource(std::string url)
 
 			if( hostaddr == INADDR_NONE )
 			{
-				throw "failed to find host adress";
+				throw HTTPException("failed to find host adress");
 			}
 		}
 		address.full = hostaddr;
@@ -73,15 +75,15 @@ HTTPStreamDataSource::HTTPStreamDataSource(std::string url)
 	}
 
 	if (sendmsg.size() != conn->send((uint8*)sendmsg.c_str(), sendmsg.size())) {
-		throw "error sending http request";
+		throw HTTPException("error sending http request");
 	}
 
 	char headers[1025];
 	int hpos = 0;
 	int hend = 0;
 	do {
-		if (hpos == 1024) throw "error receiving shoutcast headers";
-		if (conn->receive((uint8*)headers+hpos, 1) != 1) throw "error receiving shoutcast headers";
+		if (hpos == 1024) throw HTTPException("error receiving shoutcast headers");
+		if (conn->receive((uint8*)headers+hpos, 1) != 1) throw HTTPException("error receiving shoutcast headers");
 		if (headers[hpos] == '\r') ++hend;
 		else if (headers[hpos] == '\n') ++hend;
 		else hend = 0;
@@ -129,7 +131,7 @@ unsigned long HTTPStreamDataSource::getData(uint8* buffer, uint32 len)
 
 void HTTPStreamDataSource::reset()
 {
-	if (dataofs != 0) throw "error!";
+	if (dataofs != 0) throw HTTPException("error, reset() after too many reads");
 	datalen += datarpos;
 	datarpos = 0;
 }

@@ -30,7 +30,7 @@ tcp_socket::tcp_socket( const ipv4_addr addr, const uint16 port )
 {
 	sock = socket( AF_INET, SOCK_STREAM, 0 );
 
-	if (sock == INVALID_SOCKET) throw "failed to create tcp socket";
+	if (sock == INVALID_SOCKET) throw NetworkException("failed to create tcp socket");
 
 	sockaddr_in addr_in;
 	addr_in.sin_family = AF_INET;
@@ -38,7 +38,7 @@ tcp_socket::tcp_socket( const ipv4_addr addr, const uint16 port )
 	addr_in.sin_port = htons( port );
 
 	int res = ::connect(sock, (sockaddr*)&addr_in, sizeof(addr_in));
-	if (res == SOCKET_ERROR) throw "failed to bind tcp socket";
+	if (res == SOCKET_ERROR) throw NetworkException("failed to bind tcp socket");
 }
 
 uint32 tcp_socket::send( const uint8* buf, const uint32 len )
@@ -65,7 +65,8 @@ tcp_listen_socket::tcp_listen_socket(const ipv4_addr addr, const uint16 portnumb
 		closesocket( sock );
 		stringstream ss;
 		ss << "tcp_listen_socket: Bind to network failed: error " << NetGetLastError();
-		throw(ss.str().c_str());	}
+		throw NetworkException(ss.str());
+	}
 }
 
 udp_socket::udp_socket(const ipv4_addr addr, const uint16 portnumber) {
@@ -81,7 +82,7 @@ udp_socket::udp_socket(const ipv4_addr addr, const uint16 portnumber) {
 		closesocket( sock );
 		stringstream ss;
 		ss << "udp_socket: Bind to network failed: error " << NetGetLastError();
-		throw(ss.str().c_str());
+		throw NetworkException(ss.str());
 	}
 
 	// now enable broadcasting
@@ -91,7 +92,7 @@ udp_socket::udp_socket(const ipv4_addr addr, const uint16 portnumber) {
 		closesocket( sock );
 		stringstream ss;
 		ss << "udp_socket: Unable to enable broadcasting: error " << NetGetLastError();
-		throw(ss.str().c_str());
+		throw NetworkException(ss.str());
 	};
 }
 
