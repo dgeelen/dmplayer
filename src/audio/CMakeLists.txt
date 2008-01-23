@@ -81,8 +81,8 @@ IF(LIBVORBISFILE_FOUND AND LIBOGG_FOUND AND LIBVORBIS_FOUND)
 	INCLUDE_DIRECTORIES(${LIBVORBISFILE_INCLUDE_DIR})
 ENDIF(LIBVORBISFILE_FOUND AND LIBOGG_FOUND AND LIBVORBIS_FOUND)
 
-# we can always compile the raw decoder, no libs needed for that
-SET(DECODER_NAMES ${DECODER_NAMES} Raw)
+# we can always compile the wave decoder, no libs needed for that
+SET(DECODER_NAMES ${DECODER_NAMES} Wave)
 
 # configure all decoders
 SET(FName ${CMAKE_CURRENT_BINARY_DIR}/decoder_linker.inc)

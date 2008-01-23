@@ -1,22 +1,21 @@
-#include "decoder_raw.h"
+#include "decoder_wave.h"
 #include <string>
 
-RawDecoder::RawDecoder() : IDecoder(AudioFormat())
+WaveDecoder::WaveDecoder() : IDecoder(AudioFormat())
 {
 	source = NULL;
 }
 
-RawDecoder::RawDecoder(AudioFormat af, IDataSource* source) : IDecoder(af)
+WaveDecoder::WaveDecoder(AudioFormat af, IDataSource* source) : IDecoder(af)
 {
 	this->source = source;
-	//tryDecode(source);
 }
 
-RawDecoder::~RawDecoder()
+WaveDecoder::~WaveDecoder()
 {
 }
 
-IDecoder* RawDecoder::tryDecode(IDataSource* datasource)
+IDecoder* WaveDecoder::tryDecode(IDataSource* datasource)
 {
 	datasource->reset();
 	uint8 hdr[48];
@@ -43,10 +42,10 @@ IDecoder* RawDecoder::tryDecode(IDataSource* datasource)
 	af.LittleEndian = true;
 	af.SignedSample = true;
 
-	return new RawDecoder(af, datasource);
+	return new WaveDecoder(af, datasource);
 }
 
-uint32 RawDecoder::getData(uint8* buf, uint32 len)
+uint32 WaveDecoder::getData(uint8* buf, uint32 len)
 {
 	uint32 res = 0;
 	do {
