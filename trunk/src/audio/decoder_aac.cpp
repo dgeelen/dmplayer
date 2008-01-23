@@ -49,20 +49,32 @@ AACDecoder::AACDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 		buffer_fill -= pos;
 		fill_buffer();
 	}
-	if(pos<0) throw "This does not appear to be an AAC stream";
+	if (pos<0)
+		throw Exception("This does not appear to be an AAC stream");
 
 	boost::uint32_t sample_rate;
 	boost::uint8_t channels;
 	long bytes_used = faacDecInit(decoder_handle, buffer, BLOCK_SIZE, &sample_rate, &channels);
-	if(bytes_used<0) {
-		dcerr("Error while initializing libfaad2");
-		throw "Error while initializing libfaad2";
-	}
+	if (bytes_used<0)
+		throw Exception("Error while initializing AAC stream");
 	if(bytes_used) {
 		memmove(buffer, buffer + bytes_used, BLOCK_SIZE - bytes_used);
 		buffer_fill -= bytes_used;
 		fill_buffer();
 	}
+
+	faacDecFrameInfo frame_info;
+	sample_buffer = (uint8*) faacDecDecode(decoder_handle, &frame_info, buffer, BLOCK_SIZE);
+	memmove(buffer, buffer + frame_info.bytesconsumed, BLOCK_SIZE - frame_info.bytesconsumed);
+	buffer_fill-=frame_info.bytesconsumed;
+	fill_buffer();
+
+	if (frame_info.error != 0)
+		throw Exception("Error decoding first AAC frame");
+
+	const int bytes_per_sample = audioformat.BitsPerSample/8;
+	sample_buffer_size = frame_info.samples*bytes_per_sample;
+
 	audioformat.SampleRate = sample_rate;
 	audioformat.Channels = channels;
 	audioformat.BitsPerSample=16;
@@ -85,20 +97,20 @@ void AACDecoder::initialize() {
 	decoder_config->downMatrix       = 1;
 	/* then call SetConfiguration */
 	int error = faacDecSetConfiguration(decoder_handle, decoder_config);
-	if(error==0) {
-		dcerr("Error: invalid configuration");
-		throw "Error: invalid configuration";
-	}
+	if (error == 0)
+		throw Exception("Error: invalid configuration");
 }
 
 AACDecoder::~AACDecoder() {
+	faacDecClose(decoder_handle);
 }
 
 IDecoderRef AACDecoder::tryDecode(IDataSourceRef ds) {
 	try {
 		return IDecoderRef(new AACDecoder(ds));
 	}
-	catch(...) {
+	catch (Exception& e) {
+		dcerr("AAC tryDecode failed: " << e.what());
 		return IDecoderRef();
 	}
 }
@@ -109,7 +121,7 @@ uint32 AACDecoder::getData(uint8* buf, uint32 len) {
 	uint32 bytes_done = 0;
 	uint8* ptr = buf;
 
-	if(sample_buffer_size - sample_buffer_index) {
+	if(sample_buffer_size - sample_buffer_index > 0) {
 		uint32 to_copy = min(sample_buffer_size - sample_buffer_index, len);
 		memmove(ptr, sample_buffer + sample_buffer_index, to_copy);
 		sample_buffer_index    += to_copy;
