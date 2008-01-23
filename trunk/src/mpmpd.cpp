@@ -14,7 +14,7 @@ using namespace std;
 static int    xargc;
 static char** xargv;
 
-int xmain()
+void xmain()
 {
 	int    argc = xargc;
 	char** argv = xargv;
@@ -45,7 +45,7 @@ int xmain()
 
 	if (showhelp) {
 		cout << desc << "\n";
-		return 1;
+		throw ReturnValueException(1);
 	}
 
 	dcerr("Starting network_handler");
@@ -59,11 +59,15 @@ int xmain()
 	cout << "Press any key to quit\n";
 	getchar();
 
-	return 0;
+	throw ReturnValueException(0);
 }
 
 int main(int argc, char* argv[]) {
 	xargc = argc;
 	xargv = argv;
-	ErrorHandler(boost::bind(&xmain))();
+	try {
+		ErrorHandler(boost::bind(&xmain), true)();
+	} catch (const ReturnValueException& e) {
+		return e.getValue();
+	}
 }
