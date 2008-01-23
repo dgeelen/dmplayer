@@ -169,9 +169,9 @@ void network_handler::start() {
 	dcerr("Starting network IO thread");
 	receive_packet_handler_running = true;
 	try {
-		thread_receive_packet_handler = new boost::thread(error_handler(boost::bind(&network_handler::receive_packet_handler, this)));
+		thread_receive_packet_handler = new boost::thread(ErrorHandler(boost::bind(&network_handler::receive_packet_handler, this)));
 		if(!server_mode)
-			thread_send_packet_handler = new boost::thread(error_handler(boost::bind(&network_handler::send_packet_handler, this)));
+			thread_send_packet_handler = new boost::thread(ErrorHandler(boost::bind(&network_handler::send_packet_handler, this)));
 	}
 	catch(...) {
 		receive_packet_handler_running = false;

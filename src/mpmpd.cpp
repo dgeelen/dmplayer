@@ -3,12 +3,22 @@
 #include "network-handler.h"
 #include "error-handling.h"
 #include <boost/program_options.hpp>
+#include <boost/bind.hpp>
 #include "audio/audio_controller.h"
 
 namespace po = boost::program_options;
 using namespace std;
-int main(int argc, char* argv[]) {
-	try {
+
+// hacky! pass arguments through static vars
+// this is so we can wrap xmain in the global exception handler
+static int    xargc;
+static char** xargv;
+
+int xmain()
+{
+	int    argc = xargc;
+	char** argv = xargv;
+
 	int listen_port;
 	string filename;
 	string server_name;
@@ -50,10 +60,10 @@ int main(int argc, char* argv[]) {
 	getchar();
 
 	return 0;
-	}
-	catch(char const* error_msg) {
-		cout << "---<ERROR REPORT>---\n"
-		     << error_msg << "\n"
-		     << "---</ERROR REPORT>---\n";
-	}
+}
+
+int main(int argc, char* argv[]) {
+	xargc = argc;
+	xargv = argv;
+	ErrorHandler(boost::bind(&xmain))();
 }

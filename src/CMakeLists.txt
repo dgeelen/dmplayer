@@ -14,6 +14,7 @@ ADD_EXECUTABLE(mpmpd
 	network-core.h network-core.cpp
 	network-handler.h network-handler.cpp
 	cross-platform.h
+	error-handling.h error-handling.cpp
 	types.h
 )
 
