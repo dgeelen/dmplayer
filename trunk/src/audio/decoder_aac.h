@@ -16,7 +16,6 @@ class AACDecoder : public IDecoder {
 	private:
 		AACDecoder(IDataSourceRef source);
 		IDataSourceRef datasource;
-		AudioFormat audio_format;
 
 		uint32 buffer_fill;
 		uint8 buffer[BLOCK_SIZE];
@@ -27,7 +26,7 @@ class AACDecoder : public IDecoder {
 		int aac_probe();
 		void fill_buffer();
 
-		uint32 decoder_capabilities;
+		//uint32 decoder_capabilities;
 		faacDecHandle decoder_handle;
 		faacDecConfigurationPtr decoder_config;
 
