@@ -110,14 +110,14 @@
          <widget class="QPushButton" name="OpenButton" >
           <property name="geometry" >
            <rect>
-            <x>60</x>
-            <y>220</y>
-            <width>75</width>
+            <x>20</x>
+            <y>210</y>
+            <width>141</width>
             <height>24</height>
            </rect>
           </property>
           <property name="text" >
-           <string>Open</string>
+           <string>Open...</string>
           </property>
          </widget>
          <widget class="QWidget" name="horizontalLayout_2" >
@@ -154,6 +154,29 @@
             </widget>
            </item>
           </layout>
+         </widget>
+         <widget class="QPushButton" name="OpenEditButton" >
+          <property name="geometry" >
+           <rect>
+            <x>20</x>
+            <y>260</y>
+            <width>141</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="text" >
+           <string>Open</string>
+          </property>
+         </widget>
+         <widget class="QLineEdit" name="lineEdit" >
+          <property name="geometry" >
+           <rect>
+            <x>170</x>
+            <y>260</y>
+            <width>331</width>
+            <height>31</height>
+           </rect>
+          </property>
          </widget>
         </widget>
        </widget>
@@ -291,6 +314,22 @@
     <hint type="destinationlabel" >
      <x>127</x>
      <y>80</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lineEdit</sender>
+   <signal>returnPressed()</signal>
+   <receiver>OpenEditButton</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>485</x>
+     <y>340</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>485</x>
+     <y>312</y>
     </hint>
    </hints>
   </connection>
