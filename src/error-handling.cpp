@@ -14,8 +14,15 @@ void Exception::create(const char* amsg) throw ()
 		memcpy(msg, amsg, msglen);
 	} catch (...) {
 		msglen = -1;
-		msg = "INVALID EXCEPTION: error on construction";
+		msg = "INVALID EXCEPTION: error on message construction";
 	}
+}
+
+void Exception::setMessage(const char* amsg)
+{
+	if (msg != NULL && msglen != -1)
+		delete msg;
+	create(amsg);
 }
 
 Exception::Exception(const char* amsg)
@@ -48,11 +55,28 @@ Exception::~Exception() throw ()
 }
 
 /*
+ *  Implementation of ReturnValueException class 
+ */
+
+ReturnValueException::ReturnValueException(int value)
+	: retval(value)
+	, Exception("ReturnValueException + TODO value")
+{
+	// TODO put value in what() message
+}
+
+int ReturnValueException::getValue() const
+{
+	return retval;
+}
+
+/*
  *  Implementation of ErrorHandler class 
  */
-ErrorHandler::ErrorHandler( boost::function<void()> f )
+ErrorHandler::ErrorHandler( boost::function<void()> f, bool silent)
 {
 	this->f = f;
+	silentreturnexception = silent;
 };
 
 void ErrorHandler::operator()() {
@@ -65,17 +89,20 @@ void ErrorHandler::operator()() {
 
 	try {
 		f();
-	}
-	catch(const exception& e) { // catch by reference do ensure virtual calls work as needed
+	} catch (const ReturnValueException& e) {
+		if (!silentreturnexception) {
+			const char* msg = e.what();
+			PRINT_MSG;
+		}
+		throw;
+	} catch (const exception& e) { // catch by reference do ensure virtual calls work as needed
 		const char* msg = e.what();
 		PRINT_MSG;
 		throw;
-	}
-	catch(const char* msg) {
+	} catch (const char* msg) {
 		PRINT_MSG;
 		throw;
-	}
-	catch(...) {
+	} catch (...) {
 		const char* msg = "UNKNOWN ERROR";
 		PRINT_MSG;
 		throw;

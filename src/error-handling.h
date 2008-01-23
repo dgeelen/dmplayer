@@ -11,6 +11,8 @@ class Exception: public std::exception {
 		char* msg;
 		int msglen;
 		void create(const char*) throw();
+	protected:
+		void setMessage(const char*);
 	public:
 		Exception(const char*);
 		Exception(const std::string&);
@@ -19,12 +21,32 @@ class Exception: public std::exception {
 		virtual const char* what() const throw();
 };
 
+class ReturnValueException: public Exception {
+	private:
+		int retval;
+	public:
+		ReturnValueException(int value);
+		int getValue() const;
+};
+
+/// Create exception class identical to type 'base', but with a new type 'name'
+#define DEFINE_EXCEPTION(name, base) \
+	class name: public name { \
+		public: \
+			name()                    : base()  {}; \
+			name(const char* c)       : base(c) {}; \
+			name(const std::string& s): base(s) {}; \
+			name(const Exception& e)  : base(e) {}; \
+	};
+
+
 class ErrorHandler {
 	public:
-		ErrorHandler(boost::function<void()> f);
+		ErrorHandler(boost::function<void()> f, bool silent = false);
 		void operator()();
 	private:
 		boost::function<void()> f;
+		bool silentreturnexception;
 };
 
 /* DEBUG #define's */
