@@ -122,7 +122,6 @@ ADD_LIBRARY(mpmp_audio
 	datasource_httpstream.h       datasource_httpstream.cpp
 	
 	filter_sampledoubler.h        filter_sampledoubler.cpp
-	filter_monotostereo.h         filter_monotostereo.cpp
 	filter_reformat.h             filter_reformat.cpp
 
 	${BACKEND_SOURCE_FILES}

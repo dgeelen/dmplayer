@@ -11,8 +11,8 @@ ReformatFilter::ReformatFilter(IAudioSourceRef as, AudioFormat target)
 	: IAudioSource(as->getAudioFormat()), src(as)
 {
 	// partially fix sample rate (only multiply by powers of 2)
-	while (src->getAudioFormat().SampleRate < target.SampleRate)
-		src = IAudioSourceRef(new SampleDoublerFilter(src));
+	//while (src->getAudioFormat().SampleRate < target.SampleRate)
+	//	src = IAudioSourceRef(new SampleDoublerFilter(src));
 
 	audioformat = src->getAudioFormat();
 }
