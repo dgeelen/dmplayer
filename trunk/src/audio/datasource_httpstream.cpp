@@ -9,10 +9,15 @@ using namespace std;
 
 HTTPStreamDataSource::HTTPStreamDataSource()
 {
+	conn = NULL;
 }
 
 HTTPStreamDataSource::~HTTPStreamDataSource()
 {
+	if (conn) {
+		conn->disconnect();
+		delete conn;
+	}
 }
 
 HTTPStreamDataSource::HTTPStreamDataSource(std::string url)

@@ -51,6 +51,14 @@ uint32 tcp_socket::receive( const uint8* buf, const uint32 len )
 	return ::recv(sock, (char*)buf, len, 0);
 }
 
+void tcp_socket::disconnect()
+{
+	if (sock != INVALID_SOCKET) {
+		closesocket(sock);
+		sock = INVALID_SOCKET;
+	}
+}
+
 tcp_listen_socket::tcp_listen_socket(const ipv4_addr addr, const uint16 portnumber)
 {
 	sock = socket( AF_INET, SOCK_STREAM, 0 );

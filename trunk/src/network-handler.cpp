@@ -192,9 +192,15 @@ void network_handler::stop()
 	 * wrt closing blocking sockets, so until that is resolved
 	 * we don't join on this threads.
 	 */
-	if (thread_receive_packet_handler) thread_receive_packet_handler->join();
+	if (thread_receive_packet_handler) {
+		thread_receive_packet_handler->join();
+		delete thread_receive_packet_handler;
+	}
 	#endif
-	if (thread_send_packet_handler) thread_send_packet_handler->join();
+	if (thread_send_packet_handler) {
+		thread_send_packet_handler->join();
+		delete thread_send_packet_handler;
+	}
 }
 /** End class network_handler **/
 
