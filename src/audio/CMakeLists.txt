@@ -123,6 +123,7 @@ ADD_LIBRARY(mpmp_audio
 	
 	filter_sampledoubler.h        filter_sampledoubler.cpp
 	filter_reformat.h             filter_reformat.cpp
+	filter_monotostereo.h         filter_monotostereo.cpp
 
 	${BACKEND_SOURCE_FILES}
 	${DECODER_SOURCE_FILES}
