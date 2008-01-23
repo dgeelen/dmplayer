@@ -4,6 +4,20 @@
 #include <iostream>
 #include <stdexcept>
 #include <boost/function.hpp>
+//#include <boost/exception.hpp>
+
+class Exception: public std::exception {
+	private:
+		char* msg;
+		int msglen;
+		void create(const char*) throw();
+	public:
+		Exception(const char*);
+		Exception(const std::string&);
+		Exception(const Exception&);
+		virtual ~Exception() throw();
+		virtual const char* what() const throw();
+};
 
 class ErrorHandler {
 	public:
