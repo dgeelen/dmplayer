@@ -80,10 +80,11 @@ void MainWindow::on_OpenButton_clicked()
 	QString fileName;
 	trackProgress->setValue(0);
 	fileName = QFileDialog::getOpenFileName(this,
-		tr("Open Image"), "", tr("Audio Files (*.mp3 *.wav)"));
+		tr("Open Image"), "", tr("Audio Files (*.mp3 *.wav *.aac *.ogg)"));
 	if (fileName == "")
 		return;
 	file = fileName.toStdString();
+	audiocontroller.test_functie(file);
 //    handler->Load(file);
 //	trackProgress->setMaximum(handler->Length());
 }
