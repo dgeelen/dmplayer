@@ -96,18 +96,15 @@ void AudioController::test_functie(std::string file) {
 		}
 	}
 
-	if (ds == NULL)
-		dcerr("Error opening :" << file);
-	else
-	{
-		for (unsigned int i = 0; i < decoderlist.size(); ++i) {
-			IDecoder* decoder = decoderlist[i](ds);
-			if (decoder) {
-				curdecoder = decoder;
-				dcerr("Found a decoder; decoder #"<<i);
-				break;
-			}
-		}
+	if (ds == NULL) {
+		dcerr("Error opening: " << file);
+		return;
+	}
+
+	curdecoder = IDecoder::findDecoder(ds);
+	if (curdecoder == NULL) {
+		dcerr("Cannot find decoder for file: " << file);
+		return;
 	}
 
 	if (curdecoder->getAudioFormat() != backend->getAudioFormat()) {

@@ -197,14 +197,8 @@ IDecoder* OGGDecoder::find_decoder() {
 	for(map<long, stream_decoding_state>::iterator i = streams.begin(); i!=streams.end(); ++i) {
 		dcerr("found a stream with ID " << i->second.stream_state->serialno);
 		OGGStreamDataSource* oggs = new OGGStreamDataSource(this, i->second.stream_state->serialno);
-		for (unsigned int i = 0; i < decoderlist.size(); ++i) {
-			IDecoder* dc = decoderlist[i](oggs);
-			if (dc) {
-				dcerr("Found decoder for stream 1: "<<i);
-				return dc;
-				break;
-			}
-		}
+		IDecoder* dc = IDecoder::findDecoder(oggs);
+		if (dc) return dc;
 		delete oggs;
 	}
 	return NULL;
