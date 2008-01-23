@@ -31,14 +31,14 @@ class ReturnValueException: public Exception {
 
 /// Create exception class identical to type 'base', but with a new type 'name'
 #define DEFINE_EXCEPTION(name, base) \
-	class name: public name { \
+	class name: public base { \
 		public: \
-			name()                    : base()  {}; \
-			name(const char* c)       : base(c) {}; \
-			name(const std::string& s): base(s) {}; \
-			name(const Exception& e)  : base(e) {}; \
-	};
-
+			name()                    : base(std::string(#name) + " : <unspecified>") {}; \
+			name(const char* c)       : base(std::string(#name) + " : " + c         ) {}; \
+			name(const std::string& s): base(std::string(#name) + " : " + s         ) {}; \
+			name(const Exception& e)  : base(std::string(#name) + " : " + e.what()  ) {}; \
+			name(const name& e)       : base(e.what()) {};\
+	}
 
 class ErrorHandler {
 	public:
