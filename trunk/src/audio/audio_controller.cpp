@@ -16,6 +16,7 @@
 /* FOR TESTING PURPOSES ONLY */
 #include "datasource_filereader.h"
 #include "datasource_httpstream.h"
+#include "filter_sampledoubler.h"
 
 using namespace std;
 
@@ -108,6 +109,8 @@ void AudioController::test_functie(std::string file) {
 	}
 
 	if (curdecoder->getAudioFormat() != backend->getAudioFormat()) {
+		while (curdecoder->getAudioFormat().SampleRate < backend->getAudioFormat().SampleRate)
+			curdecoder = new SampleDoublerFilter(curdecoder);
 		// TODO: conversion filter stuff
 	}
 }

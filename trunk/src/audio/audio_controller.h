@@ -10,7 +10,6 @@ class AudioController {
 	public:
 		AudioController();
 		~AudioController();
-		IDecoder* tryDecode(IDataSource*);
 		void test_functie(std::string file);
 		uint32 getData(uint8* buf, uint32 len);
 	private:
