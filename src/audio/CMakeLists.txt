@@ -106,19 +106,15 @@ ADD_LIBRARY(mpmp_audio
 	audiosource_interface.h
 	backend_interface.h
 	datasource_interface.h
-	decoder_interface.h
-	decoder_interface.cpp
+	decoder_interface.h           decoder_interface.cpp
 	
-	audio_controller.h
-	audio_controller.cpp
+	audio_controller.h            audio_controller.cpp
 	
-	datasource_filereader.h
-	datasource_filereader.cpp
-	datasource_httpstream.h
-	datasource_httpstream.cpp
+	datasource_filereader.h       datasource_filereader.cpp
+	datasource_httpstream.h       datasource_httpstream.cpp
 	
-	filter_sampledoubler.h
-	filter_sampledoubler.cpp
+	filter_sampledoubler.h        filter_sampledoubler.cpp
+	filter_reformat.h             filter_reformat.cpp
 
 	${BACKEND_SOURCE_FILES}
 	${DECODER_SOURCE_FILES}
