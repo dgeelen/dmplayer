@@ -1,7 +1,6 @@
 #include "decoder_aac.h"
 #include "../error-handling.h"
 #include <algorithm>
-
 #include <boost/cstdint.hpp>
 
 using namespace std;
@@ -112,7 +111,7 @@ uint32 AACDecoder::getData(uint8* buf, uint32 len) {
 
 	if(sample_buffer_size - sample_buffer_index) {
 		uint32 to_copy = min(sample_buffer_size - sample_buffer_index, len);
-		memcpy(ptr, sample_buffer + sample_buffer_index, to_copy);
+		memmove(ptr, sample_buffer + sample_buffer_index, to_copy);
 		sample_buffer_index    += to_copy;
 		bytes_done             += to_copy;
 		bytes_todo             -= to_copy;
@@ -127,32 +126,55 @@ uint32 AACDecoder::getData(uint8* buf, uint32 len) {
 		memmove(buffer, buffer + frame_info.bytesconsumed, BLOCK_SIZE - frame_info.bytesconsumed);
 		buffer_fill-=frame_info.bytesconsumed;
 		fill_buffer();
-		/* Now we have new samples */
-		if (frame_info.error == 0) {
+		if((frame_info.error==0) && (frame_info.samples>0)) { /* Now we have new samples */
 			sample_buffer_size = frame_info.samples*bytes_per_sample;
 			uint32 to_copy = min(sample_buffer_size, bytes_todo);
-			memcpy(ptr, sample_buffer, to_copy);
+			memmove(ptr, sample_buffer, to_copy);
 			ptr+=to_copy;
 			sample_buffer_index = to_copy;
 			bytes_todo -= to_copy;
 			bytes_done += to_copy;
 			done = (bytes_done == len);
-		} else {
-			dcerr(datasource->getpos() << " : " << faacDecGetErrorMessage(frame_info.error));
+		}
+		else if(frame_info.error) { /* Either some error occured, or we just need more data */
 			if(error_count < 10) {
+				/* This dcerr is for debugging of weird streams only */
+				dcerr("Offending bytes: " << hex
+				                          << (int)buffer[ 0] << " "
+				                          << (int)buffer[ 1] << " "
+				                          << (int)buffer[ 2] << " "
+				                          << (int)buffer[ 3] << " "
+				                          << (int)buffer[ 4] << " "
+				                          << (int)buffer[ 5] << " "
+				                          << (int)buffer[ 6] << " "
+				                          << (int)buffer[ 7] << " "
+				                          << (int)buffer[ 8] << " "
+				                          << (int)buffer[ 9] << " "
+				                          << (int)buffer[10] << " "
+				                          << (int)buffer[11] << " "
+				                          << (int)buffer[12] << " "
+				                          << (int)buffer[13] << " "
+				                          << (int)buffer[14] << " "
+				                          << (int)buffer[15] << " "
+				                          << (int)buffer[16] << " "
+				);
+
 				++error_count;
 				memmove(buffer, buffer + 1, BLOCK_SIZE - 1);
 				buffer_fill-=1;
 				fill_buffer();
 				int pos = aac_probe();
-				if(pos) {
+				if(pos>=0) {
 					memmove(buffer, buffer + pos, BLOCK_SIZE - pos);
 					buffer_fill-=pos;
 					fill_buffer();
-					dcerr("faad2 decode error, resync'd after "<<pos<<" bytes");
+					dcerr("At " << datasource->getpos() << " bytes: " << faacDecGetErrorMessage(frame_info.error) << ", resynced after "<<pos<<" bytes");
+				} else {
+					buffer_fill=0;
+					fill_buffer();
 				}
 			}
-			else {
+			else { /* Too many errors */
 				return bytes_done;
 			}
 		}
