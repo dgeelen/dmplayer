@@ -13,8 +13,8 @@ class IDecoder: public IAudioSource {
 	public:
 		IDecoder(AudioFormat af) : IAudioSource(af) {};
 		virtual IDecoder* tryDecode(IDataSource*) = 0;
-};
 
-extern std::vector<boost::function<IDecoder* (IDataSource*)> > decoderlist;
+		static IDecoder* findDecoder(IDataSource* ds);
+};
 
 #endif//DECODER_INTERFACE_H

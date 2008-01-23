@@ -1,4 +1,6 @@
 #include "decoder_interface.h"
+
+#include "../error-handling.h"
 #include <boost/bind.hpp>
 
 std::vector<boost::function<IDecoder* (IDataSource*)> > decoderlist;
@@ -18,3 +20,15 @@ std::vector<boost::function<IDecoder* (IDataSource*)> > decoderlist;
 #undef UNIQUE_NAMESPACE
 #undef REGISTER_DECODER_FUNCTION
 #undef REGISTER_DECODER_CLASS
+
+IDecoder* IDecoder::findDecoder(IDataSource* ds)
+{
+	for (unsigned int i = 0; i < decoderlist.size(); ++i) {
+		IDecoder* decoder = decoderlist[i](ds);
+		if (decoder) {
+			dcerr("Found a decoder; decoder #"<<i);
+			return decoder;
+		}
+	}
+	return NULL;
+}
