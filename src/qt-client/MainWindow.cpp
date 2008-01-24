@@ -3,6 +3,7 @@
 #include <QFileDialog>
 
 #include <boost/format.hpp>
+#include <QString>
 
 /**
  * convenience wrapper for boost::format
@@ -166,6 +167,22 @@ void MainWindow::on_StopButton_clicked()
 
 
 void MainWindow::on_NextButton_clicked()
+{
+
+}
+
+void MainWindow::on_ConnectButton_clicked()
+{
+	lblServerName->setText(serverlist->itemAt(0,0)->text(0));
+	lblPing->setText(serverlist->itemAt(0,0)->text(1));
+}
+
+void MainWindow::on_DisconnectButton_clicked()
+{
+
+}
+
+void MainWindow::on_RefreshButton_clicked()
 {
 
 }
