@@ -26,6 +26,9 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		void on_PauseButton_clicked();
 		void on_StopButton_clicked();
 		void on_NextButton_clicked();
+		void on_ConnectButton_clicked();
+		void on_RefreshButton_clicked();
+		void on_DisconnectButton_clicked();
 		void updateProgressBar();
 	private:
 		std::string file;
