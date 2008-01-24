@@ -52,8 +52,8 @@ AACDecoder::AACDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 	if (pos<0)
 		throw Exception("This does not appear to be an AAC stream");
 
-	boost::uint32_t sample_rate;
-	boost::uint8_t channels;
+	uint32 sample_rate;
+	uint8 channels;
 	long bytes_used = faacDecInit(decoder_handle, buffer, BLOCK_SIZE, &sample_rate, &channels);
 	if (bytes_used<0)
 		throw Exception("Error while initializing AAC stream");
