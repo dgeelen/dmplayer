@@ -38,7 +38,7 @@ LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec), fill_buffer_ba
 	decoder = dec;
 
 	/* Start output thread */
-	play_back = true;
+	play_back = read_back = true;
 	try {
 		thread_decoder_read_thread = NULL;
 		thread_ao_play_thread = NULL;
@@ -69,8 +69,9 @@ LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec), fill_buffer_ba
  *       goto (#)
 
  */
+
 void LibAOBackend::decoder_read_thread() {
-	while(play_back) {
+	while(read_back) {
 		if(decoder) decoder->getData(audio_buffer[0], BUF_SIZE);
 		fill_buffer_barrier.wait();
 		if(decoder) decoder->getData(audio_buffer[1], BUF_SIZE);
@@ -85,11 +86,14 @@ void LibAOBackend::ao_play_thread() {
 		fill_buffer_barrier.wait();
 		ao_play( device, (char*)audio_buffer[1], BUF_SIZE);
 	}
+	fill_buffer_barrier.wait();
 }
 
 LibAOBackend::~LibAOBackend() {
-	play_back=false;
+	play_back = false;
 	if (thread_ao_play_thread) thread_ao_play_thread->join();
+	read_back = false;
+	fill_buffer_barrier.wait();
 	if (thread_decoder_read_thread) thread_decoder_read_thread->join();
 	ao_close(device);
 	ao_shutdown();
