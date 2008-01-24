@@ -94,6 +94,7 @@ uint32 MadDecoder::getData(uint8* buf, uint32 len)
 			eos = datasource->exhausted();
 		}
 
+		if (BytesInInput == 0) return BytesOut;
 		//Buffer is sent to MAD to decode to a stream
 		mad_stream_buffer(&Stream, input_buffer, BytesInInput);
 		Stream.error = MAD_ERROR_NONE;
@@ -102,6 +103,7 @@ uint32 MadDecoder::getData(uint8* buf, uint32 len)
 		if(mad_frame_decode(&Frame, &Stream)){
 			if (!MAD_RECOVERABLE(Stream.error)) {
 				dcerr("Unrecoverable error");
+				return BytesOut;
 			}
 		}
 
@@ -122,69 +124,19 @@ uint32 MadDecoder::getData(uint8* buf, uint32 len)
 
 		// [hackmode] Because Mads output is 24 bit PCM, we need to convert everything to 16 bit
 		int i;
-		for(i = 0; i < Synth.pcm.length && BytesOut+4 <= len; ++i)
+		for(i = 0; i < Synth.pcm.length && BytesOut < len; ++i)
 		{
-			///In this loop we send as much as possible to buf
-			signed short* Samplel = (signed short*)(buf+BytesOut);
-			signed short* Sampler = (signed short*)(buf+BytesOut+2);
-			// Left Channel
-			*Samplel = MadFixedToSshort(Synth.pcm.samples[0][i]);
-
-			if (MAD_NCHANNELS(&Frame.header) == 2)
-			{
-				//Right channel. If the stream is monophonic, then right = left
-				*Sampler = MadFixedToSshort(Synth.pcm.samples[1][i]);
+			for (int j = 0; j < audioformat.Channels; ++j) {
+				*((signed short*)(buf+BytesOut)) = MadFixedToSshort(Synth.pcm.samples[j][i]);
+				BytesOut += 2;
 			}
-				else *Sampler = *Samplel;
-			BytesOut += 4;
-		}
-
-		if (BytesOut < len && i < Synth.pcm.length) {
-
-			/** It is possible that the buffer can not be filled with whole samples,
-				so we put a part of the next sample in buf.
-			*/
-			char tbuf[4];
-			signed short* Samplel = (signed short*)tbuf;
-			signed short* Sampler = (signed short*)(tbuf+2);
-			// Left Channel
-			*Samplel = MadFixedToSshort(Synth.pcm.samples[0][i]);
-
-			if (MAD_NCHANNELS(&Frame.header) == 2)
-			{
-				//Right channel. If the stream is monophonic, then right = left
-				*Sampler = MadFixedToSshort(Synth.pcm.samples[1][i]);
-			}
-			else
-				*Samplel = *Sampler;
-
-			/// Here we put the other part of the sample in the output buffer.
-			int x = len - BytesOut;
-			memcpy(buf+BytesOut, tbuf, x);
-			memcpy(output_buffer+BytesInOutput, tbuf+x, 4-x);
-			BytesOut += x;
-			BytesInOutput += (4 - x);
-			++i;
 		}
 
 		for (;i < Synth.pcm.length;++i) {
-
-			/// Put all that could not fit in buf, in the output buffer.
-
-			signed short* Samplel = (signed short*) (output_buffer + BytesInOutput);
-			signed short* Sampler = (signed short*) (output_buffer + BytesInOutput + 2);
-			// Left Channel
-			*Samplel = MadFixedToSshort(Synth.pcm.samples[0][i]);
-
-			if (MAD_NCHANNELS(&Frame.header) == 2)
-			{
-				//Right channel. If the stream is monophonic, then right = left
-				*Sampler = MadFixedToSshort(Synth.pcm.samples[1][i]);
+			for (int j = 0; j < audioformat.Channels; ++j) {
+				*((signed short*)(output_buffer+BytesInOutput)) = MadFixedToSshort(Synth.pcm.samples[j][i]);
+				BytesInOutput += 2;
 			}
-			else
-				*Samplel = *Sampler;
-
-			BytesInOutput += 4;
 		}
 	}
 
