@@ -52,6 +52,29 @@ MainWindow::MainWindow()
 	trackProgress->setMinimum(0);
 	trackProgress->setValue(0);
 	QObject::connect(&progressTimer, SIGNAL(timeout()), this, SLOT(updateProgressBar()));
+
+	QFile rcfile("recent_files_cache.txt");
+	rcfile.open(QFile::ReadOnly);
+	QStringList strlist;
+	while (!rcfile.atEnd()) {
+		QString line = rcfile.readLine();
+		while (line.size() > 0 && (line.at(line.size()-1) == '\n' || line.at(line.size()-1) == '\r'))
+			line.remove(line.size()-1, 1);
+		if (line != "") {
+			strlist.removeAll(line);
+			strlist.append(line);
+		}
+	}
+	std::reverse(strlist.begin(), strlist.end());
+	listRecentFiles->addItems(strlist);
+	std::reverse(strlist.begin(), strlist.end());
+	rcfile.close();
+	if (rcfile.open(QFile::WriteOnly)) {
+		Q_FOREACH(QString str, strlist) {
+			rcfile.write(str.toStdString().c_str(), str.size());
+			rcfile.write("\n",1);
+		}
+	}
 }
 
 MainWindow::~MainWindow()
@@ -83,17 +106,38 @@ void MainWindow::on_OpenButton_clicked()
 		tr("Open Image"), "", tr("Audio Files (*.mp3 *.wav *.aac *.ogg)"));
 	if (fileName == "")
 		return;
-	file = fileName.toStdString();
-	audiocontroller.test_functie(file);
+	openFile(fileName);
 //    handler->Load(file);
 //	trackProgress->setMaximum(handler->Length());
 }
 
 void MainWindow::on_OpenEditButton_clicked()
 {
-	QString fileName = lineEdit->text();
-	std::string str = fileName.toStdString();
-	audiocontroller.test_functie(str);
+	openFile(lineEdit->text());
+}
+
+void MainWindow::openFile(QString str)
+{
+	lineEdit->setText(str);
+
+	QList<QListWidgetItem*> flist = listRecentFiles->findItems(str, Qt::MatchFlags());
+	QFile rcfile("recent_files_cache.txt");
+	if (rcfile.open(QFile::Append)) {
+		rcfile.write(str.toStdString().c_str(), str.size());
+		rcfile.write("\n",1);
+	}
+	if (flist.size() != 0) {
+		Q_FOREACH(QListWidgetItem* item, flist) {
+			delete item;
+		}
+	}
+	listRecentFiles->insertItem(0, new QListWidgetItem(str));
+	audiocontroller.test_functie(str.toStdString());
+}
+
+void MainWindow::on_listRecentFiles_itemDoubleClicked(QListWidgetItem* item )
+{
+	openFile(item->text());
 }
 
 void MainWindow::on_PreviousButton_clicked()
