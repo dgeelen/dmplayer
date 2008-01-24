@@ -59,6 +59,12 @@ uint16 network_handler::get_port_number() {
 	return tcp_port_number;
 }
 
+void network_handler::server_tcp_connection_listener() {
+}
+
+void network_handler::client_tcp_connection() {
+}
+
 void network_handler::send_packet_handler() {
 	dcerr("Network send thread: Opening sockets");
 	ipv4_addr broadcast_addr;
@@ -165,13 +171,19 @@ void network_handler::receive_packet_handler() {
 }
 
 void network_handler::start() {
-	if(thread_receive_packet_handler!=NULL || thread_send_packet_handler!=NULL) throw("Error: stop() the network_handler() before start()ing it!");
-	dcerr("Starting network IO thread");
+	#define WRAP(x, y) boost::thread(ErrorHandler(boost::bind(&network_handler::x, y)))
+	dcerr("Starting network IO threads");
+	if(thread_receive_packet_handler!=NULL || thread_send_packet_handler!=NULL)
+		throw("Error: stop() the network_handler() before start()ing it!");
 	receive_packet_handler_running = true;
 	try {
-		thread_receive_packet_handler = new boost::thread(ErrorHandler(boost::bind(&network_handler::receive_packet_handler, this)));
-		if(!server_mode)
-			thread_send_packet_handler = new boost::thread(ErrorHandler(boost::bind(&network_handler::send_packet_handler, this)));
+		thread_receive_packet_handler = new WRAP(receive_packet_handler, this);
+		if(server_mode)
+			thread_server_tcp_connection_listener = new WRAP(server_tcp_connection_listener, this);
+		if(!server_mode) {
+			thread_send_packet_handler   = new WRAP(send_packet_handler, this);
+			thread_client_tcp_connection = new WRAP(client_tcp_connection, this);
+		}
 	}
 	catch(...) {
 		receive_packet_handler_running = false;
