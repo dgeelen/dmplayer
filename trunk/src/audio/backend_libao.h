@@ -18,7 +18,8 @@ class LibAOBackend : public IBackend {
 		ao_sample_format format;
 		int   playing_buffer;
 		uint8* audio_buffer[2];
-		bool  play_back;
+		volatile bool read_back;
+		volatile bool  play_back;
 
 		boost::barrier fill_buffer_barrier;
 		boost::thread* thread_decoder_read_thread;
