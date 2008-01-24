@@ -8,7 +8,7 @@ class FileReaderDataSource: public IDataSource
 {
 	public:
 		FileReaderDataSource(std::string FileName);
-		~FileReaderDataSource() {};
+		~FileReaderDataSource();
 
 		void reset();
 		bool exhausted();

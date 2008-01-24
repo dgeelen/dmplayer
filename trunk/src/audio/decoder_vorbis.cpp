@@ -163,7 +163,9 @@ IDecoderRef VorbisDecoder::tryDecode(IDataSourceRef ds) {
 	datasource=ds;
 	reset();
 
+	IDecoderRef result;
 	if(read_vorbis_headers())
-		return IDecoderRef(new VorbisDecoder(ds));
-	return IDecoderRef();
+		result = IDecoderRef(new VorbisDecoder(ds));
+	datasource.reset(); // don't hang on to the data source longer than needed
+	return result;
 }
