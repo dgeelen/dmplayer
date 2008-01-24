@@ -15,6 +15,7 @@ class AudioController {
 	private:
 		IBackend* backend;
 		IAudioSourceRef curdecoder;
+		IAudioSourceRef nextdecoder;
 };
 
 #endif//AUDIO_CONTROLLER_H

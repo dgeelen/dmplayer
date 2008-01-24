@@ -57,6 +57,10 @@ AudioController::~AudioController() {
 uint32 AudioController::getData(uint8* buf, uint32 len)
 {
 	uint32 read = 0;
+	if (nextdecoder) {
+		curdecoder = nextdecoder;
+		nextdecoder.reset();
+	}
 	if (curdecoder)
 		read = curdecoder->getData(buf, len);
 	if (read < len) {
@@ -93,13 +97,17 @@ void AudioController::test_functie(std::string file) {
 		return;
 	}
 
-	curdecoder = IDecoder::findDecoder(ds);
-	if (!curdecoder) {
+	IAudioSourceRef newdecoder;
+	newdecoder = IDecoder::findDecoder(ds);
+	if (!newdecoder) {
 		dcerr("Cannot find decoder for file: " << file);
 		return;
 	}
 
-	if (curdecoder->getAudioFormat() != backend->getAudioFormat())
-		curdecoder = IAudioSourceRef(new ReformatFilter(curdecoder, backend->getAudioFormat()));
-	if(!curdecoder) dcerr("All decoders failed!");
+	if (newdecoder->getAudioFormat() != backend->getAudioFormat())
+		newdecoder = IAudioSourceRef(new ReformatFilter(newdecoder, backend->getAudioFormat()));
+	if(!newdecoder) dcerr("All decoders failed!");
+
+	while (nextdecoder); // wait till nextdecoder is clear
+	nextdecoder = newdecoder;
 }
