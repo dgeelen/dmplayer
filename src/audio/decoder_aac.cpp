@@ -1,14 +1,13 @@
 #include "decoder_aac.h"
 #include "../error-handling.h"
 #include <algorithm>
-#include <boost/cstdint.hpp>
 
 using namespace std;
 
 /* Thank you mplayer :-) */
 int AACDecoder::aac_probe() {
 	int pos = -1;
-	for(uint i = 0; i < buffer_fill - 4; ++i ) {
+	for(uint i = 0; i + 4 < buffer_fill; ++i ) {
 		if( ((buffer[i] == 0xff) && ((buffer[i+1] & 0xf6) == 0xf0)) || (buffer[i] == 'A' && buffer[i+1] == 'D' && buffer[i+2] == 'I' && buffer[i+3] == 'F')) {
 			pos = i;
 			break;
@@ -34,7 +33,9 @@ AACDecoder::AACDecoder() : IDecoder(AudioFormat()) {
 
 void AACDecoder::fill_buffer() {
 	while(buffer_fill != BLOCK_SIZE) {
-		buffer_fill += datasource->getData( buffer + buffer_fill, BLOCK_SIZE - buffer_fill);
+		int read = datasource->getData( buffer + buffer_fill, BLOCK_SIZE - buffer_fill);
+		if (read == 0) break;
+		buffer_fill += read;
 	}
 }
 
@@ -45,29 +46,28 @@ AACDecoder::AACDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 	fill_buffer();
 	int pos = aac_probe();
 	if(pos>0) {
-		memmove(buffer, buffer+pos, BLOCK_SIZE - pos );
+		memmove(buffer, buffer+pos, buffer_fill - pos );
 		buffer_fill -= pos;
-		fill_buffer();
 	}
 	if (pos<0)
 		throw Exception("This does not appear to be an AAC stream");
 
 	uint32 sample_rate;
 	uint8 channels;
-	long bytes_used = faacDecInit(decoder_handle, buffer, BLOCK_SIZE, &sample_rate, &channels);
+	fill_buffer();
+	long bytes_used = faacDecInit(decoder_handle, buffer, buffer_fill, &sample_rate, &channels);
 	if (bytes_used<0)
 		throw Exception("Error while initializing AAC stream");
 	if(bytes_used) {
 		memmove(buffer, buffer + bytes_used, BLOCK_SIZE - bytes_used);
 		buffer_fill -= bytes_used;
-		fill_buffer();
 	}
 
 	faacDecFrameInfo frame_info;
-	sample_buffer = (uint8*) faacDecDecode(decoder_handle, &frame_info, buffer, BLOCK_SIZE);
+	fill_buffer();
+	sample_buffer = (uint8*) faacDecDecode(decoder_handle, &frame_info, buffer, buffer_fill);
 	memmove(buffer, buffer + frame_info.bytesconsumed, BLOCK_SIZE - frame_info.bytesconsumed);
 	buffer_fill-=frame_info.bytesconsumed;
-	fill_buffer();
 
 	if (frame_info.error != 0)
 		throw Exception("Error decoding first AAC frame");
@@ -123,7 +123,7 @@ uint32 AACDecoder::getData(uint8* buf, uint32 len) {
 
 	if(sample_buffer_size - sample_buffer_index > 0) {
 		uint32 to_copy = min(sample_buffer_size - sample_buffer_index, len);
-		memmove(ptr, sample_buffer + sample_buffer_index, to_copy);
+		memcpy(ptr, sample_buffer + sample_buffer_index, to_copy);
 		sample_buffer_index    += to_copy;
 		bytes_done             += to_copy;
 		bytes_todo             -= to_copy;
@@ -134,14 +134,15 @@ uint32 AACDecoder::getData(uint8* buf, uint32 len) {
 
 	while(!done) {
 		faacDecFrameInfo frame_info;
-		sample_buffer = (uint8*) faacDecDecode(decoder_handle, &frame_info, buffer, BLOCK_SIZE);
+		fill_buffer();
+		if (buffer_fill == 0) return bytes_done;
+		sample_buffer = (uint8*) faacDecDecode(decoder_handle, &frame_info, buffer, buffer_fill);
 		memmove(buffer, buffer + frame_info.bytesconsumed, BLOCK_SIZE - frame_info.bytesconsumed);
 		buffer_fill-=frame_info.bytesconsumed;
-		fill_buffer();
 		if((frame_info.error==0) && (frame_info.samples>0)) { /* Now we have new samples */
 			sample_buffer_size = frame_info.samples*bytes_per_sample;
 			uint32 to_copy = min(sample_buffer_size, bytes_todo);
-			memmove(ptr, sample_buffer, to_copy);
+			memcpy(ptr, sample_buffer, to_copy);
 			ptr+=to_copy;
 			sample_buffer_index = to_copy;
 			bytes_todo -= to_copy;
@@ -172,18 +173,18 @@ uint32 AACDecoder::getData(uint8* buf, uint32 len) {
 				);
 
 				++error_count;
-				memmove(buffer, buffer + 1, BLOCK_SIZE - 1);
-				buffer_fill-=1;
+				if (buffer_fill > 0 && frame_info.bytesconsumed == 0) {
+					memmove(buffer, buffer + 1, buffer_fill - 1); //fixme?
+					buffer_fill-=1;
+				}
 				fill_buffer();
 				int pos = aac_probe();
 				if(pos>=0) {
-					memmove(buffer, buffer + pos, BLOCK_SIZE - pos);
+					memmove(buffer, buffer + pos, buffer_fill - pos);
 					buffer_fill-=pos;
-					fill_buffer();
 					dcerr("At " << datasource->getpos() << " bytes: " << faacDecGetErrorMessage(frame_info.error) << ", resynced after "<<pos<<" bytes");
 				} else {
 					buffer_fill=0;
-					fill_buffer();
 				}
 			}
 			else { /* Too many errors */
