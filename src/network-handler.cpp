@@ -94,6 +94,7 @@ void network_handler::send_packet_handler() {
 			dcerr("Diff: " << (curtime - i->second.ping_last_seen));
 			if(((curtime - i->second.ping_last_seen) > (3000000))) {
 				dcerr("Deleting server");
+				server_list_removed_signal(i->second);
 				known_servers.erase(i);
 				i = known_servers.begin();
 				continue;

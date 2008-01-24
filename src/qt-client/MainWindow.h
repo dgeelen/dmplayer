@@ -18,6 +18,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 
 	public Q_SLOTS:
 		void UpdateServerList(std::vector<server_info>);
+		void UpdateServerList_remove(server_info);
 		void on_OpenButton_clicked();
 		void on_OpenEditButton_clicked();
 		void on_listRecentFiles_itemDoubleClicked(QListWidgetItem*);

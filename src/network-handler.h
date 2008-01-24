@@ -46,6 +46,8 @@
 			bool is_running();
 			uint16 get_port_number();
 			boost::signal<void(const std::vector<server_info>&)> server_list_update_signal;
+			boost::signal<void(const server_info&)> server_list_added_signal; // fixme: actually call this
+			boost::signal<void(const server_info&)> server_list_removed_signal;
 		private:
 			bool server_mode;
 			boost::thread* thread_server_tcp_connection_listener;

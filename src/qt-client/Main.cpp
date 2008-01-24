@@ -21,5 +21,9 @@ int main( int argc, char **argv )
 		QTBOOSTER(&mainwindow, MainWindow::UpdateServerList)
 	);
 
+	nh.server_list_removed_signal.connect(
+		QTBOOSTER(&mainwindow, MainWindow::UpdateServerList_remove)
+	);
+
 	return app.exec();
 }

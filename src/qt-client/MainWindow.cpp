@@ -84,14 +84,20 @@ MainWindow::~MainWindow()
 
 void MainWindow::UpdateServerList(std::vector<server_info> sl)
 {
-	serverlist->clear();
-
 	for (uint i = 0; i < sl.size(); ++i) {
-		QTreeWidgetItem* rwi = new QTreeWidgetItem(serverlist, 0);
-		rwi->setText(0, sl[i].name.c_str());
-		rwi->setText(1, STRFORMAT("%i ms", sl[i].ping_micro_secs).c_str());
+		if (serverlist->findItems(QString(sl[i].name.c_str()), Qt::MatchFlags()).size() == 0) {
+			QTreeWidgetItem* rwi = new QTreeWidgetItem(serverlist, 0);
+			rwi->setText(0, sl[i].name.c_str());
+			rwi->setText(1, STRFORMAT("%i ms", sl[i].ping_micro_secs).c_str());
+		}
 	}
-	//serverlist->addTopLevelItem(
+}
+
+void MainWindow::UpdateServerList_remove(server_info si)
+{
+	QList<QTreeWidgetItem*> flist = serverlist->findItems(si.name.c_str(), Qt::MatchFlags());
+	Q_FOREACH(QTreeWidgetItem* item, flist)
+		delete item;
 }
 
 void MainWindow::updateProgressBar()
