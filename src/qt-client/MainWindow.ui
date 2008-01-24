@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1020</width>
-    <height>447</height>
+    <width>1029</width>
+    <height>733</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -19,181 +19,142 @@
    <set>QMainWindow::AllowNestedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks|QMainWindow::VerticalTabs</set>
   </property>
   <widget class="QWidget" name="centralwidget" >
-   <layout class="QHBoxLayout" >
-    <item>
-     <layout class="QHBoxLayout" >
-      <item>
-       <widget class="QTabWidget" name="tabWidget" >
-        <property name="currentIndex" >
-         <number>1</number>
-        </property>
-        <property name="elideMode" >
-         <enum>Qt::ElideLeft</enum>
-        </property>
-        <widget class="QWidget" name="tab" >
-         <property name="sizePolicy" >
-          <sizepolicy vsizetype="Preferred" hsizetype="MinimumExpanding" >
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+   <widget class="QTabWidget" name="tabWidget" >
+    <property name="geometry" >
+     <rect>
+      <x>9</x>
+      <y>9</y>
+      <width>648</width>
+      <height>336</height>
+     </rect>
+    </property>
+    <property name="currentIndex" >
+     <number>1</number>
+    </property>
+    <property name="elideMode" >
+     <enum>Qt::ElideLeft</enum>
+    </property>
+    <widget class="QWidget" name="tab" >
+     <property name="sizePolicy" >
+      <sizepolicy vsizetype="Preferred" hsizetype="MinimumExpanding" >
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <attribute name="title" >
+      <string>Tab 1</string>
+     </attribute>
+    </widget>
+    <widget class="QWidget" name="tab_2" >
+     <attribute name="title" >
+      <string>Tab 2</string>
+     </attribute>
+     <widget class="QWidget" name="horizontalLayout" >
+      <property name="geometry" >
+       <rect>
+        <x>40</x>
+        <y>110</y>
+        <width>522</width>
+        <height>71</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" >
+       <item>
+        <widget class="QPushButton" name="PreviousButton" >
+         <property name="text" >
+          <string>Previous</string>
          </property>
-         <attribute name="title" >
-          <string>Tab 1</string>
-         </attribute>
+         <property name="icon" >
+          <iconset resource="icons.qrc" >:/new/prefix1/Images/Prev.png</iconset>
+         </property>
         </widget>
-        <widget class="QWidget" name="tab_2" >
-         <attribute name="title" >
-          <string>Tab 2</string>
-         </attribute>
-         <widget class="QWidget" name="horizontalLayout" >
-          <property name="geometry" >
-           <rect>
-            <x>40</x>
-            <y>110</y>
-            <width>522</width>
-            <height>71</height>
-           </rect>
-          </property>
-          <layout class="QHBoxLayout" >
-           <item>
-            <widget class="QPushButton" name="PreviousButton" >
-             <property name="text" >
-              <string>Previous</string>
-             </property>
-             <property name="icon" >
-              <iconset resource="icons.qrc" >:/new/prefix1/Images/Prev.png</iconset>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="PlayButton" >
-             <property name="text" >
-              <string>Play</string>
-             </property>
-             <property name="icon" >
-              <iconset resource="icons.qrc" >:/new/prefix1/Images/Play.png</iconset>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="PauseButton" >
-             <property name="text" >
-              <string>Pause</string>
-             </property>
-             <property name="icon" >
-              <iconset resource="icons.qrc" >:/new/prefix1/Images/Pause.png</iconset>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="StopButton" >
-             <property name="text" >
-              <string>Stop</string>
-             </property>
-             <property name="icon" >
-              <iconset resource="icons.qrc" >:/new/prefix1/Images/Stop.png</iconset>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="NextButton" >
-             <property name="text" >
-              <string>Next</string>
-             </property>
-             <property name="icon" >
-              <iconset resource="icons.qrc" >:/new/prefix1/Images/Next.png</iconset>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-         <widget class="QPushButton" name="OpenButton" >
-          <property name="geometry" >
-           <rect>
-            <x>20</x>
-            <y>210</y>
-            <width>141</width>
-            <height>24</height>
-           </rect>
-          </property>
-          <property name="text" >
-           <string>Open...</string>
-          </property>
-         </widget>
-         <widget class="QWidget" name="horizontalLayout_2" >
-          <property name="geometry" >
-           <rect>
-            <x>39</x>
-            <y>10</y>
-            <width>521</width>
-            <height>80</height>
-           </rect>
-          </property>
-          <layout class="QHBoxLayout" >
-           <item>
-            <widget class="QProgressBar" name="trackProgress" >
-             <property name="value" >
-              <number>24</number>
-             </property>
-             <property name="alignment" >
-              <set>Qt::AlignLeading</set>
-             </property>
-             <property name="textVisible" >
-              <bool>false</bool>
-             </property>
-             <property name="format" >
-              <string>%p%</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLabel" name="label" >
-             <property name="text" >
-              <string>bahahahahahahahahaha</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-         <widget class="QPushButton" name="OpenEditButton" >
-          <property name="geometry" >
-           <rect>
-            <x>20</x>
-            <y>260</y>
-            <width>141</width>
-            <height>24</height>
-           </rect>
-          </property>
-          <property name="text" >
-           <string>Open</string>
-          </property>
-         </widget>
-         <widget class="QLineEdit" name="lineEdit" >
-          <property name="geometry" >
-           <rect>
-            <x>170</x>
-            <y>260</y>
-            <width>331</width>
-            <height>31</height>
-           </rect>
-          </property>
-         </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="PlayButton" >
+         <property name="text" >
+          <string>Play</string>
+         </property>
+         <property name="icon" >
+          <iconset resource="icons.qrc" >:/new/prefix1/Images/Play.png</iconset>
+         </property>
         </widget>
-       </widget>
-      </item>
-      <item>
-       <layout class="QVBoxLayout" />
-      </item>
-     </layout>
-    </item>
-   </layout>
+       </item>
+       <item>
+        <widget class="QPushButton" name="PauseButton" >
+         <property name="text" >
+          <string>Pause</string>
+         </property>
+         <property name="icon" >
+          <iconset resource="icons.qrc" >:/new/prefix1/Images/Pause.png</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="StopButton" >
+         <property name="text" >
+          <string>Stop</string>
+         </property>
+         <property name="icon" >
+          <iconset resource="icons.qrc" >:/new/prefix1/Images/Stop.png</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="NextButton" >
+         <property name="text" >
+          <string>Next</string>
+         </property>
+         <property name="icon" >
+          <iconset resource="icons.qrc" >:/new/prefix1/Images/Next.png</iconset>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="horizontalLayout_2" >
+      <property name="geometry" >
+       <rect>
+        <x>39</x>
+        <y>10</y>
+        <width>521</width>
+        <height>80</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" >
+       <item>
+        <widget class="QProgressBar" name="trackProgress" >
+         <property name="value" >
+          <number>24</number>
+         </property>
+         <property name="alignment" >
+          <set>Qt::AlignLeading</set>
+         </property>
+         <property name="textVisible" >
+          <bool>false</bool>
+         </property>
+         <property name="format" >
+          <string>%p%</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label" >
+         <property name="text" >
+          <string>bahahahahahahahahaha</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar" >
    <property name="geometry" >
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1020</width>
+     <width>1029</width>
      <height>19</height>
     </rect>
    </property>
@@ -218,7 +179,7 @@
    <addaction name="menu_Edit" />
   </widget>
   <widget class="QStatusBar" name="statusbar" />
-  <widget class="QDockWidget" name="dockWidget" >
+  <widget class="QDockWidget" name="dockServerList" >
    <property name="floating" >
     <bool>false</bool>
    </property>
@@ -257,6 +218,125 @@
         </widget>
        </item>
       </layout>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockFileHistory" >
+   <property name="floating" >
+    <bool>false</bool>
+   </property>
+   <property name="features" >
+    <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable|QDockWidget::NoDockWidgetFeatures</set>
+   </property>
+   <property name="windowTitle" >
+    <string>Recent Files</string>
+   </property>
+   <attribute name="dockWidgetArea" >
+    <number>4</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_2" >
+    <layout class="QGridLayout" >
+     <item row="0" column="2" >
+      <spacer>
+       <property name="orientation" >
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeType" >
+        <enum>QSizePolicy::Fixed</enum>
+       </property>
+       <property name="sizeHint" >
+        <size>
+         <width>5</width>
+         <height>5</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="1" column="1" >
+      <widget class="QPushButton" name="OpenEditButton" >
+       <property name="text" >
+        <string>Open</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2" >
+      <widget class="QLineEdit" name="lineEdit" />
+     </item>
+     <item row="2" column="0" >
+      <spacer>
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType" >
+        <enum>QSizePolicy::Fixed</enum>
+       </property>
+       <property name="sizeHint" >
+        <size>
+         <width>5</width>
+         <height>5</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="2" column="1" >
+      <layout class="QVBoxLayout" >
+       <item>
+        <widget class="QPushButton" name="OpenButton" >
+         <property name="text" >
+          <string>Browse...</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer>
+         <property name="orientation" >
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" >
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item row="2" column="2" >
+      <widget class="QListWidget" name="listRecentFiles" />
+     </item>
+     <item row="2" column="3" >
+      <spacer>
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType" >
+        <enum>QSizePolicy::Fixed</enum>
+       </property>
+       <property name="sizeHint" >
+        <size>
+         <width>5</width>
+         <height>5</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="3" column="2" >
+      <spacer>
+       <property name="orientation" >
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeType" >
+        <enum>QSizePolicy::Fixed</enum>
+       </property>
+       <property name="sizeHint" >
+        <size>
+         <width>5</width>
+         <height>5</height>
+        </size>
+       </property>
+      </spacer>
      </item>
     </layout>
    </widget>

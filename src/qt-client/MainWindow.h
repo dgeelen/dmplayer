@@ -20,6 +20,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		void UpdateServerList(std::vector<server_info>);
 		void on_OpenButton_clicked();
 		void on_OpenEditButton_clicked();
+		void on_listRecentFiles_itemDoubleClicked(QListWidgetItem*);
 		void on_PreviousButton_clicked();
 		void on_PlayButton_clicked();
 		void on_PauseButton_clicked();
@@ -31,5 +32,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		AudioController audiocontroller;
 		//mp3_handler* handler;
 		QTimer progressTimer;
+
+		void openFile(QString str);
 };
 #endif
