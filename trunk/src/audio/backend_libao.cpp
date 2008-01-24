@@ -10,6 +10,14 @@ LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec), fill_buffer_ba
 	format.channels = 2;
 	format.rate = 44100;
 	format.byte_format = AO_FMT_LITTLE;
+
+	/* let the world know what audio format we accept */
+	af.Channels = format.channels;
+	af.BitsPerSample = format.bits;
+	af.SampleRate = format.rate;
+	af.SignedSample = true;
+	af.LittleEndian = true;
+
 	device = ao_open_live(default_driver, &format, NULL /* no options */);
 	if (device == NULL) {
 		dcerr("LibAOBackend: Error opening device!");
@@ -41,7 +49,6 @@ LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec), fill_buffer_ba
 		throw ThreadException("LibAOBackend: Could not start output thread!");
 	}
 }
-
 
 /*
  *   Mutexen mutex_a and mutex_b to represent each buffer
