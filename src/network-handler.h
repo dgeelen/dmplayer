@@ -48,8 +48,12 @@
 			boost::signal<void(const std::vector<server_info>&)> server_list_update_signal;
 		private:
 			bool server_mode;
+			boost::thread* thread_server_tcp_connection_listener;
+			boost::thread* thread_client_tcp_connection;
 			boost::thread* thread_receive_packet_handler;
 			boost::thread* thread_send_packet_handler;
+			void server_tcp_connection_listener();
+			void client_tcp_connection();
 			bool receive_packet_handler_running;
 			bool send_packet_handler_running;
 			uint16 tcp_port_number;
