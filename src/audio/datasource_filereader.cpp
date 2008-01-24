@@ -15,6 +15,11 @@
 	reset();
 }
 
+FileReaderDataSource::~FileReaderDataSource()
+{
+	fclose(FileHandle);
+}
+
 long FileReaderDataSource::getpos() {
 	return ftell(FileHandle);
 }
