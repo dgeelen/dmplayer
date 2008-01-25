@@ -15,6 +15,7 @@ int main( int argc, char **argv )
 	mainwindow.show();
 
 	qRegisterMetaType<std::vector<server_info> >("std::vector<server_info>");
+	qRegisterMetaType<server_info >("server_info");
 
 	network_handler nh(12345);
 	nh.server_list_update_signal.connect(
