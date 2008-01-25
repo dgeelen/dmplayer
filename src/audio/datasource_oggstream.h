@@ -25,6 +25,8 @@ class OGGStreamDataSource: public IDataSource
 		OGGDecoderRef decoder;
 		long stream_id;
 		uint32 total_bytes_read;
+		uint32 bytes_leftover;
+		ogg_packet* packet;
 };
 
 

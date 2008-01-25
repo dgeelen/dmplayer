@@ -1,5 +1,3 @@
-
-
 #include "datasource_oggstream.h"
 #include "../error-handling.h"
 #include <algorithm>
@@ -8,19 +6,21 @@ using namespace std;
 OGGStreamDataSource::OGGStreamDataSource( OGGDecoderRef decoder, long stream_id ) {
 	this->decoder = decoder;
 	this->stream_id = stream_id;
-	is_exhausted = false;
-	total_bytes_read=0;
+	packet = NULL;
 	reset();
 }
 
 OGGStreamDataSource::~OGGStreamDataSource() {
-	total_bytes_read=0;
-	is_exhausted = false;
+	if(packet) delete packet;
 };
 
 void OGGStreamDataSource::reset() {
 	is_exhausted = false;
 	total_bytes_read=0;
+	bytes_leftover = 0;
+	if(packet) delete packet;
+	packet = NULL;
+	is_exhausted = false;
 	this->decoder->reset();
 }
 
@@ -34,21 +34,38 @@ bool OGGStreamDataSource::exhausted() {
 
 /**
  * Returns at most 1 packet of data per call
+ * If less data is requested than contained in the packet, subsequent
+ * calls will return the remainder until the full packet has been returned
  * @param buffer Where to store packet data
  * @param len Size of buffer
  * @return buffer is filled with as much data as is contained in 1 packet
  */
 uint32 OGGStreamDataSource::getData(uint8* const buffer, uint32 len) {
-	ogg_packet* packet = decoder->get_packet_from_stream(stream_id);
-	if(packet) {
-		if(packet->bytes > (int)len) dcerr("Warning: packet won't fit buffer!");
-		int n = min((unsigned long)packet->bytes, len);
-		memcpy(buffer, packet->packet, n);
+	if(!is_exhausted) {
+		if(bytes_leftover) {
+			uint32 todo = min(bytes_leftover, len);
+			memcpy(buffer, packet->packet + packet->bytes - bytes_leftover, todo);
+			bytes_leftover-=todo;
+			total_bytes_read+=todo;
+			return todo;
+		}
 		delete packet;
-		total_bytes_read+=n;
-		return n;
+		packet = decoder->get_packet_from_stream(stream_id);
+		if(packet) {
+			int n = min((unsigned long)packet->bytes, len);
+			memcpy(buffer, packet->packet, n);
+			total_bytes_read+=n;
+			if(packet->bytes > len) {
+				bytes_leftover = packet->bytes-n;
+			}
+			else {
+				delete packet;
+				packet = NULL;
+			}
+			return n;
+		}
+		is_exhausted = true;
 	}
-	is_exhausted = true;
 	return 0;
 }
 
