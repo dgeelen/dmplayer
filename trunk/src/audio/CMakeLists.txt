@@ -50,8 +50,20 @@ IF(LIBAO_FOUND) # Xiph.org libao backend
 	ADD_DEFINITIONS(-DLIBAO_BACKEND)
 ENDIF(LIBAO_FOUND)
 
-# Now set up all decoders
+# Set up all demuxer before the decoders to prevent the
+# decoders from detecting encapsulated data
+IF(LIBOGG_FOUND) # Xiph.org OGG decoder (demuxer really)
+	SET(DECODER_NAMES ${DECODER_NAMES} OGG)
+	SET(DECODER_LIBRARIES ${DECODER_LIBRARIES} ${LIBOGG_LIBRARY})
+	INCLUDE_DIRECTORIES(${LIBOGG_INCLUDE_DIR})
+	# The OGG decoder has a bundled datasource, since it
+	# is not really a decoder but a demuxer
+	SET(DECODER_SOURCE_FILES ${DECODER_SOURCE_FILES}
+		datasource_oggstream.cpp datasource_oggstream.h
+	)
+ENDIF(LIBOGG_FOUND)
 
+# Now set up all decoders
 IF(LIBFAAD2_FOUND) # http://www.audiocoding.com/faad2.html
 	SET(DECODER_NAMES ${DECODER_NAMES} AAC)
 	SET(DECODER_LIBRARIES ${DECODER_LIBRARIES} ${LIBFAAD2_LIBRARY})
@@ -63,17 +75,6 @@ IF(MAD_FOUND) # MAD MP3 decoder
 	SET(DECODER_LIBRARIES ${DECODER_LIBRARIES} ${MAD_LIBRARY})
 	INCLUDE_DIRECTORIES(${MAD_INCLUDE_DIR})
 ENDIF(MAD_FOUND)
-
-IF(LIBOGG_FOUND) # Xiph.org OGG decoder (demuxer really)
-	SET(DECODER_NAMES ${DECODER_NAMES} OGG)
-	SET(DECODER_LIBRARIES ${DECODER_LIBRARIES} ${LIBOGG_LIBRARY})
-	INCLUDE_DIRECTORIES(${LIBOGG_INCLUDE_DIR})
-	# The OGG decoder has a bundled datasource, since it
-	# is not really a decoder but a demuxer
-	SET(DECODER_SOURCE_FILES ${DECODER_SOURCE_FILES}
-		datasource_oggstream.cpp datasource_oggstream.h
-	)
-ENDIF(LIBOGG_FOUND)
 
 IF(LIBVORBIS_FOUND) # Xiph.org Vorbis decoder
 	SET(DECODER_NAMES ${DECODER_NAMES} Vorbis)
@@ -115,12 +116,12 @@ ADD_LIBRARY(mpmp_audio
 	backend_interface.h
 	datasource_interface.h
 	decoder_interface.h           decoder_interface.cpp
-	
+
 	audio_controller.h            audio_controller.cpp
-	
+
 	datasource_filereader.h       datasource_filereader.cpp
 	datasource_httpstream.h       datasource_httpstream.cpp
-	
+
 	filter_sampledoubler.h        filter_sampledoubler.cpp
 	filter_reformat.h             filter_reformat.cpp
 	filter_monotostereo.h         filter_monotostereo.cpp
