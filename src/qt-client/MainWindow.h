@@ -31,11 +31,12 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		void on_RefreshButton_clicked();
 		void on_DisconnectButton_clicked();
 		void updateProgressBar();
+
 	private:
 		std::string file;
 		AudioController audiocontroller;
-		//mp3_handler* handler;
 		QTimer progressTimer;
+		std::vector<server_info> currentServers;
 
 		void openFile(QString str);
 };

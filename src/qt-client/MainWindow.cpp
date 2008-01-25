@@ -85,10 +85,21 @@ MainWindow::~MainWindow()
 void MainWindow::UpdateServerList(std::vector<server_info> sl)
 {
 	for (uint i = 0; i < sl.size(); ++i) {
-		if (serverlist->findItems(QString(sl[i].name.c_str()), Qt::MatchFlags()).size() == 0) {
+		QList<QTreeWidgetItem*> flist = serverlist->findItems(QString(sl[i].name.c_str()), Qt::MatchFlags());
+		if (flist.size() == 0) {
 			QTreeWidgetItem* rwi = new QTreeWidgetItem(serverlist, 0);
 			rwi->setText(0, sl[i].name.c_str());
 			rwi->setText(1, STRFORMAT("%i ms", sl[i].ping_micro_secs).c_str());
+			currentServers.push_back(sl[i]);
+		}
+		else { //Update ping
+			Q_FOREACH(QTreeWidgetItem* item, flist)
+				item->setText(1, STRFORMAT("%i ms", sl[i].ping_micro_secs).c_str());
+			for (int j = 0; j < sl.size(); ++j)
+			{
+				if (currentServers[j].sock_addr == sl[i].sock_addr)
+					currentServers[j] = sl[i];
+			}
 		}
 	}
 }
@@ -98,6 +109,16 @@ void MainWindow::UpdateServerList_remove(server_info si)
 	QList<QTreeWidgetItem*> flist = serverlist->findItems(si.name.c_str(), Qt::MatchFlags());
 	Q_FOREACH(QTreeWidgetItem* item, flist)
 		delete item;
+	for (std::vector<server_info>::iterator i = currentServers.begin(); i != currentServers.end();)
+	{
+		if (i->sock_addr == si.sock_addr)
+		{
+			currentServers.erase(i);
+			continue;
+		}
+		++i;
+	}
+	std::cerr << "Disconnect" << std::endl;
 }
 
 void MainWindow::updateProgressBar()
@@ -179,8 +200,18 @@ void MainWindow::on_NextButton_clicked()
 
 void MainWindow::on_ConnectButton_clicked()
 {
-	lblServerName->setText(serverlist->itemAt(0,0)->text(0));
-	lblPing->setText(serverlist->itemAt(0,0)->text(1));
+	int index = serverlist->indexOfTopLevelItem(serverlist->currentItem());
+	if (index > -1)
+	{
+		lblServerName->setText(currentServers[index].name.c_str());
+		lblPing->setText(STRFORMAT("%i ms", currentServers[index].ping_micro_secs).c_str());
+		lblServerAddress->setText(currentServers[index].sock_addr.std_str().c_str());
+	}
+	else
+	{
+		lblServerName->setText("");
+		lblPing->setText("");
+	}
 }
 
 void MainWindow::on_DisconnectButton_clicked()
