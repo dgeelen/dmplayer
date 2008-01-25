@@ -75,10 +75,4 @@ class packet {
 			int curpos;
 };
 
-//NOTE: This is actually part of class packet, but needs to declared *outside* of class packet
-//      for various obscure reasons.
-//      See http://www.lrde.epita.fr/cgi-bin/twiki/view/Know/MemberFunctionsTemplateSpecialization
-//          http://www.linuxquestions.org/questions/programming-9/explicit-specialization-in-non-namespace-scope-186352/
-//          http://gcc.gnu.org/ml/gcc/1998-09/msg01216.html
-
 #endif
