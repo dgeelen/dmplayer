@@ -57,6 +57,7 @@ uint32 OGGStreamDataSource::getData(uint8* const buffer, uint32 len) {
 			total_bytes_read+=n;
 			if(packet->bytes > len) {
 				bytes_leftover = packet->bytes-n;
+				dcerr("Warning: Splitting packet, "<<bytes_leftover<<" bytes leftover");
 			}
 			else {
 				delete packet;
@@ -67,8 +68,4 @@ uint32 OGGStreamDataSource::getData(uint8* const buffer, uint32 len) {
 		is_exhausted = true;
 	}
 	return 0;
-}
-
-ogg_packet* OGGStreamDataSource::read() {
-	return decoder->get_packet_from_stream(stream_id);
 }
