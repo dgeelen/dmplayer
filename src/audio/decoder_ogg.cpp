@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include "decoder_ogg.h"
 #include "datasource_oggstream.h"
+#include "datasource_resetbuffer.h"
 #include "../error-handling.h"
 #include <string.h>
 #include <vector>
@@ -21,8 +22,8 @@ OGGDecoder::OGGDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 }
 
 void OGGDecoder::setDecoder(IDecoderRef decoder) {
-	if(decoder) {
-		current_decoder = decoder;
+	current_decoder = decoder; //FIXME: Smart Pointer will clean up?
+	if(current_decoder) {
 		audioformat = current_decoder->getAudioFormat();
 	}
 }
@@ -31,7 +32,7 @@ OGGDecoder::~OGGDecoder() {
 	uninitialize();
 }
 
-void OGGDecoder::uninitialize() {
+void OGGDecoder::clear_streams() {
 	for(map<long, struct stream_decoding_state >::iterator i = streams.begin(); i!=streams.end(); ++i) {
 		stream_decoding_state& s = i->second;
 		for(list<ogg_packet*>::iterator j=s.packets.begin(); j!=s.packets.end(); ++j) {
@@ -40,6 +41,10 @@ void OGGDecoder::uninitialize() {
 		ogg_stream_destroy(s.stream_state);
 	}
 	streams.clear();
+}
+
+void OGGDecoder::uninitialize() {
+	clear_streams();
 	if(sync) {
 		delete sync;
 		sync = NULL;
@@ -49,15 +54,19 @@ void OGGDecoder::uninitialize() {
 void OGGDecoder::initialize() {
 	sync = new ogg_sync_state();
 	ogg_sync_init(sync);
-	read_bos_pages();
+	read_bos_pages(true);
+	eos_count = 0;
+	first_stream = true;
 	if(streams.size()==0)
 		throw Exception("Could not find any BOS pages");
 }
 
 void OGGDecoder::reset() {
-	uninitialize();
-	if(datasource) datasource->reset();
-	initialize();
+	if(first_stream) {
+		uninitialize();
+		if(datasource) datasource->reset();
+		initialize();
+	}
 }
 
 /**
@@ -93,15 +102,15 @@ ogg_packet* OGGDecoder::get_packet_from_stream(long stream_id) {
  * @param stream_id
  */
 void OGGDecoder::read_next_packet_from_stream(long stream_id) {
-	stream_decoding_state& state = streams[stream_id];
-	bool done = state.exhausted;
+	bool done = false;
 	ogg_packet* packet = new ogg_packet;
 	packet->packet = NULL;
+	stream_decoding_state& state = streams[stream_id];
 	while(!done) {
 		int result = ogg_stream_packetout(state.stream_state, packet);
 		switch(result) {
 			case 0 : { // Stream needs more data to construct a packet
-				if(datasource->exhausted()) {
+				if(datasource->exhausted() || state.exhausted==true) {
 					state.exhausted = true;
 					done=true;
 					break;
@@ -116,7 +125,6 @@ void OGGDecoder::read_next_packet_from_stream(long stream_id) {
 				}
 			} /* Fallthrough intentional */
 			case 1 : { // Successfully extracted a packet
-				if(packet->e_o_s) state.exhausted = true;
 				streams[stream_id].packets.push_back(packet);
 				done=true;
 				break;
@@ -179,6 +187,11 @@ ogg_page* OGGDecoder::read_page(uint32 time_out) {
 				break; //FIXME: Same test as in lost packet?
 			}
 			case 1 : { // Successfully extracted a page
+				if(ogg_page_eos(page)) {
+					eos_count++;
+					dcerr("Eos marker for stream "<<ogg_page_serialno(page)<<" found for a total of "<<eos_count<<" eos markers");
+					streams[ogg_page_serialno(page)].exhausted = true;
+				}
 				done=true;
 				break;
 			}
@@ -196,18 +209,19 @@ IDecoderRef OGGDecoder::find_decoder() {
 		dcerr("found a stream with ID " << i->second.stream_state->serialno);
 		boost::shared_ptr<OGGDecoder> ptr = shared_from_this();
 		OGGStreamDataSourceRef oggs = OGGStreamDataSourceRef(new OGGStreamDataSource(OGGDecoderRef(ptr), i->second.stream_state->serialno));
-		IDecoderRef dc = IDecoder::findDecoder(oggs);
+		ResetBufferDataSourceRef ds = ResetBufferDataSourceRef(new ResetBufferDataSource(oggs));
+		IDecoderRef dc = IDecoder::findDecoder(ds);
 		if (dc) return dc;
 	}
 	return IDecoderRef();
 }
 
 /* After this all bos pages should be in streams */
-void OGGDecoder::read_bos_pages() {
+void OGGDecoder::read_bos_pages(bool from_start_of_stream) {
 	all_bos_pages_handled = false;
 	ogg_page* page;
 	bool done = false;
-	while((!done) && (datasource->getpos() < 1024*16) ) {
+	while((!done) && ((datasource->getpos() < 1024*16) || !from_start_of_stream )) {
 		page = read_page(1024*16);
 		all_bos_pages_handled = true;
 		if(page) {
@@ -228,10 +242,27 @@ void OGGDecoder::read_bos_pages() {
 
 uint32 OGGDecoder::getData(uint8* buf, uint32 len) {
 	if(!current_decoder) return 0;
-	return current_decoder->getData(buf, len);
+	uint32 n = current_decoder->getData(buf, len);
+	if(n) return n;
+	else if(streams.size() == eos_count) { // All streams have been closed, now new streams are allowed
+		dcerr("Trying new stream...");
+		eos_count=0;
+		clear_streams();
+		read_bos_pages(false);
+		if(streams.size()) { // We found new BOS pages
+			dcerr("found, setting new decoder");
+			first_stream = false;
+			setDecoder(find_decoder());
+			return getData(buf,len);
+		}
+		else {
+			dcerr("Not found");
+			setDecoder(IDecoderRef());
+		}
+	}
+	return 0;
 }
 
-//NOTE: We do not (yet, if ever) support concatenated streams
 IDecoderRef OGGDecoder::tryDecode(IDataSourceRef ds) {
 	try {
 		OGGDecoderRef oggd(new OGGDecoder(ds));
@@ -246,10 +277,4 @@ IDecoderRef OGGDecoder::tryDecode(IDataSourceRef ds) {
 		dcerr("OGG tryDecode failed: " << e.what());
 		return IDecoderRef();
 	}
-/*	datasource = ds;
-	reset();
-
-	datasource.reset();
-	if(current_decoder) return IDecoderRef(new OGGDecoder(ds));
-	return IDecoderRef(); // NULL reference*/
 }

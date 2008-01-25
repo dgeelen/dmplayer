@@ -158,7 +158,7 @@ uint32 VorbisDecoder::getData(uint8* buffer, uint32 len)
 			if(vorbis_synthesis(block, packet)==0) {
 				vorbis_synthesis_blockin(dsp_state, block); //FIXME: Else?
 			}
-			else dcerr("Warning: could not vorbis_synthesis_blockin()");
+// 			else dcerr("Warning: could not vorbis_synthesis_blockin()"); //EOF?
 		}
 	}
 	return samples_decoded*bytes_per_sample;

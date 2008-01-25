@@ -26,7 +26,9 @@ class OGGDecoder : public boost::enable_shared_from_this<OGGDecoder>, public IDe
 		ogg_packet* get_packet_from_stream(long stream_id);
 		void reset();
 	private:
-		void read_bos_pages();
+		bool first_stream;
+		void read_bos_pages(bool from_start_of_stream);
+		long eos_count;
 		OGGDecoder(IDataSourceRef ds);
 		IDecoderRef find_decoder();
 		void setDecoder(IDecoderRef decoder);
@@ -43,6 +45,7 @@ class OGGDecoder : public boost::enable_shared_from_this<OGGDecoder>, public IDe
 		long current_stream;
 		IDecoderRef current_decoder;
 
+		void clear_streams();
 		void uninitialize();
 		void initialize();
 };
