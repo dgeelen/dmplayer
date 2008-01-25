@@ -11,12 +11,19 @@ using namespace std;
 #define BLOCK_SIZE 1024*8
 
 OGGDecoder::OGGDecoder() : IDecoder(AudioFormat()) {
-	initialize();
 }
 
 OGGDecoder::OGGDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 	datasource = ds;
+	datasource->reset();
 	initialize();
+}
+
+void OGGDecoder::setDecoder(IDecoderRef decoder) {
+	if(decoder) {
+		current_decoder = decoder;
+		audioformat = current_decoder->getAudioFormat();
+	}
 }
 
 OGGDecoder::~OGGDecoder() {
@@ -41,7 +48,9 @@ void OGGDecoder::uninitialize() {
 void OGGDecoder::initialize() {
 	sync = new ogg_sync_state();
 	ogg_sync_init(sync);
-	all_bos_pages_handled = false;
+	read_bos_pages();
+	if(streams.size()==0)
+		throw Exception("Could not find any BOS pages");
 }
 
 void OGGDecoder::reset() {
@@ -105,15 +114,13 @@ void OGGDecoder::read_next_packet_from_stream(long stream_id) {
 				}
 			} /* Fallthrough intentional */
 			case 1 : { // Successfully extracted a packet
-				if(packet->e_o_s)
-					state.exhausted = true;
+				if(packet->e_o_s) state.exhausted = true;
 				streams[stream_id].packets.push_back(packet);
 				done=true;
 				break;
 			}
 			default: {
-				dcerr("Internal error");
-				throw "Invalid return value";
+				throw Exception("Invalid return value");
 				break;
 			}
 		}
@@ -132,19 +139,10 @@ void OGGDecoder::read_next_page_for_stream(long stream_id) {
 		ogg_page* page = read_page();
 		if(page) {
 			long page_serial = ogg_page_serialno(page);
-			if(ogg_page_bos(page)) { // This page belongs to a new stream
-				streams[page_serial] = stream_decoding_state();
-				streams[page_serial].exhausted = false;
-				streams[page_serial].stream_state = new ogg_stream_state();
-				if(ogg_stream_init(streams[page_serial].stream_state, page_serial)) throw "libogg: could not initialize stream";
-			}
-			else {
-				all_bos_pages_handled = true;
-			}
-			if(ogg_stream_pagein(streams[page_serial].stream_state, page)) throw "Could not submit page to stream";
+			if(ogg_stream_pagein(streams[page_serial].stream_state, page)) throw Exception("Could not submit page to stream");
 			done = page_serial == stream_id;
 			delete page;
-		}
+		} else done = true;
 	}
 }
 
@@ -165,7 +163,7 @@ ogg_page* OGGDecoder::read_page(uint32 time_out) {
 			case 0: { // needs more data to construct a page
 				char* buffer = ogg_sync_buffer(sync, BLOCK_SIZE);
 				long bytes_read = datasource->getData( (uint8*)buffer, BLOCK_SIZE );
-				if(ogg_sync_wrote(sync, bytes_read)) throw "Internal error in libogg!";
+				if(ogg_sync_wrote(sync, bytes_read)) throw Exception("Internal error in libogg!");
 				if(datasource->exhausted() || (datasource->getpos() >= (int)time_out )) {
 					delete page;
 					return NULL;
@@ -183,8 +181,7 @@ ogg_page* OGGDecoder::read_page(uint32 time_out) {
 				break;
 			}
 			default: {
-				dcerr("Internal error");
-				throw "Invalid return value";
+				throw Exception("Invalid return value");
 				break;
 			}
 		}
@@ -195,7 +192,8 @@ ogg_page* OGGDecoder::read_page(uint32 time_out) {
 IDecoderRef OGGDecoder::find_decoder() {
 	for(map<long, stream_decoding_state>::iterator i = streams.begin(); i!=streams.end(); ++i) {
 		dcerr("found a stream with ID " << i->second.stream_state->serialno);
-		OGGStreamDataSourceRef oggs = OGGStreamDataSourceRef(new OGGStreamDataSource(OGGDecoderRef(this), i->second.stream_state->serialno));
+		boost::shared_ptr<OGGDecoder> ptr = shared_from_this();
+		OGGStreamDataSourceRef oggs = OGGStreamDataSourceRef(new OGGStreamDataSource(OGGDecoderRef(ptr), i->second.stream_state->serialno));
 		IDecoderRef dc = IDecoder::findDecoder(oggs);
 		if (dc) return dc;
 	}
@@ -209,25 +207,47 @@ void OGGDecoder::read_bos_pages() {
 	bool done = false;
 	while((!done) && (datasource->getpos() < 1024*16) ) {
 		page = read_page(1024*16);
-		done=true;
-		if(page) if(ogg_page_bos(page)) done = false;
+		all_bos_pages_handled = true;
+		if(page) {
+			long page_serial = ogg_page_serialno(page);
+			if(ogg_page_bos(page)) { // This page belongs to a new stream
+				streams[page_serial] = stream_decoding_state();
+				streams[page_serial].exhausted = false;
+				streams[page_serial].stream_state = new ogg_stream_state();
+				if(ogg_stream_init(streams[page_serial].stream_state, page_serial)) throw Exception("libogg: could not initialize stream");
+				all_bos_pages_handled = false;
+			}
+			if(ogg_stream_pagein(streams[page_serial].stream_state, page)) throw Exception("Could not submit page to stream");
+		}
+		done=all_bos_pages_handled;
 		delete page;
 	}
-	all_bos_pages_handled = true;
 }
 
 uint32 OGGDecoder::getData(uint8* buf, uint32 len) {
-	/* TODO: Pass through */
-	return 0;
+	if(!current_decoder) return 0;
+	return current_decoder->getData(buf, len);
 }
 
 //NOTE: We do not (yet, if ever) support concatenated streams
 IDecoderRef OGGDecoder::tryDecode(IDataSourceRef ds) {
-	datasource = ds;
+	try {
+		OGGDecoderRef oggd(new OGGDecoder(ds));
+		IDecoderRef decodable = oggd->find_decoder();
+		if(decodable) {
+			oggd->setDecoder(decodable);
+			return oggd;
+		}
+		return IDecoderRef();;
+	}
+	catch (Exception& e) {
+		dcerr("OGG tryDecode failed: " << e.what());
+		return IDecoderRef();
+	}
+/*	datasource = ds;
 	reset();
-	read_bos_pages();
-	current_decoder = find_decoder();
+
 	datasource.reset();
 	if(current_decoder) return IDecoderRef(new OGGDecoder(ds));
-	return IDecoderRef(); // NULL reference
+	return IDecoderRef(); // NULL reference*/
 }

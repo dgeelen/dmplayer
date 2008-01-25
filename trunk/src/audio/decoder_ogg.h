@@ -6,6 +6,7 @@
 #include <ogg/ogg.h>
 #include <map>
 #include <list>
+#include <boost/enable_shared_from_this.hpp>
 
 struct stream_decoding_state {
 	bool exhausted;                   // set after last packet is read
@@ -14,7 +15,7 @@ struct stream_decoding_state {
 };
 
 typedef boost::shared_ptr<class OGGDecoder> OGGDecoderRef;
-class OGGDecoder : public IDecoder {
+class OGGDecoder : public boost::enable_shared_from_this<OGGDecoder>, public IDecoder {
 	public:
 		OGGDecoder();
 		~OGGDecoder();
@@ -28,6 +29,7 @@ class OGGDecoder : public IDecoder {
 		void read_bos_pages();
 		OGGDecoder(IDataSourceRef ds);
 		IDecoderRef find_decoder();
+		void setDecoder(IDecoderRef decoder);
 
 		ogg_sync_state* sync;
 		std::map<long, struct stream_decoding_state > streams;
