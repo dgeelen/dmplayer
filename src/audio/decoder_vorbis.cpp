@@ -13,6 +13,11 @@ VorbisDecoder::VorbisDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 	datasource->reset();
 	/* Initialize libvorbis */
 	if(!read_vorbis_headers()) throw "VorbisDecoder: Error while reading vorbis header";
+	audioformat.LittleEndian = true;
+	audioformat.Channels = info->channels;
+	audioformat.BitsPerSample = 16;
+	audioformat.SampleRate = info->rate;
+	audioformat.SignedSample = true;
 	/* FIXME: These are only used when we have a data source, and unitialized after playing a full track */
 	vorbis_synthesis_init(dsp_state, info);
 	vorbis_block_init(dsp_state, block);
