@@ -11,6 +11,7 @@ using namespace std;
 #define BLOCK_SIZE 1024*8
 
 OGGDecoder::OGGDecoder() : IDecoder(AudioFormat()) {
+	sync = NULL;
 }
 
 OGGDecoder::OGGDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
@@ -95,6 +96,7 @@ void OGGDecoder::read_next_packet_from_stream(long stream_id) {
 	stream_decoding_state& state = streams[stream_id];
 	bool done = state.exhausted;
 	ogg_packet* packet = new ogg_packet;
+	packet->packet = NULL;
 	while(!done) {
 		int result = ogg_stream_packetout(state.stream_state, packet);
 		switch(result) {
