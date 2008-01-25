@@ -121,6 +121,7 @@ ADD_LIBRARY(mpmp_audio
 
 	datasource_filereader.h       datasource_filereader.cpp
 	datasource_httpstream.h       datasource_httpstream.cpp
+	datasource_resetbuffer.h      datasource_resetbuffer.cpp
 
 	filter_sampledoubler.h        filter_sampledoubler.cpp
 	filter_reformat.h             filter_reformat.cpp
