@@ -110,8 +110,7 @@ void OGGDecoder::read_next_packet_from_stream(long stream_id) {
 		int result = ogg_stream_packetout(state.stream_state, packet);
 		switch(result) {
 			case 0 : { // Stream needs more data to construct a packet
-				if(datasource->exhausted() || state.exhausted==true) {
-					state.exhausted = true;
+				if(state.exhausted==true) {
 					done=true;
 					break;
 				}
@@ -174,7 +173,7 @@ ogg_page* OGGDecoder::read_page(uint32 time_out) {
 				char* buffer = ogg_sync_buffer(sync, BLOCK_SIZE);
 				long bytes_read = datasource->getData( (uint8*)buffer, BLOCK_SIZE );
 				if(ogg_sync_wrote(sync, bytes_read)) throw Exception("Internal error in libogg!");
-				if(datasource->exhausted() || (datasource->getpos() >= (int)time_out )) {
+				if((bytes_read==0) || ((datasource->getpos() >= (int)time_out ))) {
 					delete page;
 					return NULL;
 				}
