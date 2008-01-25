@@ -20,7 +20,6 @@ class OGGStreamDataSource: public IDataSource
 		bool exhausted();
 		long getpos();
 		uint32 getData(uint8* buffer, uint32 len);
-		ogg_packet* read();
 	private:
 		OGGDecoderRef decoder;
 		long stream_id;
