@@ -80,7 +80,7 @@ VorbisDecoder::~VorbisDecoder() {
 void VorbisDecoder::construct_next_packet() {
 	packet->bytes = datasource->getData(packet->packet, 1<<16);
 	packet->b_o_s = max(--(packet->b_o_s), (long int)0);
-	packet->e_o_s = datasource->exhausted();
+	packet->e_o_s = (packet->bytes==0) ? 1 : 0;
 	packet->granulepos++;
 	packet->packetno++;
 }
@@ -153,8 +153,8 @@ uint32 VorbisDecoder::getData(uint8* buffer, uint32 len)
 			vorbis_synthesis_read(dsp_state, samples_todo); /* tell libvorbis how many samples we actually consumed */
 		}
 		else {
+			if(packet->e_o_s) done=true;
 			construct_next_packet();
-			if(!packet->bytes) done=true;
 			if(vorbis_synthesis(block, packet)==0) {
 				vorbis_synthesis_blockin(dsp_state, block); //FIXME: Else?
 			}
