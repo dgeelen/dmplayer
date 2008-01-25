@@ -13,7 +13,7 @@
 	//FIXME: HAVE_CONFIG_H is a automake thing, use CMake instead
   #ifdef HAVE_CONFIG_H
     #include <config.h>
-  #elif defined(__WIN32__) || defined(WIN32)
+  #elif defined(WIN32)
     // borland/msvs win32 specifics..
     #define HAVE_WINSOCK
     #define HAVE_WSNWLINK_H
@@ -21,8 +21,11 @@
 
 // TODO: properly figure network stuff out (in conjunction with cmake)
 // ??: http://www.cmake.org/pipermail/cmake-commits/2007-March/001026.html
+	#if __WIN32__
+		#define WIN32
+	#endif
 
-	#if defined(__WIN32__) || defined(WIN32)
+	#ifdef WIN32
 		// defines needed for any windows header we will include
 		#define WIN32_LEAN_AND_MEAN
 		#ifndef NOMINMAX
@@ -91,7 +94,8 @@
 		return tv.tv_sec * 1000000 + tv.tv_usec;
 	}
 #else
-	#ifdef __WIN32__
+	#ifdef WIN32
+		#include <time.h>
 		uint64 inline get_time_us() {
 			return clock() * (1000000 / CLOCKS_PER_SEC);
 		}
