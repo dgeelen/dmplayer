@@ -241,8 +241,14 @@ void OGGDecoder::read_bos_pages(bool from_start_of_stream) {
 
 uint32 OGGDecoder::getData(uint8* buf, uint32 len) {
 	if(!current_decoder) return 0;
-	uint32 n = current_decoder->getData(buf, len);
-	if(n) return n;
+	uint32 todo = len;
+	while(1) {
+		uint32 n = current_decoder->getData(buf + len - todo, todo);
+		todo -= n;
+		if(todo==0) break;
+		if(n==0) break;
+	}
+	if(!todo) return len;
 	else if(streams.size() == eos_count) { // All streams have been closed, now new streams are allowed
 		dcerr("Trying new stream...");
 		eos_count=0;
