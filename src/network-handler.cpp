@@ -143,9 +143,6 @@ void network_handler::receive_packet_handler() {
 					uint32 cookie; received_packet.deserialize(cookie);
 					reply_packet.serialize<uint32>(cookie);
 					reply_packet.serialize( (string)server_name );
-					#ifdef DEBUG
-						usleep(100000); //Fake some latency (0.1sec)
-					#endif
 					udp_ssock.send( listen_addr, UDP_PORT_NUMBER+1, reply_packet );
 					break;
 				}
