@@ -20,8 +20,10 @@ ReformatFilter::ReformatFilter(IAudioSourceRef as, AudioFormat target)
 	}
 
 	// mono to stereo if needed
-	if (src->getAudioFormat().Channels == 1 && target.Channels == 2)
+	if (src->getAudioFormat().Channels == 1 && target.Channels == 2) {
+		dcerr(src->getAudioFormat().Channels << " != " << target.Channels);
 		src = IAudioSourceRef(new MonoToStereoFilter(src));
+	}
 
 	// partially fix sample rate (only multiply by powers of 2)
 	int count = 0;
