@@ -85,7 +85,7 @@ AACDecoder::AACDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 void AACDecoder::initialize() {
 	decoder_handle = faacDecOpen();
 	if (!decoder_handle) throw Exception("Failed to initialize libfaad library");
-	atexit.add(boost::bind(&faacDecClose, decoder_handle));
+	onDestroy.add(boost::bind(&faacDecClose, decoder_handle));
 	buffer_fill = 0;
 	sample_buffer_size=0;
 	sample_buffer_index=0;

@@ -33,8 +33,7 @@ class AACDecoder : public IDecoder {
 		void fill_buffer();
 
 		IDataSourceRef datasource;
-		ScopeExitSignal atexit;
-
+		
 		uint32 buffer_fill;
 		uint8 buffer[BLOCK_SIZE];
 		uint32 sample_buffer_size;
@@ -44,6 +43,8 @@ class AACDecoder : public IDecoder {
 		uint32 decoder_capabilities;
 		faacDecHandle decoder_handle;
 		faacDecConfigurationPtr decoder_config;
+
+		ScopeExitSignal onDestroy; // should be last data member
 };
 
 #endif//DECODER_AAC_H
