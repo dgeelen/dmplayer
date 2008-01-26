@@ -3,30 +3,55 @@
 #include "../error-handling.h"
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/utility/result_of.hpp>
 
-std::vector<boost::function<IDecoderRef (IDataSourceRef)> > decoderlist;
+namespace { namespace ns_reghelper {
+	std::vector<boost::function<IDecoderRef (IDataSourceRef)> > decoderlist;
 
-#define UNIQUE_NAMESPACE_HELPER2(x, y) x ## y
-#define UNIQUE_NAMESPACE_HELPER1(a, b) UNIQUE_NAMESPACE_HELPER2(a,b)
+	template<typename T, class F>
+	int doregister(F f);
 
-#define UNIQUE_NAMESPACE UNIQUE_NAMESPACE_HELPER1(ns, __LINE__)
+	template<typename T>
+	int doregister(IDecoderRef f(IDataSourceRef))
+	{
+		decoderlist.push_back(
+			boost::bind(& T::tryDecode,
+				_1
+			)
+		);
+		return 1;
+	}
 
-#define REGISTER_DECODER_FUNCTION(func) namespace UNIQUE_NAMESPACE { static int x = (decoderlist.push_back(func), 10); }
-#define REGISTER_DECODER_CLASS(cls) REGISTER_DECODER_FUNCTION(boost::bind(& cls ::tryDecode, boost::shared_ptr<cls>(new cls()), _1) )
+	template<typename T>
+	int doregister(IDecoderRef (T::*f)(IDataSourceRef))
+	{
+		decoderlist.push_back(
+			boost::bind(& T::tryDecode,
+				boost::shared_ptr<T>(new T()),
+				_1
+			)
+		);
+		return 2;
+	}
+
+	//template<typename T, class F>
+	//static int doregister(F f)
+	//{
+	//	assert(false);
+	//}
+} } //namespace { namespace nshelper {
+
+#define REGISTER_DECODER_CLASS(cls) namespace { namespace ns_cls_ ## cls { int x = ns_reghelper::doregister<cls>(&cls ::tryDecode); } }
 
 #include <decoder_linker.inc>
 
-#undef UNIQUE_NAMESPACE_HELPER2
-#undef UNIQUE_NAMESPACE_HELPER1
-#undef UNIQUE_NAMESPACE
-#undef REGISTER_DECODER_FUNCTION
 #undef REGISTER_DECODER_CLASS
 
 IDecoderRef IDecoder::findDecoder(IDataSourceRef ds)
 {
 	IDecoderRef decoder;
-	for (unsigned int i = 0; i < decoderlist.size(); ++i) {
-		decoder = decoderlist[i](ds);
+	for (unsigned int i = 0; i < ns_reghelper::decoderlist.size(); ++i) {
+		decoder = ns_reghelper::decoderlist[i](ds);
 		if (decoder) {
 			dcerr("Found a decoder; decoder #"<<i);
 			break;
