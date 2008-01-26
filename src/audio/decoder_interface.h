@@ -12,9 +12,13 @@ typedef boost::shared_ptr<class IDecoder> IDecoderRef;
 class IDecoder: public IAudioSource {
 	public:
 		IDecoder(AudioFormat af) : IAudioSource(af) {};
-		virtual IDecoderRef tryDecode(IDataSourceRef) = 0;
 
 		static IDecoderRef findDecoder(IDataSourceRef ds);
+
+		//subclasses need to implement one of these methods:
+		//IDecoder tryDecode(IDataSourceRef);
+		//static IDecoder tryDecodeStatic(IDataSourceRef);
+
 };
 
 #endif//DECODER_INTERFACE_H
