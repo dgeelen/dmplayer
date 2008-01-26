@@ -75,7 +75,7 @@ void network_handler::send_packet_handler() {
 	dcerr("Network send thread: starting ping loop");
 	packet request_servers_packet;
 	while(!are_we_done && receive_packet_handler_running) {
-		dcerr("Requesting server list...");
+		//dcerr("Requesting server list...");
 		ping_cookie=rand();
 		request_servers_packet.reset();
 		request_servers_packet.serialize<uint8>(PT_QUERY_SERVERS);
@@ -86,7 +86,7 @@ void network_handler::send_packet_handler() {
 
 		vector<server_info> vsi;
 		uint64 curtime = get_time_us();
-		dcerr("---Evalutaing "<<known_servers.size()<<" servers...");
+		//dcerr("---Evalutaing "<<known_servers.size()<<" servers...");
 		for(map<ipv4_socket_addr, server_info>::iterator i = known_servers.begin(); i != known_servers.end(); ) {
 			dcerr(i->second);
 			dcerr("Curtime:" << curtime);
@@ -105,7 +105,7 @@ void network_handler::send_packet_handler() {
 			++i;
 			dcerr("");
 		}
-		dcerr("---Eval_DONE");
+		//dcerr("---Eval_DONE");
 		server_list_update_signal(vsi);
 	}
 }
