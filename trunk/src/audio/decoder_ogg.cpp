@@ -206,7 +206,10 @@ IDecoderRef OGGDecoder::find_decoder() {
 		OGGStreamDataSourceRef oggs = OGGStreamDataSourceRef(new OGGStreamDataSource(OGGDecoderRef(ptr), i->second.stream_state->serialno));
 		ResetBufferDataSourceRef ds = ResetBufferDataSourceRef(new ResetBufferDataSource(oggs));
 		decoder = IDecoder::findDecoder(ds);
-		if (decoder) break;
+		if (decoder) {
+			ds->noMoreResets();
+			break;
+		}
 	}
 	return decoder;
 }
