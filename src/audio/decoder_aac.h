@@ -4,6 +4,8 @@
 #include "decoder_interface.h"
 #include "datasource_interface.h"
 
+#include "../util/ScopeExitSignal.h"
+
 #include <faad.h>
 #ifdef __NEAACDEC_H__
 	// yes this is crappy, but there is no other suitable define it seems
@@ -23,7 +25,15 @@ class AACDecoder : public IDecoder {
 
 	private:
 		AACDecoder(IDataSourceRef source);
+
+		void uninitialize();
+		void initialize();
+
+		int aac_probe();
+		void fill_buffer();
+
 		IDataSourceRef datasource;
+		ScopeExitSignal atexit;
 
 		uint32 buffer_fill;
 		uint8 buffer[BLOCK_SIZE];
@@ -31,15 +41,9 @@ class AACDecoder : public IDecoder {
 		uint32 sample_buffer_index;
 		uint8* sample_buffer;
 
-		int aac_probe();
-		void fill_buffer();
-
 		uint32 decoder_capabilities;
 		faacDecHandle decoder_handle;
 		faacDecConfigurationPtr decoder_config;
-
-		void uninitialize();
-		void initialize();
 };
 
 #endif//DECODER_AAC_H

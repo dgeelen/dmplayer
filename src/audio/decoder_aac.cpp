@@ -83,12 +83,14 @@ AACDecoder::AACDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 }
 
 void AACDecoder::initialize() {
+	decoder_handle = faacDecOpen();
+	if (!decoder_handle) throw Exception("Failed to initialize libfaad library");
+	atexit.add(boost::bind(&faacDecClose, decoder_handle));
 	buffer_fill = 0;
 	sample_buffer_size=0;
 	sample_buffer_index=0;
 	sample_buffer = NULL;
 	decoder_capabilities = faacDecGetCapabilities();
-	decoder_handle = faacDecOpen();
 	decoder_config = faacDecGetCurrentConfiguration(decoder_handle);
 	/* Adjust configuration */
 	decoder_config->defSampleRate    = 44100;
@@ -102,7 +104,6 @@ void AACDecoder::initialize() {
 }
 
 AACDecoder::~AACDecoder() {
-	faacDecClose(decoder_handle);
 }
 
 IDecoderRef AACDecoder::tryDecode(IDataSourceRef ds) {
