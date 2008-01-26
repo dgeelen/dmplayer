@@ -204,15 +204,16 @@ ogg_page* OGGDecoder::read_page(uint32 time_out) {
 }
 
 IDecoderRef OGGDecoder::find_decoder() {
+	IDecoderRef decoder;
 	for(map<long, stream_decoding_state>::iterator i = streams.begin(); i!=streams.end(); ++i) {
 		dcerr("found a stream with ID " << i->second.stream_state->serialno);
 		boost::shared_ptr<OGGDecoder> ptr = shared_from_this();
 		OGGStreamDataSourceRef oggs = OGGStreamDataSourceRef(new OGGStreamDataSource(OGGDecoderRef(ptr), i->second.stream_state->serialno));
 		ResetBufferDataSourceRef ds = ResetBufferDataSourceRef(new ResetBufferDataSource(oggs));
-		IDecoderRef dc = IDecoder::findDecoder(ds);
-		if (dc) return dc;
+		decoder = IDecoder::findDecoder(ds);
+		if (decoder) break;
 	}
-	return IDecoderRef();
+	return decoder;
 }
 
 /* After this all bos pages should be in streams */

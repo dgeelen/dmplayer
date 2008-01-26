@@ -7,7 +7,9 @@ OGGStreamDataSource::OGGStreamDataSource( OGGDecoderRef decoder, long stream_id 
 	this->decoder = decoder;
 	this->stream_id = stream_id;
 	packet = NULL;
-	reset();
+	is_exhausted = false;
+	total_bytes_read=0;
+	bytes_leftover = 0;
 }
 
 OGGStreamDataSource::~OGGStreamDataSource() {
@@ -15,13 +17,7 @@ OGGStreamDataSource::~OGGStreamDataSource() {
 };
 
 void OGGStreamDataSource::reset() {
-	is_exhausted = false;
-	total_bytes_read=0;
-	bytes_leftover = 0;
-	if(packet) delete packet;
-	packet = NULL;
-	is_exhausted = false;
-	this->decoder->reset();
+	throw Exception("Impossible OGGStreamDataSource::reset()");
 }
 
 long OGGStreamDataSource::getpos() {
