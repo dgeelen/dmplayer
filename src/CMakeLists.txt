@@ -4,7 +4,7 @@ FIND_PACKAGE(PortAudio)
 INCLUDE_DIRECTORIES("${BOOST_INCLUDE_DIR}" )
 LINK_DIRECTORIES("${BOOST_LIBRARY_DIR}")
 
-
+SUBDIRS(util)
 SUBDIRS(gtk-client)
 SUBDIRS(qt-client)
 SUBDIRS(audio)
@@ -23,6 +23,7 @@ TARGET_LINK_LIBRARIES(mpmpd
 	${BOOST_SIGNALS_LIBRARY}
 	${BOOST_PROGRAM_OPTIONS_LIBRARY}
 	mpmp_audio
+	mpmp_util
 )
 
 INCLUDE_DIRECTORIES("D:/Stuff/Projects/dMPlayer/portaudio_v18_1/pa_common")

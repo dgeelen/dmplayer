@@ -75,6 +75,7 @@ IF(ENABLE_QT_GUI)
 		${BOOST_SIGNALS_LIBRARY}
 		${BOOST_THREAD_LIBRARY}
 		mpmp_audio
+		mpmp_util
 	)
 
 ENDIF(ENABLE_QT_GUI)
