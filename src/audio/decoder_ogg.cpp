@@ -14,6 +14,9 @@ using namespace std;
 OGGDecoder::OGGDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 	datasource = ds;
 	datasource->reset();
+	ogg_sync_init(&sync);
+	onDestroy.add(boost::bind(&ogg_sync_clear, &sync));
+	onDestroy.add(boost::bind(&OGGDecoder::clear_streams, this));
 	initialize();
 }
 
@@ -41,15 +44,10 @@ void OGGDecoder::clear_streams() {
 
 void OGGDecoder::uninitialize() {
 	clear_streams();
-	if(sync) {
-		delete sync;
-		sync = NULL;
-	}
 }
 
 void OGGDecoder::initialize() {
-	sync = new ogg_sync_state();
-	ogg_sync_init(sync);
+	ogg_sync_reset(&sync);
 	read_bos_pages(true);
 	eos_count = 0;
 	first_stream = true;
@@ -107,6 +105,7 @@ void OGGDecoder::read_next_packet_from_stream(long stream_id) {
 		switch(result) {
 			case 0 : { // Stream needs more data to construct a packet
 				if(state.exhausted==true) {
+					delete packet;
 					done=true;
 					break;
 				}
@@ -163,12 +162,12 @@ ogg_page* OGGDecoder::read_page(uint32 time_out) {
 	ogg_page* page = new ogg_page();
 	bool done = false;
 	while(!done) {
-		int page_state = ogg_sync_pageout(sync, page);
+		int page_state = ogg_sync_pageout(&sync, page);
 		switch(page_state) {
 			case 0: { // needs more data to construct a page
-				char* buffer = ogg_sync_buffer(sync, BLOCK_SIZE);
+				char* buffer = ogg_sync_buffer(&sync, BLOCK_SIZE);
 				long bytes_read = datasource->getData( (uint8*)buffer, BLOCK_SIZE );
-				if(ogg_sync_wrote(sync, bytes_read)) throw Exception("Internal error in libogg!");
+				if(ogg_sync_wrote(&sync, bytes_read)) throw Exception("Internal error in libogg!");
 				if((bytes_read==0) || ((datasource->getpos() >= (int)time_out ))) {
 					delete page;
 					return NULL;
