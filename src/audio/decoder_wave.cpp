@@ -1,10 +1,6 @@
 #include "decoder_wave.h"
 #include <string>
 
-WaveDecoder::WaveDecoder() : IDecoder(AudioFormat())
-{
-}
-
 WaveDecoder::WaveDecoder(AudioFormat af, IDataSourceRef ds)
 	: IDecoder(af)
 	, source(ds)

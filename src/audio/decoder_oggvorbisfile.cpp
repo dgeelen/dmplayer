@@ -15,24 +15,17 @@ static ov_callbacks OV_CALLBACKS_IDATASOURCE = {
 	(long (*)(void *))                            NULL
 };
 
-OGGVorbisFileDecoder::OGGVorbisFileDecoder() : IDecoder(AudioFormat())
-{
-	this->oggFile = NULL;
-}
-
-OGGVorbisFileDecoder::OGGVorbisFileDecoder(AudioFormat af, IDataSourceRef ds, OggVorbis_File* oggFile) :
+OGGVorbisFileDecoder::OGGVorbisFileDecoder(AudioFormat af, IDataSourceRef ds, OggVorbis_File* f) :
 	IDecoder(af),
-	datasource(ds)
+	datasource(ds),
+	oggFile(f)
 {
-	this->oggFile = oggFile;
 }
 
 OGGVorbisFileDecoder::~OGGVorbisFileDecoder()
 {
-	if (oggFile) {
-		ov_clear(oggFile);
-		delete oggFile;
-	}
+	ov_clear(oggFile);
+	delete oggFile;
 }
 
 IDecoderRef OGGVorbisFileDecoder::tryDecode(IDataSourceRef datasource)
