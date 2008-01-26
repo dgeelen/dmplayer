@@ -17,9 +17,8 @@ struct stream_decoding_state {
 typedef boost::shared_ptr<class OGGDecoder> OGGDecoderRef;
 class OGGDecoder : public boost::enable_shared_from_this<OGGDecoder>, public IDecoder {
 	public:
-		OGGDecoder();
 		~OGGDecoder();
-		IDecoderRef tryDecode(IDataSourceRef ds);
+		static IDecoderRef tryDecode(IDataSourceRef ds);
 		uint32 getData(uint8* buf, uint32 max);
 
 		/* Functions for DataSources */
