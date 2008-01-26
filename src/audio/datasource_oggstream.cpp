@@ -51,7 +51,7 @@ uint32 OGGStreamDataSource::getData(uint8* const buffer, uint32 len) {
 			int n = min((unsigned long)packet->bytes, len);
 			memcpy(buffer, packet->packet, n);
 			total_bytes_read+=n;
-			if(packet->bytes > len) {
+			if((uint)packet->bytes > len) {
 				bytes_leftover = packet->bytes-n;
 				dcerr("Warning: Splitting packet, "<<bytes_leftover<<" bytes leftover");
 			}
