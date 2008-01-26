@@ -7,6 +7,7 @@
 #include <map>
 #include <list>
 #include <boost/enable_shared_from_this.hpp>
+#include "../util/ScopeExitSignal.h"
 
 struct stream_decoding_state {
 	bool exhausted;                   // set after last packet is read
@@ -32,7 +33,7 @@ class OGGDecoder : public boost::enable_shared_from_this<OGGDecoder>, public IDe
 		IDecoderRef find_decoder();
 		void setDecoder(IDecoderRef decoder);
 
-		ogg_sync_state* sync;
+		ogg_sync_state sync;
 		std::map<long, struct stream_decoding_state > streams;
 		bool all_bos_pages_handled;
 		ogg_page* read_page();
@@ -47,6 +48,8 @@ class OGGDecoder : public boost::enable_shared_from_this<OGGDecoder>, public IDe
 		void clear_streams();
 		void uninitialize();
 		void initialize();
+
+		ScopeExitSignal onDestroy; // should be last data member
 };
 
 #endif//DECODER_OGG_H
