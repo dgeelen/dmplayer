@@ -54,7 +54,7 @@ void MainWindow::UpdateServerList(std::vector<server_info> sl)
 		else { //Update ping
 			Q_FOREACH(QTreeWidgetItem* item, flist)
 				item->setText(1, STRFORMAT("%i ms", sl[i].ping_micro_secs).c_str());
-			for (int j = 0; j < sl.size(); ++j)
+			for (uint j = 0; j < sl.size(); ++j)
 			{
 				if (currentServers[j].sock_addr == sl[i].sock_addr)
 					currentServers[j] = sl[i];
