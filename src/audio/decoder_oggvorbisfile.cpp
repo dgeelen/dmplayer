@@ -1,16 +1,18 @@
 #include "decoder_oggvorbisfile.h"
 
-size_t dsread(void* data, size_t s1, size_t s2, void* ds) {
+#include "../error-handling.h"
+
+static size_t dsread(void* data, size_t s1, size_t s2, void* ds) {
 	IDataSource* rds = (IDataSource*)ds;
 	size_t s = s1*s2;
 	return rds->getData((uint8*)data, s);
 }
 
 static ov_callbacks OV_CALLBACKS_IDATASOURCE = {
-  (size_t (*)(void *, size_t, size_t, void *))  dsread,
-  (int (*)(void *, ogg_int64_t, int))           NULL,
-  (int (*)(void *))                             NULL,
-  (long (*)(void *))                            NULL
+	(size_t (*)(void *, size_t, size_t, void *))  dsread,
+	(int (*)(void *, ogg_int64_t, int))           NULL,
+	(int (*)(void *))                             NULL,
+	(long (*)(void *))                            NULL
 };
 
 OGGVorbisFileDecoder::OGGVorbisFileDecoder() : IDecoder(AudioFormat())
@@ -59,7 +61,8 @@ uint32 OGGVorbisFileDecoder::getData(uint8* buf, uint32 len)
 	uint32 res = 0;
 	do {
 		int32 read = ov_read(oggFile, ((char*)buf)+res, len-res, 0, 2, 1, &bitStream);
-		if (read <= 0) return res;
+		if (read < 0) dcerr("OGGVorbisFile error from ov_read: " << read);
+		if (read <= 0) break;
 		res += read;
 	} while (res < len);
 	return res;

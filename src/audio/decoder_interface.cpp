@@ -24,12 +24,13 @@ std::vector<boost::function<IDecoderRef (IDataSourceRef)> > decoderlist;
 
 IDecoderRef IDecoder::findDecoder(IDataSourceRef ds)
 {
+	IDecoderRef decoder;
 	for (unsigned int i = 0; i < decoderlist.size(); ++i) {
-		IDecoderRef decoder = decoderlist[i](ds);
+		decoder = decoderlist[i](ds);
 		if (decoder) {
 			dcerr("Found a decoder; decoder #"<<i);
-			return decoder;
+			break;
 		}
 	}
-	return IDecoderRef(); // NULL reference
+	return decoder;
 }
