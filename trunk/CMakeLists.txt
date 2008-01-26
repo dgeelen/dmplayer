@@ -9,6 +9,13 @@ if (NOT CMAKE_BUILD_TYPE)
     FORCE)
 endif (NOT CMAKE_BUILD_TYPE)
 
+IF(MSVC)
+	# Prevent link warning in msvc
+	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMTD")
+	# Treat warnings as errors <TODO> make this a cmake option?
+	# SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")
+ENDIF(MSVC)
+
 # Define DEBUG when doing debug builds.
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG" CACHE STRING
   "Flags used by the compiler during debug builds." FORCE)
