@@ -9,18 +9,20 @@ class ResetBufferDataSource: public IDataSource {
 		ResetBufferDataSource( IDataSourceRef ds );
 		~ResetBufferDataSource();
 		void reset();
+		void noMoreResets();
 		bool exhausted();
 		long getpos();
 		uint32 getData(uint8* buffer, uint32 len);
 	private:
-		uint8 data[1<<16]; //NOTE: Should be at least MAX_(OGG/VORBIS)_PACKET_SIZE
+		std::vector<uint8> data; //NOTE: Should be at least MAX_(OGG/VORBIS)_PACKET_SIZE
 		IDataSourceRef datasource;
 		long bytes_buffered;
 		long bytes_read;
-		bool buffer_intact;
+		bool done_buffering;
+		bool done_resetting;
 		std::vector<std::vector<uint8> > history;
-		long index_a;
-		long index_b;
+		uint32 index_a;
+		uint32 index_b;
 };
 
 
