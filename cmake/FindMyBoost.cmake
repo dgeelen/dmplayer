@@ -9,15 +9,22 @@
 # also defined, but not for general use are
 #  BOOST_LIBRARY_SUFFIX, suffix to try for finding the boost libraries (unix only)
 
+find_package(SearchUtils)
+
+GLOB_PATHS(BOOST_SEARCH_PATHS
+	GLOBS "boost_[0-9_]*"
+	BASES	
+		/usr/include /usr/local/include
+		"C:/Program Files/boost"
+		"C:/Program Files"
+		"C:/Boost"
+		"D:/Prog/Boost"
+		
+)
+
 FIND_PATH(BOOST_INCLUDE_DIR
 	NAMES boost/config.hpp
-	PATHS
-		/usr/include /usr/local/include
-		"C:/Program Files/boost/boost_1_34_1"
-		"C:/Program Files/boost/boost_1_34_0"
-		"C:/Program Files/boost/boost_1_34"
-		"C:/Boost/boost_1_34_1/"
-		"D:/Prog/Boost/boost_1_34_1/"
+	PATHS ${BOOST_SEARCH_PATHS}
 )
 
 IF(WIN32 AND NOT MINGW)
@@ -83,4 +90,3 @@ ELSE(WIN32 AND NOT MINGW)
 ENDIF(WIN32 AND NOT MINGW)
 
 MARK_AS_ADVANCED(BOOST_LIBRARY_DIR)
-
