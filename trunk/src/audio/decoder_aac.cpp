@@ -26,11 +26,6 @@ static void printCaps(long caps) {
 	CAN_DECODE(FIXED_POINT_CAP);
 }
 
-AACDecoder::AACDecoder() : IDecoder(AudioFormat()) {
-	initialize();
-	printCaps(decoder_capabilities);
-}
-
 void AACDecoder::fill_buffer() {
 	while(buffer_fill != BLOCK_SIZE) {
 		int read = datasource->getData( buffer + buffer_fill, BLOCK_SIZE - buffer_fill);

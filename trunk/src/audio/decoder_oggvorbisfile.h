@@ -12,9 +12,8 @@ class OGGVorbisFileDecoder : public IDecoder{
 		OGGVorbisFileDecoder(AudioFormat af, IDataSourceRef ds, OggVorbis_File* oggFile);
 		int bitStream;
 	public:
-		OGGVorbisFileDecoder();
 		~OGGVorbisFileDecoder();
-		IDecoderRef tryDecode(IDataSourceRef datasource);
+		static IDecoderRef tryDecode(IDataSourceRef datasource);
 		uint32 getData(uint8* buf, uint32 max);
 };
 

@@ -18,9 +18,8 @@
 #define BLOCK_SIZE 8*1024
 class AACDecoder : public IDecoder {
 	public:
-		AACDecoder();
 		~AACDecoder();
-		IDecoderRef tryDecode(IDataSourceRef ds);
+		static IDecoderRef tryDecode(IDataSourceRef ds);
 		uint32 getData(uint8* buf, uint32 max);
 
 	private:
