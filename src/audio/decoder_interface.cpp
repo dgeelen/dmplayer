@@ -8,9 +8,9 @@
 namespace { namespace ns_reghelper {
 	std::vector<boost::function<IDecoderRef (IDataSourceRef)> > decoderlist;
 
-	template<typename T, class F>
+/*	template<typename T, class F>
 	int doregister(F f);
-
+*/
 	template<typename T>
 	int doregister(IDecoderRef f(IDataSourceRef))
 	{
