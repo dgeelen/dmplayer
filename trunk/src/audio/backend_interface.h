@@ -12,6 +12,8 @@ class IBackend {
 		IBackend(AudioController* i) : source(i) {};
 		AudioFormat getAudioFormat() { return af;} ;
 		virtual ~IBackend() {};
+		virtual void StartStream() {};
+		virtual void StopStream()  {};
 };
 
 #endif//BACKEND_INTERFACE_H

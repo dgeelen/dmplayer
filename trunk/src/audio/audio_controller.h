@@ -12,6 +12,8 @@ class AudioController {
 		~AudioController();
 		void test_functie(std::string file);
 		uint32 getData(uint8* buf, uint32 len);
+		void StartPlayback();
+		void StopPlayback();
 	private:
 		IBackend* backend;
 		IAudioSourceRef curdecoder;
