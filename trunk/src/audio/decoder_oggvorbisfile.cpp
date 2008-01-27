@@ -2,18 +2,20 @@
 
 #include "../error-handling.h"
 
-static size_t dsread(void* data, size_t s1, size_t s2, void* ds) {
-	IDataSource* rds = (IDataSource*)ds;
-	size_t s = s1*s2;
-	return rds->getData((uint8*)data, s);
-}
+namespace {
+	size_t dsread(void* data, size_t s1, size_t s2, void* ds) {
+		IDataSource* rds = (IDataSource*)ds;
+		size_t s = s1*s2;
+		return rds->getData((uint8*)data, s);
+	}
 
-static ov_callbacks OV_CALLBACKS_IDATASOURCE = {
-	(size_t (*)(void *, size_t, size_t, void *))  dsread,
-	(int (*)(void *, ogg_int64_t, int))           NULL,
-	(int (*)(void *))                             NULL,
-	(long (*)(void *))                            NULL
-};
+	ov_callbacks OV_CALLBACKS_IDATASOURCE = {
+		(size_t (*)(void *, size_t, size_t, void *))  dsread,
+		(int (*)(void *, ogg_int64_t, int))           NULL,
+		(int (*)(void *))                             NULL,
+		(long (*)(void *))                            NULL
+	};
+}
 
 OGGVorbisFileDecoder::OGGVorbisFileDecoder(AudioFormat af, IDataSourceRef ds, OggVorbis_File* f) :
 	IDecoder(af),
