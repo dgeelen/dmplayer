@@ -49,9 +49,6 @@ PortAudioBackend::PortAudioBackend(AudioController* dec)
 		dec );
 
 	if (err != paNoError) throw SoundException("failed to open portaudio stream");
-
-	err = Pa_StartStream( stream );
-	if (err != paNoError) throw SoundException("failed to start portaudio stream");
 };
 
 PortAudioBackend::~PortAudioBackend()
@@ -60,3 +57,16 @@ PortAudioBackend::~PortAudioBackend()
 	Pa_CloseStream(stream);
 	Pa_Terminate();
 }
+
+void PortAudioBackend::StopStream()
+{
+	PaError err = Pa_StopStream( stream );
+	if (err != paNoError) throw SoundException("failed to stop portaudio stream");
+}
+
+void PortAudioBackend::StartStream()
+{
+	PaError err = Pa_StartStream( stream );
+	if (err != paNoError) throw SoundException("failed to start portaudio stream");
+}
+

@@ -111,3 +111,14 @@ void AudioController::test_functie(std::string file) {
 	while (nextdecoder); // wait till nextdecoder is clear
 	nextdecoder = newdecoder;
 }
+
+void AudioController::StopPlayback()
+{
+	backend->StopStream();
+}
+
+void AudioController::StartPlayback()
+{
+	backend->StartStream();
+}
+

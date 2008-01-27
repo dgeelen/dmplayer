@@ -134,9 +134,8 @@ void MainWindow::on_PreviousButton_clicked()
 
 void MainWindow::on_PlayButton_clicked()
 {
-//	handler->Play();
-//	new PortAudioBackend(NULL);
 	progressTimer.start(250);
+	audiocontroller.StartPlayback();
 }
 
 void MainWindow::on_PauseButton_clicked()
@@ -149,6 +148,7 @@ void MainWindow::on_StopButton_clicked()
 //	handler->Stop();
 	progressTimer.stop();
 	updateProgressBar();
+	audiocontroller.StopPlayback();
 }
 
 
