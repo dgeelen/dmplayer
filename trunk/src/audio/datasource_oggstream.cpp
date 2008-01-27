@@ -4,7 +4,7 @@
 using namespace std;
 
 OGGStreamDataSource::OGGStreamDataSource( OGGDecoderRef decoder, long stream_id ) {
-	this->decoder = decoder;
+	this->decoderw = decoder;
 	this->stream_id = stream_id;
 	packet = NULL;
 	is_exhausted = false;
@@ -37,6 +37,8 @@ bool OGGStreamDataSource::exhausted() {
  * @return buffer is filled with as much data as is contained in 1 packet
  */
 uint32 OGGStreamDataSource::getData(uint8* const buffer, uint32 len) {
+	OGGDecoderRef decoder(decoderw);
+	if (!decoder) throw Exception("Weak reference invalid!");
 	if(!is_exhausted) {
 		if(bytes_leftover) {
 			uint32 todo = min(bytes_leftover, len);
