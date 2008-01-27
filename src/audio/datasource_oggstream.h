@@ -21,7 +21,7 @@ class OGGStreamDataSource: public IDataSource
 		long getpos();
 		uint32 getData(uint8* buffer, uint32 len);
 	private:
-		OGGDecoderRef decoder;
+		OGGDecoderWeakRef decoderw;
 		long stream_id;
 		uint32 total_bytes_read;
 		uint32 bytes_leftover;

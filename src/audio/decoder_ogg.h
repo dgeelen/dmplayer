@@ -7,6 +7,7 @@
 #include <map>
 #include <list>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/weak_ptr.hpp>
 #include "../util/ScopeExitSignal.h"
 
 struct stream_decoding_state {
@@ -16,6 +17,7 @@ struct stream_decoding_state {
 };
 
 typedef boost::shared_ptr<class OGGDecoder> OGGDecoderRef;
+typedef boost::weak_ptr<class OGGDecoder> OGGDecoderWeakRef;
 class OGGDecoder : public boost::enable_shared_from_this<OGGDecoder>, public IDecoder {
 	public:
 		~OGGDecoder();
