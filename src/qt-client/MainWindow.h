@@ -19,7 +19,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 	public Q_SLOTS:
 		void UpdateServerList(std::vector<server_info>);
 		void UpdateServerList_remove(server_info);
-		void on_OpenButton_clicked();
+		void on_actionOpen_triggered();
 		void on_OpenEditButton_clicked();
 		void on_listRecentFiles_itemDoubleClicked(QListWidgetItem*);
 		void on_PreviousButton_clicked();
@@ -38,6 +38,6 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		QTimer progressTimer;
 		std::vector<server_info> currentServers;
 
-		void openFile(QString str);
+		void openFile(const QString& str);
 };
 #endif

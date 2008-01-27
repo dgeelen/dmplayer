@@ -85,7 +85,7 @@ void MainWindow::updateProgressBar()
 //	trackProgress->setValue(handler->Position());
 }
 
-void MainWindow::on_OpenButton_clicked()
+void MainWindow::on_actionOpen_triggered()
 {
 	QString fileName;
 	trackProgress->setValue(0);
@@ -103,7 +103,7 @@ void MainWindow::on_OpenEditButton_clicked()
 	openFile(lineEdit->text());
 }
 
-void MainWindow::openFile(QString str)
+void MainWindow::openFile(const QString& str)
 {
 	lineEdit->setText(str);
 

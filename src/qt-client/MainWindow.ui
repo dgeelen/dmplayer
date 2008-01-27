@@ -443,7 +443,7 @@
  <connections>
   <connection>
    <sender>actionClose</sender>
-   <signal>activated()</signal>
+   <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>close()</slot>
    <hints>
@@ -470,6 +470,22 @@
     <hint type="destinationlabel" >
      <x>485</x>
      <y>312</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>OpenButton</sender>
+   <signal>clicked()</signal>
+   <receiver>actionOpen</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>47</x>
+     <y>90</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>-1</x>
+     <y>-1</y>
     </hint>
    </hints>
   </connection>
