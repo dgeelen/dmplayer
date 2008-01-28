@@ -21,7 +21,7 @@ VorbisDecoder::VorbisDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 	packet.packetno=-1;
 
 	if (!read_vorbis_headers())
-		throw "VorbisDecoder: Error while reading vorbis header";
+		throw Exception("VorbisDecoder: Error while reading vorbis header");
 
 	audioformat.LittleEndian = true;
 	audioformat.Channels = info.channels;
@@ -128,7 +128,6 @@ uint32 VorbisDecoder::getData(uint8* buffer, uint32 len)
 
 IDecoderRef VorbisDecoder::tryDecode(IDataSourceRef ds) {
 	IDecoderRef decoder;
-	return decoder;
 	try {
 		decoder = IDecoderRef(new VorbisDecoder(ds));
 	} catch (Exception &e) {
