@@ -15,6 +15,7 @@ ADD_EXECUTABLE(mpmpd
 	network-handler.h network-handler.cpp
 	cross-platform.h
 	error-handling.h error-handling.cpp
+	playlist_management.h playlist_management.cpp
 	types.h
 )
 
