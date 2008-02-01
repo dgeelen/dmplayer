@@ -4,6 +4,7 @@
 	#include <string>
 	#include <vector>
 	#include <map>
+	#include "boost/filesystem.hpp"
 
 	typedef std::pair<uint32,uint32> TrackID;
 
@@ -21,10 +22,10 @@
 		public:
 			TrackDataBase();
 			void add(Track t);
-			void add_directory(std::string path); //DEBUG or Utility?
+			void add_directory(boost::filesystem::path path); //DEBUG or Utility?
 			void remove(Track t);
 			void remove(uint32 id);
-			std::vector<SearchResult> search(Track t);
+			std::vector<Track> search(Track t);
 		private:
 			uint32 get_first_free_id();
 			std::vector<Track> entries;
