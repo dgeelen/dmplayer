@@ -5,6 +5,8 @@
 #include <boost/program_options.hpp>
 #include <boost/bind.hpp>
 #include "audio/audio_controller.h"
+#include "playlist_management.h"
+#include "boost/filesystem.hpp"
 
 namespace po = boost::program_options;
 using namespace std;
@@ -22,6 +24,8 @@ void xmain()
 	int listen_port;
 	string filename;
 	string server_name;
+	string musix;
+	string findtext;
 	bool showhelp;
 	cout << "starting mpmpd V" MPMP_VERSION_STRING
 	#ifdef DEBUG
@@ -37,6 +41,8 @@ void xmain()
 			("port", po::value(&listen_port)->default_value(12345), "listen port for daemon (TCP part)")
 			("file", po::value(&filename)->default_value("")      , "file to play (Debug for fmod lib)")
 			("name", po::value(&server_name)->default_value("mpmpd V" MPMP_VERSION_STRING), "Server name")
+			("musix", po::value(&musix)->default_value("")      , "directory to add music from")
+			("find", po::value(&findtext)->default_value("")      , "text to find in database")
 	;
 
 	po::variables_map vm;
@@ -54,6 +60,16 @@ void xmain()
 	AudioController ac;;
 	if(filename!= "") {
 		ac.test_functie(filename);
+	}
+
+	TrackDataBase tdb;
+	tdb.add_directory( musix );
+	map<string, string> m;
+	m["FILENAME"] = findtext;
+	Track t(0, "", m);
+	vector<Track> s = tdb.search(t);
+	for(vector<Track>::iterator i = s.begin(); i!=s.end(); ++i) {
+		dcerr( i->filename );
 	}
 
 	cout << "Press any key to quit\n";
