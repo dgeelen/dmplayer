@@ -17,13 +17,14 @@ class HTTPStreamDataSource : public IDataSource {
 		uint32 datalen;     // amount of valid data in buffer
 		uint32 dataofs;     // current offset to begin of stream of buffer
 		tcp_socket* conn;
+		int exhaustion_counter;
 	public:
 		HTTPStreamDataSource();
 		HTTPStreamDataSource(std::string url);
 		~HTTPStreamDataSource();
 
 		long getpos();
-		virtual bool exhausted() { return false; };
+		bool exhausted();
 		virtual void reset();
 
 		virtual uint32 getData(uint8* buffer, uint32 len);

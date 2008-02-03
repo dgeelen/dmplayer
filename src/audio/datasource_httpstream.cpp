@@ -7,9 +7,12 @@
 
 using namespace std;
 
+#define MAX_RETRIES 16
+
 HTTPStreamDataSource::HTTPStreamDataSource()
 {
 	conn = NULL;
+	exhaustion_counter=0;
 }
 
 HTTPStreamDataSource::~HTTPStreamDataSource()
@@ -22,6 +25,7 @@ HTTPStreamDataSource::~HTTPStreamDataSource()
 
 HTTPStreamDataSource::HTTPStreamDataSource(std::string url)
 {
+	exhaustion_counter=0;
 	#ifdef __linux__
 	if (strncmp(url.c_str(), "http://", 7) != 0) throw HTTPException("not a valid url");
 	#else
@@ -119,6 +123,7 @@ unsigned long HTTPStreamDataSource::getData(uint8* buffer, uint32 len)
 				datawpos = 0;
 				dataofs += 1;
 			}
+			exhaustion_counter = min((arecv==0) ? ++exhaustion_counter : 0, MAX_RETRIES);
 		}
 	}
 	uint32 toread = HTTP_STREAM_BUFFER_SIZE-1;
@@ -143,4 +148,8 @@ void HTTPStreamDataSource::reset()
 
 long HTTPStreamDataSource::getpos() {
 	return datarpos;
+}
+
+bool HTTPStreamDataSource::exhausted() {
+	return (exhaustion_counter == MAX_RETRIES);
 }
