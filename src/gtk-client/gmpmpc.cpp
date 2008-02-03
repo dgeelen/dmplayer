@@ -4,20 +4,32 @@
 #include "../error-handling.h"
 #include "gmpmpc_main_window.glade.h"
 #include "gmpmpc_select_server.h"
-#include <boost/program_options.hpp>
-
 #include "../audio/audio_controller.h"
+#include <boost/program_options.hpp>
 
 using namespace std;
 namespace po = boost::program_options;
 network_handler* gmpmpc_network_handler; //FIXME: Global variables == 3vil
+bool connected_to_server = false;
+
+/* Signals */
+int gmpmpc_main_window_delete_event_signal_id      = 0;
+int imagemenuitem_select_server_activate_signal_id = 0;
+
+GladeXML* main_window = NULL;
+
+void gmpmpc_main_window_delete_event(GtkWidget *widget, gpointer user_data) {
+	/* Clean up */
+	select_server_uninitialise_window();
+	disconnect_signal(main_window, imagemenuitem_select_server, activate);
+	disconnect_signal(main_window, gmpmpc_main_window, delete_event);
+	gtk_main_quit();
+}
 
 int main ( int argc, char *argv[] )
 {
-	fprintf(stderr, "Starting GUI..\n");
 	gtk_init (&argc, &argv);
 	glade_init();
-
 
 	int listen_port;
 	bool showhelp;
@@ -26,7 +38,7 @@ int main ( int argc, char *argv[] )
 	desc.add_options()
 			("help", po::bool_switch(&showhelp)                   , "produce help message")
 			("port", po::value(&listen_port)->default_value(12345), "TCP Port")
-			("file", po::value(&filename)->default_value(""), "Filename to test with")
+			("file", po::value(&filename)->default_value("")      , "Filename to test with")
 	;
 	po::variables_map vm;
  	po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -40,42 +52,19 @@ int main ( int argc, char *argv[] )
 
 	network_handler nh(listen_port);
 	gmpmpc_network_handler = &nh;
-// 	nh.add_server_signal.connect(server_lister_tmp);
 
-// 	while(1) {
-// 		nh.get_available_servers();
-// 		return 0;
-// 	}
-
-
-	uint32 retval = show_gui();
-	fprintf(stderr, "Terminating GUI (%i)\n", retval);
-	return retval;
-}
-
-/***
- * NOTE:
- * Keep the bindings/connections in this file, and put the actual
- * handler's routines in other files.
- */
-
-uint32 show_gui() {
-	/* load the interface from the xml buffer */
-	GladeXML *main_window = glade_xml_new_from_buffer(gmpmpc_main_window_glade_definition, gmpmpc_main_window_glade_definition_size, NULL, NULL);
+	main_window = glade_xml_new_from_buffer(gmpmpc_main_window_glade_definition,
+	                                                  gmpmpc_main_window_glade_definition_size,
+	                                                  NULL,
+	                                                  NULL);
 	if(!select_server_initialise_window()) {
-		fprintf(stderr, "Error while loading server select window!\n");
-		return false;
+		cerr << "Error while loading server select window!\n";
 	}
 
 	/* connect the signals in the interface */
 	try_connect_signal(main_window, imagemenuitem_select_server, activate);
-
-	/* Have the delete event (window close) end the program */
-	GtkWidget* widget = glade_xml_get_widget (main_window, "gmpmpc_main_window");
-	g_signal_connect (G_OBJECT (widget), "delete_event", G_CALLBACK (gtk_main_quit), NULL);
-
-	/* start the event loop. TODO: Do this in the background? */
-	//spawnThread(gtk_main(), NULL); ?
+	try_connect_signal(main_window, gmpmpc_main_window, delete_event);
+	if(!connected_to_server) imagemenuitem_select_server_activate(NULL, NULL);
 	gtk_main ();
-	return true;
+	return 0;
 }

@@ -21,14 +21,27 @@
 		GtkWidget* widget; \
 		widget = glade_xml_get_widget (xml_source, #widget_name); \
 		if(widget==NULL) { \
-			fprintf(stderr,"Error: can not find widget `widget_name'!\n"); \
+			cerr << "Error: can not find widget `" #widget_name "'!\n"; \
 			false; \
 		} \
 		else { \
-			g_signal_connect (G_OBJECT (widget), #signal_name, G_CALLBACK (widget_name ## _ ## signal_name), NULL); \
+			widget_name ## _ ## signal_name ## _signal_id = g_signal_connect (G_OBJECT (widget), #signal_name, G_CALLBACK (widget_name ## _ ## signal_name), NULL); \
 			true; \
 		}\
-		}
+	}
+
+	#define disconnect_signal(xml_source, widget_name, signal_name) {\
+		GtkWidget* widget; \
+		widget = glade_xml_get_widget (xml_source, #widget_name); \
+		if(widget==NULL) { \
+			cerr << "Error: can not find widget `" #widget_name "'!\n"; \
+			false; \
+		} \
+		else { \
+			g_signal_handler_disconnect(G_OBJECT(widget), widget_name ## _ ## signal_name ## _signal_id);\
+			true; \
+		}\
+	}
 
 	/* NOTE:
 	 * According to the standard this should also be valid:
@@ -37,7 +50,7 @@
 	 */
 	#define try_with_widget(xml_source, widget_name, widget) \
 	if( GtkWidget* widget = glade_xml_get_widget (xml_source, #widget_name) ) if(widget==NULL) { \
-		fprintf(stderr,"Error: can not find widget `widget_name'!\n"); \
+		cerr << "Error: can not find widget `" #widget_name "'!\n"; \
 		false; \
 	} else
 
