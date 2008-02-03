@@ -58,7 +58,10 @@ HTTPStreamDataSource::HTTPStreamDataSource(std::string url)
 		if( hostaddr == INADDR_NONE )
 		{
 			hostent *host = gethostbyname( hoststr.c_str() );
-			hostaddr = *reinterpret_cast<unsigned long *>( host->h_addr_list[0] );
+			if(host)
+				hostaddr = *reinterpret_cast<unsigned long *>( host->h_addr_list[0] );
+			else
+				hostaddr = INADDR_NONE;
 
 			if( hostaddr == INADDR_NONE )
 			{
