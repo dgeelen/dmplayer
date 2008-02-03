@@ -40,6 +40,7 @@ vector<Track> TrackDataBase::search(Track t) {
 	vector<Track> result;
 	string filename = ba::to_lower_copy(t.meta_data["FILENAME"]);
 	for(vector<Track>::iterator i = entries.begin(); i!=entries.end(); ++i) {
+		//TODO: Real reg-ex foo on all meta-data fields
 		if( ba::to_lower_copy(i->meta_data["FILENAME"]).find(filename, -1) != -1 ) {
 			result.push_back(*i);
 		}
@@ -57,7 +58,7 @@ void TrackDataBase::add_directory(fs::path path) {
 			}
 		}
 	}
-	else { // Some kind of file
+	else { // Some kind of file //FIXME: Handle recursive symlinks
 		map<string, string> meta_data;
 		meta_data["FILENAME"] = path.leaf();
 		add(Track(get_first_free_id(), path.string(), meta_data ));
