@@ -6,4 +6,5 @@
 	gint window_select_server_delete_event(GtkWidget *widget, GdkEvent * event, gpointer user_data);
 	void imagemenuitem_select_server_activate(GtkWidget *widget, gpointer user_data);
 	void button_cancel_server_selection_clicked(GtkWidget *widget, gpointer user_data);
+	void button_accept_server_selection_clicked(GtkWidget *widget, gpointer user_data);
 #endif // GMPMPC_SELECT_SERVER_H
