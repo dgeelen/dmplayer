@@ -16,6 +16,11 @@
 
 using namespace std;
 
+tcp_socket::tcp_socket()
+{
+	sock = INVALID_SOCKET;
+}
+
 tcp_listen_socket::tcp_listen_socket()
 {
 	sock = INVALID_SOCKET;
@@ -24,6 +29,11 @@ tcp_listen_socket::tcp_listen_socket()
 udp_socket::udp_socket()
 {
 	sock = INVALID_SOCKET;
+}
+
+tcp_socket::tcp_socket( SOCKET s, ipv4_socket_addr addr) {
+	sock = s;
+	peer = addr;
 }
 
 tcp_socket::tcp_socket( const ipv4_addr addr, const uint16 port )
@@ -39,6 +49,8 @@ tcp_socket::tcp_socket( const ipv4_addr addr, const uint16 port )
 
 	int res = ::connect(sock, (sockaddr*)&addr_in, sizeof(addr_in));
 	if (res == SOCKET_ERROR) throw NetworkException("failed to bind tcp socket");
+
+	peer = ipv4_socket_addr(ipv4_addr(addr_in.sin_addr.s_addr), addr_in.sin_port);
 }
 
 uint32 tcp_socket::send( const uint8* buf, const uint32 len )
@@ -59,6 +71,10 @@ void tcp_socket::disconnect()
 	}
 }
 
+ipv4_socket_addr tcp_socket::get_ipv4_socket_addr() {
+	return peer;
+}
+
 tcp_listen_socket::tcp_listen_socket(const ipv4_addr addr, const uint16 portnumber)
 {
 	sock = socket( AF_INET, SOCK_STREAM, 0 );
@@ -75,6 +91,19 @@ tcp_listen_socket::tcp_listen_socket(const ipv4_addr addr, const uint16 portnumb
 		ss << "tcp_listen_socket: Bind to network failed: error " << NetGetLastError();
 		throw NetworkException(ss.str());
 	}
+
+	if(listen(sock, 16)) { //Queue up to 16 connections
+		cout << "tcp_listen_socket: Could not listen() on socket: error " << NetGetLastError() << "\n";
+	}
+}
+
+tcp_socket* tcp_listen_socket::accept() {
+	sockaddr_in peer;
+	socklen_t len = sizeof(peer);
+	SOCKET s = ::accept(sock, ( sockaddr* )&peer, &len);
+	if(s != SOCKET_ERROR)
+		return new tcp_socket(s, ipv4_socket_addr(peer.sin_addr.s_addr,peer.sin_port));
+	return NULL;
 }
 
 udp_socket::udp_socket(const ipv4_addr addr, const uint16 portnumber) {
