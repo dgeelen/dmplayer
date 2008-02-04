@@ -67,7 +67,11 @@ void select_server_update_treeview( const vector<server_info>& si) {
 						my_si.erase(s);
 					}
 					else { // This server no longer exists
-						gtk_tree_store_remove(tree_store_servers, &iter_b);
+						if(!gtk_tree_store_remove(tree_store_servers, &iter_b)) {
+							// If iter is no longer valid we don't want to call gtk_tree_model_iter_next
+							// It is only invalid if the server we deleted was the last in the list
+							break;
+						}
 					}
 					append_new_servers_here = iter_b;
 				} while(gtk_tree_model_iter_next(tree_model_servers, &iter_b));
