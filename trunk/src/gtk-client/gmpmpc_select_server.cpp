@@ -20,6 +20,7 @@ enum {
   SERVER_TREE_COLUMN_PING,
   SERVER_TREE_COLUMN_LAST_SEEN,
   SERVER_TREE_COLUMN_SOCK_ADDR,
+  SERVER_TREE_COLUMN_SOCK_ADDR_PTR,
   SERVER_TREE_COLUMN_COUNT
 };
 
@@ -51,22 +52,27 @@ void select_server_update_treeview( const vector<server_info>& si) {
 			if(gtk_tree_model_iter_children(tree_model_servers, &iter_b, &iter_a)) {
 				do {
 					char* server_address;
-					gtk_tree_model_get(tree_model_servers, &iter_b, 3, &server_address,-1); //server_address should never be NULL after this
+					gtk_tree_model_get(tree_model_servers, &iter_b, SERVER_TREE_COLUMN_SOCK_ADDR, &server_address,-1); //server_address should never be NULL after this
 					vector<server_info>::iterator s = my_si.end();
 					for(vector<server_info>::iterator i = my_si.begin(); i != my_si.end(); ++i ) {
 						if( strncmp( server_address, i->sock_addr.std_str().c_str(), i->sock_addr.std_str().size()) ==0 )
 							s = i; //assume servers are uniquely identified by their sock_addr
 					}
 					if(s!=my_si.end()) { // We already know about this server
+						ipv4_socket_addr* addr = new ipv4_socket_addr(s->sock_addr);
 						gtk_tree_store_set (tree_store_servers, &iter_b,
 										SERVER_TREE_COLUMN_NAME, s->name.c_str(),
 										SERVER_TREE_COLUMN_PING, s->ping_micro_secs,
 										SERVER_TREE_COLUMN_LAST_SEEN,  s->ping_last_seen,
 										SERVER_TREE_COLUMN_SOCK_ADDR, s->sock_addr.std_str().c_str(),
+										SERVER_TREE_COLUMN_SOCK_ADDR_PTR, addr,
 										-1);  // Update ping etc
 						my_si.erase(s);
 					}
 					else { // This server no longer exists
+						ipv4_socket_addr* addr;
+						gtk_tree_model_get(tree_model_servers, &iter_b, SERVER_TREE_COLUMN_SOCK_ADDR, &addr,-1);
+						delete addr;
 						if(!gtk_tree_store_remove(tree_store_servers, &iter_b)) {
 							// If iter is no longer valid we don't want to call gtk_tree_model_iter_next
 							// It is only invalid if the server we deleted was the last in the list
@@ -90,11 +96,13 @@ void select_server_update_treeview( const vector<server_info>& si) {
 			if(append_new_servers_here.stamp == invalid_iter.stamp ) {
 				gtk_tree_store_append(tree_store_servers, &append_new_servers_here, &iter_a);
 			} else  gtk_tree_store_insert_after(tree_store_servers, &append_new_servers_here, &iter_a, &append_new_servers_here);
+			ipv4_socket_addr* addr = new ipv4_socket_addr(i->sock_addr);
 			gtk_tree_store_set (tree_store_servers, &append_new_servers_here,
 													SERVER_TREE_COLUMN_NAME, i->name.c_str(),
 													SERVER_TREE_COLUMN_PING, i->ping_micro_secs,
 													SERVER_TREE_COLUMN_LAST_SEEN,  i->ping_last_seen,
 													SERVER_TREE_COLUMN_SOCK_ADDR, i->sock_addr.std_str().c_str(),
+													SERVER_TREE_COLUMN_SOCK_ADDR_PTR, addr,
 													-1);
 		}
 	}
@@ -111,7 +119,7 @@ bool select_server_initialise_window() {
 		try_connect_signal(select_server_window, button_cancel_server_selection, clicked);
 		try_connect_signal(select_server_window, button_accept_server_selection, clicked);
 		/* Initialise store for server treeview with Name, Ping, Last Seen, Address */
-		GtkTreeStore *tree_store_servers = gtk_tree_store_new(4, G_TYPE_STRING, G_TYPE_UINT64, G_TYPE_UINT64, G_TYPE_STRING);
+		GtkTreeStore *tree_store_servers = gtk_tree_store_new(SERVER_TREE_COLUMN_COUNT, G_TYPE_STRING, G_TYPE_UINT64, G_TYPE_UINT64, G_TYPE_STRING, G_TYPE_POINTER);
 
 		/* Connect View to Store */
 		try_with_widget(select_server_window, treeview_discovered_servers, tv) {
@@ -199,4 +207,18 @@ void button_cancel_server_selection_clicked(GtkWidget *widget, gpointer user_dat
 
 void button_accept_server_selection_clicked(GtkWidget *widget, gpointer user_data) {
 	dcerr("");
+	try_with_widget(select_server_window, treeview_discovered_servers, tv) {
+		GtkTreeView*  tree_view_servers  = GTK_TREE_VIEW(tv);
+		GtkTreeStore* tree_store_servers = GTK_TREE_STORE(gtk_tree_view_get_model(tree_view_servers));
+		GtkTreeModel* tree_model_servers = GTK_TREE_MODEL(tree_store_servers);
+		GtkTreeSelection* selection = gtk_tree_view_get_selection(tree_view_servers);
+		GtkTreeIter iter;
+		if(gtk_tree_selection_get_selected(selection, &tree_model_servers, &iter)) {
+			ipv4_socket_addr* server_address;
+			gtk_tree_model_get(tree_model_servers, &iter, SERVER_TREE_COLUMN_SOCK_ADDR_PTR, &server_address,-1);
+			if(server_address) { //FIXME: Bit hacky, better use gtk_tree_selection_set_select_function()
+				gmpmpc_network_handler->client_connect_to_server( *server_address );
+			}
+		}
+	}
 }
