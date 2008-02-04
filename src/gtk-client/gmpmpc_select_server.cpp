@@ -97,20 +97,6 @@ void select_server_update_treeview( const vector<server_info>& si) {
 													SERVER_TREE_COLUMN_SOCK_ADDR, i->sock_addr.std_str().c_str(),
 													-1);
 		}
-
-
-// 		for(vector<server_info>::const_iterator i = si.begin(); i != si.end(); ++i ) {
-// // 			dcerr(*i << "\n");
-// 			gtk_tree_store_append(tree_store_servers, &iter);
-// 			gtk_tree_store_set (tree_store_servers, &iter,
-// 													SERVER_TREE_COLUMN_NAME, i->name.c_str(),
-// 													SERVER_TREE_COLUMN_PING, i->ping_micro_secs,
-// 													SERVER_TREE_COLUMN_LAST_SEEN,  i->ping_last_seen,
-// 													SERVER_TREE_COLUMN_SOCK_ADDR, i->sock_addr.std_str().c_str(),
-// 													-1);
-// 		}
-// 		gtk_tree_store_append(tree_store_servers, &iter);
-// //
 	}
 }
 
