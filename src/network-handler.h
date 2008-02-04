@@ -20,6 +20,7 @@
 	#include <ctime>
 	#include <iostream>
 	#define UDP_PORT_NUMBER 55555
+	#define TCP_PORT_NUMBER 4444
 	#define MPMP_CLIENT false
 	#define MPMP_SERVER true
 
@@ -48,14 +49,15 @@
 			boost::signal<void(const std::vector<server_info>&)> server_list_update_signal;
 			boost::signal<void(const server_info&)> server_list_added_signal; // fixme: actually call this
 			boost::signal<void(const server_info&)> server_list_removed_signal;
+			boost::signal<void(const message&)> message_receive_signal;
+
+			void client_connect_to_server( ipv4_socket_addr dest );
 		private:
 			bool server_mode;
 			boost::thread* thread_server_tcp_connection_listener;
 			boost::thread* thread_client_tcp_connection;
 			boost::thread* thread_receive_packet_handler;
 			boost::thread* thread_send_packet_handler;
-			void server_tcp_connection_listener();
-			void client_tcp_connection();
 			bool receive_packet_handler_running;
 			bool send_packet_handler_running;
 			uint16 tcp_port_number;
@@ -70,6 +72,16 @@
 			udp_socket udp_ssock;
 			udp_socket udp_rsock;
 			udp_socket udp_qsock;
+
+			/* Client connection with server */
+			void client_tcp_connection();
+			void client_disconnect_from_server();
+			bool client_tcp_connection_running;
+			ipv4_socket_addr target_server;
+
+			/* Server connection with client */
+			void server_tcp_connection_handler();
+			void server_tcp_connection_listener();
 		};
 
 
