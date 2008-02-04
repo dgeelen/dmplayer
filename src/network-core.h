@@ -24,6 +24,10 @@
 		ipv4_addr() {
 			full=0;
 		}
+
+		ipv4_addr(uint32 addr) {
+			full=addr;
+		}
 	};
 
 	struct ipv6_addr {
@@ -37,20 +41,30 @@
 		}
 	};
 
+	struct ipv4_socket_addr : std::pair<ipv4_addr, uint16> {
+		ipv4_socket_addr(ipv4_addr a, uint16 b) : std::pair<ipv4_addr, uint16>(a,b) {};
+		ipv4_socket_addr() {};
+		std::string std_str() const;
+	};
+// 	typedef std::pair<ipv6_addr, uint16> ipv6_socket_addr;
+
 	class tcp_socket {
 		public:
+			tcp_socket( );
+			tcp_socket( SOCKET s, ipv4_socket_addr addr );
 			tcp_socket( const ipv4_addr addr, const uint16 port );
 			tcp_socket( const ipv6_addr addr, const uint16 port );
 			void connect( const ipv4_addr addr, const uint16 port );
 			void connect( const ipv6_addr addr, const uint16 port );
 			bool bind( const ipv4_addr addr, const uint16 port );
 			bool bind( const ipv6_addr addr, const uint16 port );
-
+			ipv4_socket_addr get_ipv4_socket_addr();
 			uint32 send( const uint8* buf, const uint32 len );
 			uint32 receive( const uint8* buf, const uint32 len );
 			void disconnect();
 		private:
 			SOCKET sock;
+			ipv4_socket_addr peer;
 	};
 
 	class tcp_listen_socket {
@@ -82,13 +96,6 @@
 		private:
 			SOCKET sock;
 	};
-
-	struct ipv4_socket_addr : std::pair<ipv4_addr, uint16> {
-		ipv4_socket_addr(ipv4_addr a, uint16 b) : std::pair<ipv4_addr, uint16>(a,b) {};
-		ipv4_socket_addr() {};
-		std::string std_str() const;
-	};
-// 	typedef std::pair<ipv6_addr, uint16> ipv6_socket_addr;
 
 	std::ostream& operator<<(std::ostream& os, const ipv4_addr& addr);
 	std::ostream& operator<<(std::ostream& os, const ipv4_socket_addr& saddr);
