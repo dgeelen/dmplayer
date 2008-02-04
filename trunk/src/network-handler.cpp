@@ -40,6 +40,8 @@ void network_handler::init() {
 	dcerr("network_handler(): Initializing...");
 	thread_send_packet_handler = NULL;
 	thread_receive_packet_handler = NULL;
+	thread_client_tcp_connection = NULL;
+	thread_server_tcp_connection_listener = NULL;
 	if(!singleton) throw LogicError("Error: network_handler() is a singleton class!");
 	singleton=false;
 	#ifdef HAVE_WINSOCK //NOTE: This is done only once, network_handler is a singleton class
@@ -59,10 +61,36 @@ uint16 network_handler::get_port_number() {
 	return tcp_port_number;
 }
 
-void network_handler::server_tcp_connection_listener() {
+
+void network_handler::server_tcp_connection_handler() { // One thread per client (Server)
+
 }
 
-void network_handler::client_tcp_connection() {
+void network_handler::server_tcp_connection_listener() { // Listens for incoming connections (Server)
+	dcerr("server_tcp_connection_listener Opening sockets");
+	ipv4_addr addr;
+	addr.full = INADDR_ANY;
+	tcp_listen_socket lsock(addr, TCP_PORT_NUMBER);
+
+	vector<pair<tcp_socket*, pair<boost::thread*, bool*> > > connections;
+	while(!are_we_done) {
+		tcp_socket* sock = lsock.accept();
+		dcerr("Accepted a client connection from " << sock->get_ipv4_socket_addr());
+	}
+	for(vector<pair<tcp_socket*, pair<boost::thread*, bool*> > >::iterator i = connections.begin(); i!=connections.end(); ++i) {
+		//TODO: disconnect
+	}
+}
+
+void network_handler::client_tcp_connection() { // Initiates a connection to the server (Client)
+	dcerr("client_tcp_connection Opening sockets");
+	ipv4_addr addr;
+	addr.full = INADDR_ANY;
+	tcp_socket lsock(addr, TCP_PORT_NUMBER);
+
+	while(!are_we_done && client_tcp_connection_running) {
+
+	}
 }
 
 void network_handler::send_packet_handler() {
@@ -88,10 +116,10 @@ void network_handler::send_packet_handler() {
 		uint64 curtime = get_time_us();
 		//dcerr("---Evalutaing "<<known_servers.size()<<" servers...");
 		for(map<ipv4_socket_addr, server_info>::iterator i = known_servers.begin(); i != known_servers.end(); ) {
-			dcerr(i->second);
-			dcerr("Curtime:" << curtime);
-			dcerr("i->second.ping_last_seen" << i->second.ping_last_seen);
-			dcerr("Diff: " << (curtime - i->second.ping_last_seen));
+// 			dcerr(i->second);
+// 			dcerr("Curtime:" << curtime);
+// 			dcerr("i->second.ping_last_seen" << i->second.ping_last_seen);
+// 			dcerr("Diff: " << (curtime - i->second.ping_last_seen));
 			if(((curtime - i->second.ping_last_seen) > (3000000))) {
 				dcerr("Deleting server");
 				server_list_removed_signal(i->second);
@@ -168,8 +196,8 @@ void network_handler::receive_packet_handler() {
 	}
 }
 
+#define WRAP(x, y) boost::thread(ErrorHandler(boost::bind(&network_handler::x, y)))
 void network_handler::start() {
-	#define WRAP(x, y) boost::thread(ErrorHandler(boost::bind(&network_handler::x, y)))
 	dcerr("Starting network IO threads");
 	if(thread_receive_packet_handler!=NULL || thread_send_packet_handler!=NULL)
 		throw("Error: stop() the network_handler() before start()ing it!");
@@ -180,7 +208,6 @@ void network_handler::start() {
 			thread_server_tcp_connection_listener = new WRAP(server_tcp_connection_listener, this);
 		if(!server_mode) {
 			thread_send_packet_handler   = new WRAP(send_packet_handler, this);
-			thread_client_tcp_connection = new WRAP(client_tcp_connection, this);
 		}
 	}
 	catch(...) {
@@ -188,6 +215,23 @@ void network_handler::start() {
 		throw ThreadException("Could not start one or more threads!");
 	}
 }
+
+void network_handler::client_connect_to_server( ipv4_socket_addr dest ) {
+	dcerr(dest);
+	target_server = dest;
+	client_tcp_connection_running = true;
+	thread_client_tcp_connection = new WRAP(client_tcp_connection, this);
+}
+
+void network_handler::client_disconnect_from_server(  ) {
+	client_tcp_connection_running = false;
+	target_server = ipv4_socket_addr();
+	if (thread_client_tcp_connection) {
+		thread_client_tcp_connection->join();
+		delete thread_client_tcp_connection;
+	}
+}
+#undef WRAP
 
 void network_handler::stop()
 {
@@ -211,6 +255,7 @@ void network_handler::stop()
 		thread_send_packet_handler->join();
 		delete thread_send_packet_handler;
 	}
+	client_disconnect_from_server();
 }
 /** End class network_handler **/
 
