@@ -39,5 +39,8 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		std::vector<server_info> currentServers;
 
 		void openFile(const QString& str);
+
+	public:
+		boost::signal<void (ipv4_socket_addr)> sigconnect;
 };
 #endif
