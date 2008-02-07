@@ -52,10 +52,12 @@ IF(ENABLE_GTK_GUI)
 
 	ADD_EXECUTABLE(gmpmpc
 		gmpmpc.cpp gmpmpc.h
-		gmpmpc_select_server.cpp gmpmpc_select_server.h
-		../network-handler.cpp ../network-handler.h
-		../error-handling.cpp ../error-handling.h
-		../network-core.cpp ../network-core.h
+		gmpmpc_select_server.h       gmpmpc_select_server.cpp
+		gmpmpc_connection_handling.h gmpmpc_connection_handling.cpp
+		../network-handler.cpp       ../network-handler.h
+		../error-handling.cpp        ../error-handling.h
+		../network-core.cpp          ../network-core.h
+		../packet.cpp                ../packet.h
 		"${CMAKE_CURRENT_BINARY_DIR}/gmpmpc_main_window.glade.h"
 		"${CMAKE_CURRENT_BINARY_DIR}/gmpmpc_select_server_window.glade.h"
 	)

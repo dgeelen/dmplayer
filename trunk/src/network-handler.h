@@ -80,7 +80,7 @@
 			ipv4_socket_addr target_server;
 
 			/* Server connection with client */
-			void server_tcp_connection_handler();
+			void server_tcp_connection_handler(tcp_socket* sock, bool* active);
 			void server_tcp_connection_listener();
 		};
 

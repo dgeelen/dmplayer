@@ -18,6 +18,8 @@
 
 using namespace std;
 
+#define WRAP(x, y) boost::thread(ErrorHandler(boost::bind(&network_handler::x, y)))
+
 /** Begin class network_handler **/
 bool singleton = true;
 
@@ -62,12 +64,17 @@ uint16 network_handler::get_port_number() {
 }
 
 
-void network_handler::server_tcp_connection_handler() { // One thread per client (Server)
-
+void network_handler::server_tcp_connection_handler(tcp_socket* sock, bool* active) { // One thread per client (Server)
+	dcerr("");
+	message_capabilities m;
+	m.set_capability("PROTOCOL", "0");
+	sock->send(m,m);
+	while(!are_we_done && active) {
+	}
 }
 
 void network_handler::server_tcp_connection_listener() { // Listens for incoming connections (Server)
-	dcerr("server_tcp_connection_listener Opening sockets");
+	dcerr("");
 	ipv4_addr addr;
 	addr.full = INADDR_ANY;
 	tcp_listen_socket lsock(addr, TCP_PORT_NUMBER);
@@ -76,6 +83,17 @@ void network_handler::server_tcp_connection_listener() { // Listens for incoming
 	while(!are_we_done) {
 		tcp_socket* sock = lsock.accept();
 		dcerr("Accepted a client connection from " << sock->get_ipv4_socket_addr());
+		bool* b = new bool;
+// 		boost::thread* t = new WRAP(server_tcp_connection_handler, this);
+		boost::thread* t = new boost::thread(
+		                       ErrorHandler(
+		                       boost::bind(&network_handler::server_tcp_connection_handler,
+		                                   this,
+		                                   sock,
+		                                   b)));
+		pair<boost::thread*, bool*> cc(t, b);
+		pair<tcp_socket*, pair<boost::thread*, bool*> > c(sock, cc);
+		connections.push_back(c);
 	}
 	for(vector<pair<tcp_socket*, pair<boost::thread*, bool*> > >::iterator i = connections.begin(); i!=connections.end(); ++i) {
 		//TODO: disconnect
@@ -83,13 +101,14 @@ void network_handler::server_tcp_connection_listener() { // Listens for incoming
 }
 
 void network_handler::client_tcp_connection() { // Initiates a connection to the server (Client)
-	dcerr("client_tcp_connection Opening sockets");
+	dcerr("");
 	ipv4_addr addr;
 	addr.full = INADDR_ANY;
-	tcp_socket lsock(addr, TCP_PORT_NUMBER);
-
+	tcp_socket sock(addr, TCP_PORT_NUMBER);
+	uint8* blaa = new uint8[250];
 	while(!are_we_done && client_tcp_connection_running) {
-
+		sock.receive(blaa, 250);
+		dcerr("");
 	}
 }
 
@@ -131,7 +150,7 @@ void network_handler::send_packet_handler() {
 				vsi.push_back(i->second);
 			}
 			++i;
-			dcerr("");
+// 			dcerr("");
 		}
 		//dcerr("---Eval_DONE");
 		server_list_update_signal(vsi);
@@ -163,7 +182,7 @@ void network_handler::receive_packet_handler() {
 			int packet_type = received_packet.deserialize<uint8>();
 			switch(packet_type) {
 				case PT_QUERY_SERVERS: {
-					dcerr("Received a PT_QUERY_SERVERS from " << listen_addr << ":" << port_number );
+// 					dcerr("Received a PT_QUERY_SERVERS from " << listen_addr << ":" << port_number );
 					if(!server_mode) break;
 					packet reply_packet;
 					reply_packet.serialize<uint8>(PT_REPLY_SERVERS);
@@ -175,7 +194,7 @@ void network_handler::receive_packet_handler() {
 					break;
 				}
 				case PT_REPLY_SERVERS: {
-					dcerr("Received a PT_REPLY_SERVERS from " << listen_addr << ":" << port_number );
+// 					dcerr("Received a PT_REPLY_SERVERS from " << listen_addr << ":" << port_number );
 					uint16 tcp_port; received_packet.deserialize(tcp_port);
 					uint32 cookie; received_packet.deserialize(cookie);
 					ipv4_socket_addr sa(listen_addr, tcp_port);
@@ -196,7 +215,6 @@ void network_handler::receive_packet_handler() {
 	}
 }
 
-#define WRAP(x, y) boost::thread(ErrorHandler(boost::bind(&network_handler::x, y)))
 void network_handler::start() {
 	dcerr("Starting network IO threads");
 	if(thread_receive_packet_handler!=NULL || thread_send_packet_handler!=NULL)
@@ -229,6 +247,7 @@ void network_handler::client_disconnect_from_server(  ) {
 	if (thread_client_tcp_connection) {
 		thread_client_tcp_connection->join();
 		delete thread_client_tcp_connection;
+		thread_client_tcp_connection=NULL;
 	}
 }
 #undef WRAP
@@ -249,11 +268,18 @@ void network_handler::stop()
 	if (thread_receive_packet_handler) {
 		thread_receive_packet_handler->join();
 		delete thread_receive_packet_handler;
+		thread_receive_packet_handler=NULL;
 	}
 	#endif
 	if (thread_send_packet_handler) {
 		thread_send_packet_handler->join();
 		delete thread_send_packet_handler;
+		thread_receive_packet_handler=NULL;
+	}
+	if(thread_server_tcp_connection_listener) {
+		thread_server_tcp_connection_listener->join();
+		delete thread_server_tcp_connection_listener;
+		thread_server_tcp_connection_listener=NULL;
 	}
 	client_disconnect_from_server();
 }

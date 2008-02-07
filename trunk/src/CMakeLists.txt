@@ -17,6 +17,7 @@ ADD_EXECUTABLE(mpmpd
 	error-handling.h error-handling.cpp
 	playlist_management.h playlist_management.cpp
 	types.h
+	packet.h packet.cpp
 )
 
 TARGET_LINK_LIBRARIES(mpmpd
