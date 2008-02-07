@@ -5,6 +5,7 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits.hpp>
 #include <string>
+#include <map>
 
 enum packet_types {
 	PT_QUERY_SERVERS=0,
@@ -75,4 +76,30 @@ class packet {
 			int curpos;
 };
 
+class message {
+	public:
+		message();
+		uint32 get_message_type() const { return message_type; };
+		virtual operator uint8*() = 0;
+		operator uint32() const {return message_body_length;};
+		enum message_types {
+			MSG_CAPABILITIES=0,
+			MSG_DISCONNECT,
+		};
+	protected:
+		uint32 message_type;
+		uint8* message_body;
+		uint32 message_body_length;
+};
+
+class message_capabilities : public message {
+	public:
+		message_capabilities();
+		~message_capabilities();
+		void set_capability(const std::string&, const std::string& capability);
+		std::string get_capability(const std::string& capability) const;
+		operator uint8*();
+	private:
+		std::map<std::string, std::string> capabilities;
+};
 #endif

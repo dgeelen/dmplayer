@@ -1,6 +1,7 @@
 #include "gmpmpc.h"
 #include "gmpmpc_select_server.h"
 #include "gmpmpc_select_server_window.glade.h"
+#include "gmpmpc_connection_handling.h"
 #include "../network-handler.h"
 #include "../error-handling.h"
 #include <vector>
@@ -8,7 +9,7 @@
 using namespace std;
 
 GladeXML *select_server_window = NULL;
-extern network_handler* gmpmpc_network_handler; //FIXME: Global variables == 3vil
+
 /* Signals */
 int window_select_server_delete_event_signal_id      = 0;
 int window_select_server_destroy_signal_id           = 0;
@@ -83,14 +84,12 @@ void select_server_update_treeview( const vector<server_info>& si) {
 				} while(gtk_tree_model_iter_next(tree_model_servers, &iter_b));
 			}
 		} else { //set up structure
-			dcerr("structure");
 			GtkTreeIter iter;
 			gtk_tree_store_append(tree_store_servers, &iter, NULL);
 			gtk_tree_store_set(tree_store_servers, &iter, 0, &"Discovered servers", -1);
 			iter_a = iter;
 			gtk_tree_store_append(tree_store_servers, &iter, NULL);
 			gtk_tree_store_set(tree_store_servers, &iter, 0, "Manually added servers", -1);
-			dcerr("structure end");
 		}
 		for(vector<server_info>::iterator i = my_si.begin(); i != my_si.end(); ++i ) {
 			if(append_new_servers_here.stamp == invalid_iter.stamp ) {
@@ -217,6 +216,7 @@ void button_accept_server_selection_clicked(GtkWidget *widget, gpointer user_dat
 			ipv4_socket_addr* server_address;
 			gtk_tree_model_get(tree_model_servers, &iter, SERVER_TREE_COLUMN_SOCK_ADDR_PTR, &server_address,-1);
 			if(server_address) { //FIXME: Bit hacky, better use gtk_tree_selection_set_select_function()
+				gmpmpc_network_handler->message_receive_signal.connect(handle_received_message);
 				gmpmpc_network_handler->client_connect_to_server( *server_address );
 			}
 		}

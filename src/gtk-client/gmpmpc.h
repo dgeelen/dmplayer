@@ -17,6 +17,8 @@
 	#include <glade/glade.h>
 	#include "../network-handler.h"
 
+	extern network_handler* gmpmpc_network_handler; //FIXME: Global variables == 3vil
+
 	#define try_connect_signal(xml_source, widget_name, signal_name) {\
 		GtkWidget* widget; \
 		widget = glade_xml_get_widget (xml_source, #widget_name); \

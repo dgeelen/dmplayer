@@ -50,6 +50,7 @@ IF(ENABLE_QT_GUI)
 		../network-handler.cpp
 		../error-handling.cpp
 		../network-core.cpp
+		../packet.h ../packet.cpp
 	)
 
 	# Generate headers from .ui files
