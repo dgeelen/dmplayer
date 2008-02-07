@@ -20,7 +20,9 @@
 
 using namespace std;
 
-AudioController::AudioController() {
+AudioController::AudioController()
+	: update_decoder_flag(false)
+{
 	#ifdef PORTAUDIO_BACKEND
 	backend = NULL;
 	try {
@@ -57,10 +59,15 @@ AudioController::~AudioController() {
 uint32 AudioController::getData(uint8* buf, uint32 len)
 {
 	uint32 read = 0;
-	if (nextdecoder) {
-		curdecoder = nextdecoder;
-		nextdecoder.reset();
+	if (update_decoder_flag) {
+		// this might look like the double-checked locking anti-design-pattern, but...
+		// it should work because of the mutexes
+		boost::mutex::scoped_lock lock(update_decoder_mutex);
+		curdecoder = update_decoder_source;
+		update_decoder_source.reset();
+		update_decoder_flag = false;
 	}
+
 	if (curdecoder)
 		read = curdecoder->getData(buf, len);
 	if (read < len) {
@@ -108,8 +115,12 @@ void AudioController::test_functie(std::string file) {
 		newdecoder = IAudioSourceRef(new ReformatFilter(newdecoder, backend->getAudioFormat()));
 	if(!newdecoder) dcerr("All decoders failed!");
 
-	while (nextdecoder); // wait till nextdecoder is clear
-	nextdecoder = newdecoder;
+	{
+		boost::mutex::scoped_lock lock(update_decoder_mutex);
+		update_decoder_flag = true;
+		update_decoder_source = newdecoder;
+		newdecoder.reset();
+	}
 }
 
 void AudioController::StopPlayback()
@@ -121,4 +132,3 @@ void AudioController::StartPlayback()
 {
 	backend->StartStream();
 }
-

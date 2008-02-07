@@ -3,6 +3,7 @@
 #include "decoder_interface.h"
 #include "datasource_interface.h"
 #include <string>
+#include <boost/thread/mutex.hpp>
 
 class IBackend;
 
@@ -17,7 +18,11 @@ class AudioController {
 	private:
 		IBackend* backend;
 		IAudioSourceRef curdecoder;
-		IAudioSourceRef nextdecoder;
+
+		// possibly overkill here
+		volatile bool update_decoder_flag;
+		IAudioSourceRef update_decoder_source;
+		boost::mutex update_decoder_mutex;
 };
 
 #endif//AUDIO_CONTROLLER_H
