@@ -23,8 +23,8 @@ using namespace std;
 AudioController::AudioController()
 	: update_decoder_flag(false)
 {
-	#ifdef PORTAUDIO_BACKEND
 	backend = NULL;
+	#ifdef PORTAUDIO_BACKEND
 	try {
 		PortAudioBackend* be = new PortAudioBackend(this);
 		backend = be;

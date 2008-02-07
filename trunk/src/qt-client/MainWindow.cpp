@@ -73,7 +73,7 @@ void MainWindow::UpdateServerList_remove(server_info si)
 		if (i->sock_addr == si.sock_addr)
 		{
 			currentServers.erase(i);
-			continue;
+			break;
 		}
 		++i;
 	}
@@ -165,6 +165,10 @@ void MainWindow::on_ConnectButton_clicked()
 		lblServerName->setText(currentServers[index].name.c_str());
 		lblPing->setText(STRFORMAT("%i ms", currentServers[index].ping_micro_secs).c_str());
 		lblServerAddress->setText(currentServers[index].sock_addr.std_str().c_str());
+
+		//gmpmpc_network_handler->message_receive_signal.connect(handle_received_message);
+		sigconnect(currentServers[index].sock_addr);
+		//gmpmpc_network_handler->client_connect_to_server(currentServers[index].sock_addr);
 	}
 	else
 	{

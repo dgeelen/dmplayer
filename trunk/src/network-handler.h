@@ -74,7 +74,7 @@
 			udp_socket udp_qsock;
 
 			/* Client connection with server */
-			void client_tcp_connection();
+			void client_tcp_connection(ipv4_socket_addr dest6);
 			void client_disconnect_from_server();
 			bool client_tcp_connection_running;
 			ipv4_socket_addr target_server;

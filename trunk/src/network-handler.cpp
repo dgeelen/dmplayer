@@ -18,8 +18,6 @@
 
 using namespace std;
 
-#define WRAP(x, y) boost::thread(ErrorHandler(boost::bind(&network_handler::x, y)))
-
 /** Begin class network_handler **/
 bool singleton = true;
 
@@ -77,7 +75,7 @@ void network_handler::server_tcp_connection_listener() { // Listens for incoming
 	dcerr("");
 	ipv4_addr addr;
 	addr.full = INADDR_ANY;
-	tcp_listen_socket lsock(addr, TCP_PORT_NUMBER);
+	tcp_listen_socket lsock(addr, tcp_port_number);
 
 	vector<pair<tcp_socket*, pair<boost::thread*, bool*> > > connections;
 	while(!are_we_done) {
@@ -100,11 +98,9 @@ void network_handler::server_tcp_connection_listener() { // Listens for incoming
 	}
 }
 
-void network_handler::client_tcp_connection() { // Initiates a connection to the server (Client)
+void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiates a connection to the server (Client)
 	dcerr("");
-	ipv4_addr addr;
-	addr.full = INADDR_ANY;
-	tcp_socket sock(addr, TCP_PORT_NUMBER);
+	tcp_socket sock(dest.first, dest.second);
 	uint8* blaa = new uint8[250];
 	while(!are_we_done && client_tcp_connection_running) {
 		sock.receive(blaa, 250);
@@ -221,11 +217,11 @@ void network_handler::start() {
 		throw("Error: stop() the network_handler() before start()ing it!");
 	receive_packet_handler_running = true;
 	try {
-		thread_receive_packet_handler = new WRAP(receive_packet_handler, this);
+		thread_receive_packet_handler = new boost::thread(ErrorHandler(boost::bind(&network_handler::receive_packet_handler, this)));
 		if(server_mode)
-			thread_server_tcp_connection_listener = new WRAP(server_tcp_connection_listener, this);
+			thread_server_tcp_connection_listener = new boost::thread(ErrorHandler(boost::bind(&network_handler::server_tcp_connection_listener, this)));
 		if(!server_mode) {
-			thread_send_packet_handler   = new WRAP(send_packet_handler, this);
+			thread_send_packet_handler   = new boost::thread(ErrorHandler(boost::bind(&network_handler::send_packet_handler, this)));
 		}
 	}
 	catch(...) {
@@ -236,9 +232,8 @@ void network_handler::start() {
 
 void network_handler::client_connect_to_server( ipv4_socket_addr dest ) {
 	dcerr(dest);
-	target_server = dest;
 	client_tcp_connection_running = true;
-	thread_client_tcp_connection = new WRAP(client_tcp_connection, this);
+	thread_client_tcp_connection = new boost::thread(ErrorHandler(boost::bind(&network_handler::client_tcp_connection, this, dest)));
 }
 
 void network_handler::client_disconnect_from_server(  ) {
