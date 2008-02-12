@@ -32,6 +32,8 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		void on_DisconnectButton_clicked();
 		void updateProgressBar();
 
+		void DebugLogger(std::string msg, std::string file, std::string func, int);
+
 	private:
 		std::string file;
 		AudioController audiocontroller;

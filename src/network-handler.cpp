@@ -84,7 +84,7 @@ void network_handler::server_tcp_connection_listener() { // Listens for incoming
 		bool* b = new bool;
 // 		boost::thread* t = new WRAP(server_tcp_connection_handler, this);
 		boost::thread* t = new boost::thread(
-		                       ErrorHandler(
+		                       makeErrorHandler(
 		                       boost::bind(&network_handler::server_tcp_connection_handler,
 		                                   this,
 		                                   sock,
@@ -217,11 +217,11 @@ void network_handler::start() {
 		throw("Error: stop() the network_handler() before start()ing it!");
 	receive_packet_handler_running = true;
 	try {
-		thread_receive_packet_handler = new boost::thread(ErrorHandler(boost::bind(&network_handler::receive_packet_handler, this)));
+		thread_receive_packet_handler = new boost::thread(makeErrorHandler(boost::bind(&network_handler::receive_packet_handler, this)));
 		if(server_mode)
-			thread_server_tcp_connection_listener = new boost::thread(ErrorHandler(boost::bind(&network_handler::server_tcp_connection_listener, this)));
+			thread_server_tcp_connection_listener = new boost::thread(makeErrorHandler(boost::bind(&network_handler::server_tcp_connection_listener, this)));
 		if(!server_mode) {
-			thread_send_packet_handler   = new boost::thread(ErrorHandler(boost::bind(&network_handler::send_packet_handler, this)));
+			thread_send_packet_handler   = new boost::thread(makeErrorHandler(boost::bind(&network_handler::send_packet_handler, this)));
 		}
 	}
 	catch(...) {
@@ -233,7 +233,7 @@ void network_handler::start() {
 void network_handler::client_connect_to_server( ipv4_socket_addr dest ) {
 	dcerr(dest);
 	client_tcp_connection_running = true;
-	thread_client_tcp_connection = new boost::thread(ErrorHandler(boost::bind(&network_handler::client_tcp_connection, this, dest)));
+	thread_client_tcp_connection = new boost::thread(makeErrorHandler(boost::bind(&network_handler::client_tcp_connection, this, dest)));
 }
 
 void network_handler::client_disconnect_from_server(  ) {

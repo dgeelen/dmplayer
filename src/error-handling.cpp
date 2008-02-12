@@ -1,5 +1,7 @@
 #include "error-handling.h"
 
+#include <iomanip>
+
 using namespace std;
 
 /*
@@ -55,57 +57,40 @@ Exception::~Exception() throw ()
 }
 
 /*
- *  Implementation of ReturnValueException class 
+ * error logging stuff
  */
-
-ReturnValueException::ReturnValueException(int value)
-	: retval(value)
-	, Exception("ReturnValueException + TODO value")
-{
-	// TODO put value in what() message
+namespace lognamespace {
+	boost::signal<void(const std::string&, const std::string&, const std::string&, int)> logsignal;
 }
 
-int ReturnValueException::getValue() const
-{
-	return retval;
-}
+namespace {
+	using namespace lognamespace;
 
-/*
- *  Implementation of ErrorHandler class 
- */
-ErrorHandler::ErrorHandler( boost::function<void()> f, bool silent)
-{
-	this->f = f;
-	silentreturnexception = silent;
-};
-
-void ErrorHandler::operator()() {
-	#define PRINT_MSG do { \
-		cerr << "---<!ERROR REPORT>---\n"; \
-		cerr << msg; \
-		if (msg[strlen(msg)-1] != '\n') cerr << '\n'; \
-		cerr << "---</ERROR REPORT>---\n"; \
-	} while(false)
-
-	try {
-		f();
-	} catch (const ReturnValueException& e) {
-		if (!silentreturnexception) {
-			const char* msg = e.what();
-			PRINT_MSG;
-		}
-		throw;
-	} catch (const exception& e) { // catch by reference do ensure virtual calls work as needed
-		const char* msg = e.what();
-		PRINT_MSG;
-		throw;
-	} catch (const char* msg) {
-		PRINT_MSG;
-		throw;
-	} catch (...) {
-		const char* msg = "UNKNOWN ERROR";
-		PRINT_MSG;
-		throw;
+	std::string file_basename(std::string s) {
+		int i = s.find_last_of("/\\", s.size());
+		s = s.substr( i + 1, s.size() - i - 1);
+		return s;
 	}
-};
 
+	void logfunc1(const std::string& msg, const std::string& file, const std::string& func, int line)
+	{
+		stringstream ss;
+		ss << std::setiosflags(std::ios::right);
+		ss << std::setw(28) << file_basename(file);
+		ss << std::setw(5) << line << ' ';
+		ss << std::setw(28) << func << "(): ";
+		ss << std::setiosflags(std::ios::left);
+		ss << msg;
+		ss << '\n';
+		std::cerr << ss.str();
+	}
+
+	void logfunc2(const std::string& msg, const std::string& file, const std::string& func, int line)
+	{
+		stringstream ss;
+		ss << msg << std::endl;
+		std::cerr << ss.str();
+	}
+
+	int x = (logsignal.connect(&logfunc1), 1);
+}

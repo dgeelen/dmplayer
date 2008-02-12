@@ -187,3 +187,7 @@ void MainWindow::on_RefreshButton_clicked()
 
 }
 
+void MainWindow::DebugLogger(std::string msg, std::string file, std::string func, int line)
+{
+	textEdit->append(QString(msg.c_str()));
+}

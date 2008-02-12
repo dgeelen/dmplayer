@@ -23,7 +23,7 @@
     <item row="0" column="0" >
      <widget class="QTabWidget" name="tabWidget" >
       <property name="currentIndex" >
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="elideMode" >
        <enum>Qt::ElideLeft</enum>
@@ -217,6 +217,20 @@
          </item>
         </layout>
        </widget>
+      </widget>
+     </widget>
+    </item>
+    <item row="1" column="0" >
+     <widget class="QDockWidget" name="dockWidget" >
+      <property name="floating" >
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="dockWidgetContents_3" >
+       <layout class="QHBoxLayout" >
+        <item>
+         <widget class="QTextEdit" name="textEdit" />
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>
