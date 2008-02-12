@@ -48,7 +48,7 @@ tcp_socket::tcp_socket( const ipv4_addr addr, const uint16 port )
 	addr_in.sin_port = htons( port );
 
 	int res = ::connect(sock, (sockaddr*)&addr_in, sizeof(addr_in));
-	if (res == SOCKET_ERROR) throw NetworkException("failed to bind tcp socket");
+	if (res == SOCKET_ERROR) throw NetworkException("failed to connect tcp socket");
 
 	peer = ipv4_socket_addr(ipv4_addr(addr_in.sin_addr.s_addr), addr_in.sin_port);
 }

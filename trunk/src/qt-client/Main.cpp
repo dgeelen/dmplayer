@@ -2,12 +2,13 @@
 
 #include "MainWindow.h"
 #include "../network-handler.h"
+#include "../error-handling.h"
 #include <boost/bind.hpp>
 #include "QtBooster.h"
 
 using namespace std;
 
-int main( int argc, char **argv )
+int main_impl(int argc, char **argv )
 {
 	QApplication app(argc, argv);
 
@@ -34,5 +35,14 @@ int main( int argc, char **argv )
 		)
 	);
 
+	lognamespace::logsignal.connect(
+		QTBOOSTER(&mainwindow, MainWindow::DebugLogger)
+	);
+
 	return app.exec();
 }
+
+int main(int argc, char* argv[]) {
+	return makeErrorHandler(boost::bind(&main_impl, argc, argv))();
+}
+

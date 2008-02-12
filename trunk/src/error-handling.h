@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <boost/function.hpp>
+#include <boost/signal.hpp>
 //#include <boost/exception.hpp>
 
 class Exception: public std::exception {
@@ -19,14 +20,6 @@ class Exception: public std::exception {
 		Exception(const Exception&);
 		virtual ~Exception() throw();
 		virtual const char* what() const throw();
-};
-
-class ReturnValueException: public Exception {
-	private:
-		int retval;
-	public:
-		ReturnValueException(int value);
-		int getValue() const;
 };
 
 /// Create exception class identical to type 'base', but with a new type 'name'
@@ -48,35 +41,59 @@ DEFINE_EXCEPTION(HTTPException, NetworkException);
 DEFINE_EXCEPTION(LogicError, Exception);
 DEFINE_EXCEPTION(ThreadException, Exception);
 
+template<typename T>
 class ErrorHandler {
 	public:
-		ErrorHandler(boost::function<void()> f, bool silent = false);
-		void operator()();
+		typedef T result_type;
+		ErrorHandler(boost::function<T()> _f) : f(_f) {};
+		T operator()() {
+			#define PRINT_MSG do { \
+				cerr << "---<!ERROR REPORT>---\n"; \
+				cerr << msg; \
+				if (msg[strlen(msg)-1] != '\n') cerr << '\n'; \
+				cerr << "---</ERROR REPORT>---\n"; \
+			} while(false)
+
+			try {
+				return f(); // *should* be valid C++ even when return type 'T' is 'void'
+			} catch (const exception& e) { // catch by reference to ensure virtual calls work as needed
+				const char* msg = e.what();
+				PRINT_MSG;
+				throw;
+			} catch (const char* msg) {
+				PRINT_MSG;
+				throw;
+			} catch (...) {
+				const char* msg = "UNKNOWN ERROR";
+				PRINT_MSG;
+				throw;
+			}
+			#undef PRINT_MSG
+		};
 	private:
-		boost::function<void()> f;
-		bool silentreturnexception;
+		boost::function<T()> f;
 };
+
+template<typename T>
+ErrorHandler<typename T::result_type> makeErrorHandler(T f) {
+	return ErrorHandler<typename T::result_type>(f);
+}
 
 /* DEBUG #define's */
 #ifdef DEBUG
 	#include <string>
-	#include <iomanip>
-	namespace DCERR {
-		static std::string file_basename(std::string s) {
-			int i = s.find_last_of("/\\", s.size());
-			s = s.substr( i + 1, s.size() - i - 1);
-			return s;
-		}
+	#include <sstream>
+
+	namespace lognamespace {
+		extern boost::signal<void(const std::string&, const std::string&, const std::string&, int)> logsignal;
 	}
-	#define dcerr(x) std::cerr << std::setiosflags(std::ios::right) \
-	                           << std::setw(28) << DCERR::file_basename(__FILE__) \
-	                           << std::setw(5) << __LINE__ << ' ' \
-	                           << std::setw(28) << __FUNCTION__ << "(): " \
-	                           << std::setiosflags(std::ios::left) \
-	                           << x \
-	                           << '\n'
+	#define dcerr(x) do { \
+		std::stringstream ss; \
+		ss << x; \
+		lognamespace::logsignal(ss.str(), __FILE__, __FUNCTION__, __LINE__); \
+	} while (false)
 #else
-	#define dcerr(x)
+	#define dcerr(x) do {} while (false)
 #endif
 
 #endif //ERROR_HANDLING_H

@@ -11,16 +11,8 @@
 namespace po = boost::program_options;
 using namespace std;
 
-// hacky! pass arguments through static vars
-// this is so we can wrap xmain in the global exception handler
-static int    xargc;
-static char** xargv;
-
-void xmain()
+int main_impl(int argc, char* argv[])
 {
-	int    argc = xargc;
-	char** argv = xargv;
-
 	int listen_port;
 	string filename;
 	string server_name;
@@ -32,7 +24,6 @@ void xmain()
 	     << "   [Debug Build]"
 	#endif
 	     << "\n";
-
 
 	// Declare the supported options.
 	po::options_description desc("Allowed options");
@@ -51,7 +42,7 @@ void xmain()
 
 	if (showhelp) {
 		cout << desc << "\n";
-		throw ReturnValueException(1);
+		return 1;
 	}
 
 	dcerr("Starting network_handler");
@@ -75,15 +66,9 @@ void xmain()
 	cout << "Press any key to quit\n";
 	getchar();
 
-	throw ReturnValueException(0);
+	return 0;
 }
 
 int main(int argc, char* argv[]) {
-	xargc = argc;
-	xargv = argv;
-	try {
-		ErrorHandler(boost::bind(&xmain), true)();
-	} catch (const ReturnValueException& e) {
-		return e.getValue();
-	}
+	return makeErrorHandler(boost::bind(&main_impl, argc, argv))();
 }
