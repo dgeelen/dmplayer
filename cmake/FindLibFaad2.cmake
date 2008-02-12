@@ -1,16 +1,20 @@
 SET(LIBFAAD2_FOUND FALSE)
 
+find_package(ExtraLibDir)
+
+FIND_LIB_IN_EXTRALIBS(LIBFAAD2 *faad* include lib)
+
 Find_Path(LIBFAAD2_INCLUDE_DIR
-  faad.h
-  /usr/include /usr/local/include
-  )
+	NAMES faad.h
+	PATHS /usr/include /usr/local/include ${LIBFAAD2_EXTRALIB_INCLUDE_PATHS}
+)
 
 Find_Library(LIBFAAD2_LIBRARY
-  faad
-  /usr/lib /usr/local/lib
-  )
+	NAMES faad
+	PATHS /usr/lib /usr/local/lib ${LIBFAAD2_EXTRALIB_LIBRARY_PATHS}
+)
 
 IF(LIBFAAD2_INCLUDE_DIR AND LIBFAAD2_LIBRARY)
-  SET(LIBFAAD2_FOUND TRUE)
-  MESSAGE(STATUS "Found faad2 library")
+	SET(LIBFAAD2_FOUND TRUE)
+	MESSAGE(STATUS "Found faad2 library")
 ENDIF(LIBFAAD2_INCLUDE_DIR AND LIBFAAD2_LIBRARY)

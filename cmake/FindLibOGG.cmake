@@ -1,16 +1,22 @@
+find_package(ExtraLibDir)
+
+FIND_LIB_IN_EXTRALIBS(LIBOGG *ogg* include lib)
+
 SET(LIBOGG_FOUND FALSE)
 
 Find_Path(LIBOGG_INCLUDE_DIR
-  ogg/ogg.h
-  /usr/include /usr/local/include
-  )
+	ogg/ogg.h
+	/usr/include /usr/local/include
+	${LIBOGG_EXTRALIB_INCLUDE_PATHS}
+)
 
 Find_Library(LIBOGG_LIBRARY
-  ogg
-  /usr/lib /usr/local/lib
-  )
+	ogg
+	/usr/lib /usr/local/lib
+	${LIBOGG_EXTRALIB_LIBRARY_PATHS}
+)
 
 IF(LIBOGG_INCLUDE_DIR AND LIBOGG_LIBRARY)
-  SET(LIBOGG_FOUND TRUE)
-  MESSAGE(STATUS "Found ogg library")
+	SET(LIBOGG_FOUND TRUE)
+	MESSAGE(STATUS "Found ogg library")
 ENDIF(LIBOGG_INCLUDE_DIR AND LIBOGG_LIBRARY)
