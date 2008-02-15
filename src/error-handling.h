@@ -48,15 +48,15 @@ class ErrorHandler {
 		ErrorHandler(boost::function<T()> _f) : f(_f) {};
 		T operator()() {
 			#define PRINT_MSG do { \
-				cerr << "---<!ERROR REPORT>---\n"; \
-				cerr << msg; \
-				if (msg[strlen(msg)-1] != '\n') cerr << '\n'; \
-				cerr << "---</ERROR REPORT>---\n"; \
+				std::cerr << "---<!ERROR REPORT>---\n"; \
+				std::cerr << msg; \
+				if (msg[strlen(msg)-1] != '\n') std::cerr << '\n'; \
+				std::cerr << "---</ERROR REPORT>---\n"; \
 			} while(false)
 
 			try {
 				return f(); // *should* be valid C++ even when return type 'T' is 'void'
-			} catch (const exception& e) { // catch by reference to ensure virtual calls work as needed
+			} catch (const Exception& e) { // catch by reference to ensure virtual calls work as needed
 				const char* msg = e.what();
 				PRINT_MSG;
 				throw;
