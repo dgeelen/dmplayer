@@ -64,9 +64,8 @@ uint16 network_handler::get_port_number() {
 
 void network_handler::server_tcp_connection_handler(tcp_socket* sock, bool* active) { // One thread per client (Server)
 	dcerr("");
-	message_capabilities m;
-	m.set_capability("PROTOCOL", "0");
-	sock->send(m,m);
+	message_connect m;
+	sock->send(m);
 	while(!are_we_done && active) {
 	}
 }
