@@ -78,28 +78,34 @@ class packet {
 
 class message {
 	public:
-		message();
-		uint32 get_message_type() const { return message_type; };
-		virtual operator uint8*() = 0;
-		operator uint32() const {return message_body_length;};
+		uint32 get_type() const { return type; };
 		enum message_types {
-			MSG_CAPABILITIES=0,
+			MSG_CONNECT=0,
 			MSG_DISCONNECT,
 		};
+		template<class Archive>
+		void serialize(Archive & ar, const unsigned int version)
+		{
+			ar & type;
+		}
 	protected:
-		uint32 message_type;
-		uint8* message_body;
-		uint32 message_body_length;
+		message(uint32 type_) : type(type_) {};
+	private:
+		uint32 type;
 };
 
-class message_capabilities : public message {
+#define NETWERK_PROTOCOL_VERSION 0
+
+class message_connect : public message {
 	public:
-		message_capabilities();
-		~message_capabilities();
-		void set_capability(const std::string&, const std::string& capability);
-		std::string get_capability(const std::string& capability) const;
-		operator uint8*();
+		message_connect() : message(MSG_CONNECT), version(NETWERK_PROTOCOL_VERSION) {};
+		template<class Archive>
+		void serialize(Archive & ar, const unsigned int version)
+		{
+			message::serialize(ar, version);
+			ar & version;
+		}
 	private:
-		std::map<std::string, std::string> capabilities;
+		uint32 version;
 };
 #endif
