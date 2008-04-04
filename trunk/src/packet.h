@@ -1,11 +1,18 @@
 #ifndef PACKET_H
 #define PACKET_H
 
-#include "types.h"
+#include <boost/serialization/base_object.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits.hpp>
 #include <string>
 #include <map>
+#include "types.h"
+
+/** ** ** ** ** ** ** ** **
+ *       UDP Packet       *
+ ** ** ** ** ** ** ** ** **/
 
 enum packet_types {
 	PT_QUERY_SERVERS=0,
@@ -76,36 +83,108 @@ class packet {
 			int curpos;
 };
 
+/** ** ** ** ** ** ** ** **
+ *      TCP Packets       *
+ ** ** ** ** ** ** ** ** **/
+
+/* Typical usage scenario:*
+ *  .--------.       .----------.      .--------.
+ *  | USER_A |       | 'SERVER' |      | USER_B |
+ *  '--------'       '----------'      '--------'
+ *      |                 |                |
+ *      |     Connect     |                |
+ *      |---------------->|                |       # User A wants to connect to the server (request to connect)
+ *      |     Disconnect  |                |
+ *      |<----------------|                |       # A's request is denied   (server closes TCP connection)
+ *      |     Connect     |                |
+ *      |---------------->|                |       # A has altered his settings and tries again
+ *      |     Connect     |                |
+ *      |<----------------|                |       # Now A's request is accepted (connect message from server->client)
+ *      | PlaylistUpdate  |                |
+ *      |<----------------|                |       # The server informs A of the current state of the playlist
+ *      |  QueryTrackDB   |                |
+ *      |---------------->|                |       # Next user A wants to search (for a song, by title, artist, etc)
+ *      |  QueryTrackDB   |  QueryTrackDB  |
+ *      |<----------------|--------------->|       # The server forwards A's request to all clients (1)
+ *      |   QTDB_Result   |                |
+ *      |---------------->|  QTDB_Result   |       # A searches his private TrackDB and returns the results (2)
+ *      |   QTDB_Result   |<---------------|       # So does B
+ *      |<----------------|                |       # The server aggregates and returns the results to A (3)(4)
+ *      |      Vote       |                |
+ *      |---------------->|                |       # A find a nice song in the results and adds it to the playlist
+ *      | PlaylistUpdate  | PlaylistUpdate |
+ *      |<----------------|--------------->|       # The playlist is updated and all clients are notified of the new situation
+ *      |   RequestFile   |                |
+ *      |-----------------+--------------->|       # When it's time to play the song, A requests the file from B (4)
+ *      |                 | ReqFileResult  |
+ *      |<----------------+----------------|       # B transfers the file to A
+ *      |                 |                |
+ *      |                 |                |
+ *      |                 |                |
+ *      |                 |                |
+ *      |                 |                |
+ *      |                 |                |
+ *      |                 |                |
+ *      |                 |                |
+ *      |                 |                |
+ *      |                 |                |
+ *      |                 |                |
+ *
+ *  (1) Possibly A is omitted and performs the search locally
+ *  (2) If (1), then A does not return the results to the server, saving a network round trip
+ *  (3) After receiving the results from all other clients A must add his own results from (1)
+ *  (4) The result of the QueryTrackDB is an std::vector<TrackID>, so that A knows where each file can be downloaded
+ */
+
+
+#define NETWERK_PROTOCOL_VERSION 0
+
 class message {
 	public:
 		uint32 get_type() const { return type; };
 		enum message_types {
 			MSG_CONNECT=0,
 			MSG_DISCONNECT,
+			MSG_PLAYLIST_UPDATE,
+			MSG_QUERY_TRACKDB,
+			MSG_QUERY_TRACKDB_RESULT,
+			MSG_REQUEST_FILE,
+			MSG_REQUEST_FILE_RESULT,
 		};
-		template<class Archive>
-		void serialize(Archive & ar, const unsigned int version)
-		{
-			ar & type;
-		}
+	message() : type(-1) {};
 	protected:
 		message(uint32 type_) : type(type_) {};
 	private:
+		friend class boost::serialization::access;
+		template<class Archive>
+		void serialize(Archive & ar, const unsigned int version) {
+			ar & type;
+		}
+
 		uint32 type;
 };
-
-#define NETWERK_PROTOCOL_VERSION 0
 
 class message_connect : public message {
 	public:
 		message_connect() : message(MSG_CONNECT), version(NETWERK_PROTOCOL_VERSION) {};
+	private:
+		friend class boost::serialization::access;
 		template<class Archive>
-		void serialize(Archive & ar, const unsigned int version)
-		{
-			message::serialize(ar, version);
+		void serialize(Archive & ar, const unsigned int version) {
+			ar & boost::serialization::base_object<message>(*this);
 			ar & version;
 		}
-	private:
 		uint32 version;
 };
-#endif
+
+class message_disconnect : public message {
+	public:
+		message_disconnect() : message(MSG_DISCONNECT) {};
+	private:
+		friend class boost::serialization::access;
+		template<class Archive>
+		void serialize(Archive & ar, const unsigned int version) {
+			ar & boost::serialization::base_object<message>(*this);
+		}
+};
+#endif //PACKET_H

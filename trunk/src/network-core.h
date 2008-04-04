@@ -60,7 +60,8 @@
 			bool bind( const ipv6_addr addr, const uint16 port );
 			ipv4_socket_addr get_ipv4_socket_addr();
 			uint32 send( const uint8* buf, const uint32 len );
-			bool send(message msg) { /* !! TODO !! */ return false; };
+			void operator<<(const message& msg);
+			void operator>>(      message*& msg);
 			uint32 receive( const uint8* buf, const uint32 len );
 			void disconnect();
 		private:
