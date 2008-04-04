@@ -42,8 +42,8 @@ LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec), fill_buffer_ba
 	try {
 		thread_decoder_read_thread = NULL;
 		thread_ao_play_thread = NULL;
-		thread_decoder_read_thread = new boost::thread(ErrorHandler(boost::bind(&LibAOBackend::decoder_read_thread, this)));
-		thread_ao_play_thread = new boost::thread(ErrorHandler(boost::bind(&LibAOBackend::ao_play_thread, this)));
+		thread_decoder_read_thread = new boost::thread(makeErrorHandler(boost::bind(&LibAOBackend::decoder_read_thread, this)));
+		thread_ao_play_thread = new boost::thread(makeErrorHandler(boost::bind(&LibAOBackend::ao_play_thread, this)));
 	}
 	catch(...) {
 		throw ThreadException("LibAOBackend: Could not start output thread!");
