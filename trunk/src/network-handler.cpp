@@ -64,9 +64,9 @@ uint16 network_handler::get_port_number() {
 
 void network_handler::server_tcp_connection_handler(tcp_socket* sock, bool* active) { // One thread per client (Server)
 	dcerr("");
-	message_connect m;
-	sock->send(m);
 	while(!are_we_done && active) {
+		message* m;
+		(*sock) >> m;
 		sleep(100000);
 	}
 }
@@ -101,10 +101,10 @@ void network_handler::server_tcp_connection_listener() { // Listens for incoming
 void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiates a connection to the server (Client)
 	dcerr("");
 	tcp_socket sock(dest.first, dest.second);
-	uint8* blaa = new uint8[250];
+	message_connect m;
+	sock << m;
 	while(!are_we_done && client_tcp_connection_running) {
-		sock.receive(blaa, 250);
-		dcerr("");
+		sleep(100000);
 	}
 }
 
