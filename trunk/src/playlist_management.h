@@ -6,6 +6,9 @@
 	#include <map>
 	#include "boost/filesystem.hpp"
 
+	//NOTE: Using an average of 5MB per song (reasonable for good quality MP3)
+	//      a uint32 should suffice to hold 20 pebibytes worth of music (2^32*(5*1024^2)/1024^5)
+
 	typedef std::pair<uint32,uint32> TrackID;
 
 	typedef std::pair<TrackID, std::map<std::string, std::string> > SearchResult;
