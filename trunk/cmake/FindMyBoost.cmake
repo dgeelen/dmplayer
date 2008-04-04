@@ -13,13 +13,13 @@ find_package(SearchUtils)
 
 GLOB_PATHS(BOOST_SEARCH_PATHS
 	GLOBS "boost_[0-9_]*"
-	BASES	
+	BASES
 		/usr/include /usr/local/include
 		"C:/Program Files/boost"
 		"C:/Program Files"
 		"C:/Boost"
 		"D:/Prog/Boost"
-		
+
 )
 
 FIND_PATH(BOOST_INCLUDE_DIR
@@ -87,6 +87,46 @@ ELSE(WIN32 AND NOT MINGW)
 		      "${BOOST_INCLUDE_DIR}/../lib"
 		      /usr/lib /usr/local/lib
 	)
+
+	FIND_LIBRARY(BOOST_SERIALIZATION_LIBRARY
+		NAMES boost_serialization-mt boost_serialization${BOOST_LIBRARY_SUFFIX}
+		PATHS "${BOOST_LIBRARY_DIR}"
+		      "${BOOST_INCLUDE_DIR}/lib"
+		      "${BOOST_INCLUDE_DIR}/../lib"
+		      /usr/lib /usr/local/lib
+	)
 ENDIF(WIN32 AND NOT MINGW)
 
 MARK_AS_ADVANCED(BOOST_LIBRARY_DIR)
+
+IF(WIN32 AND NOT MINGW)
+	MESSAGE(STATUS "-TODO-")
+ELSE(WIN32 AND NOT MINGW)
+	IF (BOOST_INCLUDE_DIR)
+		MESSAGE(STATUS "Found Boost include dir")
+	ENDIF (BOOST_INCLUDE_DIR)
+
+	IF (BOOST_LIBRARY_DIR)
+		MESSAGE(STATUS "Found Boost library dir")
+	ENDIF (BOOST_LIBRARY_DIR)
+
+	IF (BOOST_THREAD_LIBRARY)
+		MESSAGE(STATUS "Found Boost Thread library")
+	ENDIF (BOOST_THREAD_LIBRARY)
+
+	IF (BOOST_PROGRAM_OPTIONS_LIBRARY)
+		MESSAGE(STATUS "Found Boost Program Options")
+	ENDIF (BOOST_PROGRAM_OPTIONS_LIBRARY)
+
+	IF (BOOST_FILESYSTEM_LIBRARY)
+		MESSAGE(STATUS "Found Boost File System")
+	ENDIF (BOOST_FILESYSTEM_LIBRARY)
+
+	IF (BOOST_SIGNALS_LIBRARY)
+		MESSAGE(STATUS "Found Boost Signals")
+	ENDIF (BOOST_SIGNALS_LIBRARY)
+
+	IF (BOOST_SERIALIZATION_LIBRARY)
+		MESSAGE(STATUS "Found Boost Serialization")
+	ENDIF (BOOST_SERIALIZATION_LIBRARY)
+ENDIF(WIN32 AND NOT MINGW)
