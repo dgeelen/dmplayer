@@ -67,6 +67,7 @@ void network_handler::server_tcp_connection_handler(tcp_socket* sock, bool* acti
 	message_connect m;
 	sock->send(m);
 	while(!are_we_done && active) {
+		sleep(100000);
 	}
 }
 
