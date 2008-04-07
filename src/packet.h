@@ -4,6 +4,7 @@
 #include <boost/serialization/base_object.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/export.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits.hpp>
 #include <string>
@@ -164,6 +165,7 @@ class message {
 		uint32 type;
 };
 
+
 class message_connect : public message {
 	public:
 		message_connect() : message(MSG_CONNECT), version(NETWERK_PROTOCOL_VERSION) {};
@@ -172,7 +174,8 @@ class message_connect : public message {
 		template<class Archive>
 		void serialize(Archive & ar, const unsigned int version) {
 			ar & boost::serialization::base_object<message>(*this);
-			ar & version;
+			// IMPORTANT! Don't *EVER* try to serialize the 'const unsigned int version' in the method definition!
+			ar & this->version;
 		}
 		uint32 version;
 };
@@ -187,4 +190,5 @@ class message_disconnect : public message {
 			ar & boost::serialization::base_object<message>(*this);
 		}
 };
+
 #endif //PACKET_H
