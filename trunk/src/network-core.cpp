@@ -63,10 +63,15 @@ uint32 tcp_socket::receive( const uint8* buf, const uint32 len )
 	return ::recv(sock, (char*)buf, len, 0);
 }
 
-void tcp_socket::operator<<(const message& msg) {
+// void tcp_socket::operator<<(const message*& msg) {
+// void tcp_socket::operator<<(const message* const & msg) {
+void tcp_socket::operator<<(const message* const & msg) {
 	stringstream ss;
 	boost::archive::text_oarchive oa(ss);
-	oa << msg;
+// 	const message_connect msg2;
+// 	const message* const msg1=&msg2;
+	oa << *msg;
+	cout << "Sending on network:\n\""<<ss.str()<<"\"\n";
 	long l = htonl((long)ss.str().size() + 1);
 	send((const uint8*)(&l), sizeof(long));
 	send((const uint8*)ss.str().c_str(), ss.str().size() +1);
@@ -76,12 +81,12 @@ void tcp_socket::operator>>(      message*& msg) {
 	long l;
 	receive((uint8*)&l, sizeof(long));
 	l = ntohl(l);
-	uint8* a;
-	receive(a,l);
-	stringstream ss((char*)a);
+	boost::shared_ptr<uint8> a = boost::shared_ptr<uint8>(new uint8[l]);
+	receive(a.get(),l);
+	stringstream ss((char*)a.get());
+	cout << "Received on network:\n\""<<ss.str()<<"\"\n";
 	boost::archive::text_iarchive ia(ss);
-	message* m;
-	ia >> m;
+	ia >> msg;
 }
 
 void tcp_socket::disconnect()
