@@ -46,20 +46,6 @@ int main_impl(int argc, char* argv[])
 		return 1;
 	}
 
-	const message_connect msg;
-	const message* const msg1=&msg;
-	message* msg2;
-	stringstream ss1;
-	boost::archive::text_oarchive oa(ss1);
-	oa << msg1;
-
-	stringstream ss2(ss1.str());
-	boost::archive::text_iarchive ia(ss2);
-	ia >> msg2;
-	cout << "ss1: \"" << ss1.str() << "\"\nss2: \""<< ss2.str() << "\"\n";
-//
-// 	exit(0);
-
 	dcerr("Starting network_handler");
 	network_handler nh(listen_port, server_name);
 

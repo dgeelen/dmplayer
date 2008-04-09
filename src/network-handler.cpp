@@ -91,27 +91,13 @@ void network_handler::server_tcp_connection_listener() { // Listens for incoming
 }
 
 void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiates a connection to the server (Client)
-	dcerr("");
 	tcp_socket sock(dest.first, dest.second);
-// 	const message_connect msg;
-// 	const message* const msg1=&msg;
 	message_connect m;
+	message* mptr = &m;
 
+	sock << mptr;
 
-	const message* const msg1=&m;
-	stringstream ss;
-	boost::archive::text_oarchive oa(ss);
-	oa << msg1;
-	cout << "sending \""<<ss.str()<<"\"\n";
-
-
-	const message* const mm = &m;
-	stringstream ss2;
-	boost::archive::text_oarchive oa2(ss2);
-	oa << mm;
-	cout << "also sending \""<<ss2.str()<<"\"\n";
-
-	sock << mm;
+	// TODO: rest of function, protocol implementation
 	while(!are_we_done && client_tcp_connection_running) {
 		sleep(100000);
 	}
@@ -122,7 +108,7 @@ void network_handler::server_tcp_connection_handler(tcp_socket* sock, bool* acti
 	while(!are_we_done && active) {
 		message* m;
 		(*sock) >> m;
-		sleep(100000);
+		usleep(100000);
 	}
 }
 
