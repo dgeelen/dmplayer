@@ -70,7 +70,7 @@ void tcp_socket::operator<<(const message* const & msg) {
 	boost::archive::text_oarchive oa(ss);
 // 	const message_connect msg2;
 // 	const message* const msg1=&msg2;
-	oa << *msg;
+	oa << msg;
 	cout << "Sending on network:\n\""<<ss.str()<<"\"\n";
 	long l = htonl((long)ss.str().size() + 1);
 	send((const uint8*)(&l), sizeof(long));
