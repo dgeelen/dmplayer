@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1029</width>
-    <height>733</height>
+    <width>1044</width>
+    <height>721</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -19,229 +19,219 @@
    <set>QMainWindow::AllowNestedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks|QMainWindow::VerticalTabs</set>
   </property>
   <widget class="QWidget" name="centralwidget" >
-   <layout class="QGridLayout" >
-    <item row="0" column="0" >
-     <widget class="QTabWidget" name="tabWidget" >
-      <property name="currentIndex" >
-       <number>1</number>
-      </property>
-      <property name="elideMode" >
-       <enum>Qt::ElideLeft</enum>
-      </property>
-      <widget class="QWidget" name="tab" >
-       <property name="sizePolicy" >
-        <sizepolicy vsizetype="Preferred" hsizetype="MinimumExpanding" >
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <attribute name="title" >
-        <string>Server info</string>
-       </attribute>
+   <widget class="QTabWidget" name="tabWidget" >
+    <property name="geometry" >
+     <rect>
+      <x>9</x>
+      <y>9</y>
+      <width>648</width>
+      <height>221</height>
+     </rect>
+    </property>
+    <property name="currentIndex" >
+     <number>1</number>
+    </property>
+    <property name="elideMode" >
+     <enum>Qt::ElideLeft</enum>
+    </property>
+    <widget class="QWidget" name="tab" >
+     <property name="sizePolicy" >
+      <sizepolicy vsizetype="Preferred" hsizetype="MinimumExpanding" >
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <attribute name="title" >
+      <string>Server info</string>
+     </attribute>
+     <layout class="QGridLayout" >
+      <item row="0" column="0" >
        <layout class="QGridLayout" >
         <item row="0" column="0" >
-         <layout class="QGridLayout" >
-          <item row="0" column="0" >
-           <widget class="QLabel" name="lblsvname" >
-            <property name="text" >
-             <string>Server Name</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1" >
-           <widget class="QLabel" name="lblServerName" >
-            <property name="text" >
-             <string/>
-            </property>
-            <property name="indent" >
-             <number>-1</number>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0" >
-           <widget class="QLabel" name="lblping" >
-            <property name="text" >
-             <string>Ping</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1" >
-           <widget class="QLabel" name="lblPing" >
-            <property name="text" >
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0" >
-           <widget class="QLabel" name="lblAddress" >
-            <property name="text" >
-             <string>Server Address</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1" >
-           <widget class="QLabel" name="lblServerAddress" >
-            <property name="text" >
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0" >
-           <spacer>
-            <property name="orientation" >
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" >
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="0" column="2" >
-           <spacer>
-            <property name="orientation" >
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" >
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
+         <widget class="QLabel" name="lblsvname" >
+          <property name="text" >
+           <string>Server Name</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1" >
+         <widget class="QLabel" name="lblServerName" >
+          <property name="text" >
+           <string/>
+          </property>
+          <property name="indent" >
+           <number>-1</number>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0" >
+         <widget class="QLabel" name="lblping" >
+          <property name="text" >
+           <string>Ping</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1" >
+         <widget class="QLabel" name="lblPing" >
+          <property name="text" >
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0" >
+         <widget class="QLabel" name="lblAddress" >
+          <property name="text" >
+           <string>Server Address</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1" >
+         <widget class="QLabel" name="lblServerAddress" >
+          <property name="text" >
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0" >
+         <spacer>
+          <property name="orientation" >
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" >
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="0" column="2" >
+         <spacer>
+          <property name="orientation" >
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" >
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
-      </widget>
-      <widget class="QWidget" name="tab_2" >
-       <attribute name="title" >
-        <string>Audio</string>
-       </attribute>
-       <widget class="QWidget" name="horizontalLayout" >
-        <property name="geometry" >
-         <rect>
-          <x>40</x>
-          <y>110</y>
-          <width>522</width>
-          <height>71</height>
-         </rect>
-        </property>
-        <layout class="QHBoxLayout" >
-         <item>
-          <widget class="QPushButton" name="PreviousButton" >
-           <property name="text" >
-            <string>Previous</string>
-           </property>
-           <property name="icon" >
-            <iconset resource="icons.qrc" >:/new/prefix1/Images/Prev.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="PlayButton" >
-           <property name="text" >
-            <string>Play</string>
-           </property>
-           <property name="icon" >
-            <iconset resource="icons.qrc" >:/new/prefix1/Images/Play.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="PauseButton" >
-           <property name="text" >
-            <string>Pause</string>
-           </property>
-           <property name="icon" >
-            <iconset resource="icons.qrc" >:/new/prefix1/Images/Pause.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="StopButton" >
-           <property name="text" >
-            <string>Stop</string>
-           </property>
-           <property name="icon" >
-            <iconset resource="icons.qrc" >:/new/prefix1/Images/Stop.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="NextButton" >
-           <property name="text" >
-            <string>Next</string>
-           </property>
-           <property name="icon" >
-            <iconset resource="icons.qrc" >:/new/prefix1/Images/Next.png</iconset>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-       <widget class="QWidget" name="horizontalLayout_2" >
-        <property name="geometry" >
-         <rect>
-          <x>39</x>
-          <y>10</y>
-          <width>521</width>
-          <height>80</height>
-         </rect>
-        </property>
-        <layout class="QHBoxLayout" >
-         <item>
-          <widget class="QProgressBar" name="trackProgress" >
-           <property name="value" >
-            <number>24</number>
-           </property>
-           <property name="alignment" >
-            <set>Qt::AlignLeading</set>
-           </property>
-           <property name="textVisible" >
-            <bool>false</bool>
-           </property>
-           <property name="format" >
-            <string>%p%</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label" >
-           <property name="text" >
-            <string>bahahahahahahahahaha</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </widget>
-     </widget>
-    </item>
-    <item row="1" column="0" >
-     <widget class="QDockWidget" name="dockWidget" >
-      <property name="floating" >
-       <bool>true</bool>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="tab_2" >
+     <attribute name="title" >
+      <string>Audio</string>
+     </attribute>
+     <widget class="QWidget" name="horizontalLayout" >
+      <property name="geometry" >
+       <rect>
+        <x>40</x>
+        <y>110</y>
+        <width>522</width>
+        <height>71</height>
+       </rect>
       </property>
-      <widget class="QWidget" name="dockWidgetContents_3" >
-       <layout class="QHBoxLayout" >
-        <item>
-         <widget class="QTextEdit" name="textEdit" />
-        </item>
-       </layout>
-      </widget>
+      <layout class="QHBoxLayout" >
+       <item>
+        <widget class="QPushButton" name="PreviousButton" >
+         <property name="text" >
+          <string>Previous</string>
+         </property>
+         <property name="icon" >
+          <iconset resource="icons.qrc" >:/new/prefix1/Images/Prev.png</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="PlayButton" >
+         <property name="text" >
+          <string>Play</string>
+         </property>
+         <property name="icon" >
+          <iconset resource="icons.qrc" >:/new/prefix1/Images/Play.png</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="PauseButton" >
+         <property name="text" >
+          <string>Pause</string>
+         </property>
+         <property name="icon" >
+          <iconset resource="icons.qrc" >:/new/prefix1/Images/Pause.png</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="StopButton" >
+         <property name="text" >
+          <string>Stop</string>
+         </property>
+         <property name="icon" >
+          <iconset resource="icons.qrc" >:/new/prefix1/Images/Stop.png</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="NextButton" >
+         <property name="text" >
+          <string>Next</string>
+         </property>
+         <property name="icon" >
+          <iconset resource="icons.qrc" >:/new/prefix1/Images/Next.png</iconset>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
-    </item>
-   </layout>
+     <widget class="QWidget" name="horizontalLayout_2" >
+      <property name="geometry" >
+       <rect>
+        <x>39</x>
+        <y>10</y>
+        <width>521</width>
+        <height>80</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" >
+       <item>
+        <widget class="QProgressBar" name="trackProgress" >
+         <property name="value" >
+          <number>24</number>
+         </property>
+         <property name="alignment" >
+          <set>Qt::AlignLeading</set>
+         </property>
+         <property name="textVisible" >
+          <bool>false</bool>
+         </property>
+         <property name="format" >
+          <string>%p%</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label" >
+         <property name="text" >
+          <string>mwuahahahahahahahahaha</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar" >
    <property name="geometry" >
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1029</width>
+     <width>1044</width>
      <height>19</height>
     </rect>
    </property>
@@ -281,18 +271,6 @@
    </attribute>
    <widget class="QWidget" name="dockWidgetContents" >
     <layout class="QHBoxLayout" >
-     <property name="leftMargin" >
-      <number>9</number>
-     </property>
-     <property name="topMargin" >
-      <number>9</number>
-     </property>
-     <property name="rightMargin" >
-      <number>9</number>
-     </property>
-     <property name="bottomMargin" >
-      <number>9</number>
-     </property>
      <item>
       <widget class="QTreeWidget" name="serverlist" >
        <column>
@@ -411,6 +389,21 @@
      </item>
      <item row="1" column="1" >
       <widget class="QListWidget" name="listRecentFiles" />
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget" >
+   <property name="floating" >
+    <bool>false</bool>
+   </property>
+   <attribute name="dockWidgetArea" >
+    <number>4</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_3" >
+    <layout class="QHBoxLayout" >
+     <item>
+      <widget class="QTextEdit" name="textEdit" />
      </item>
     </layout>
    </widget>
