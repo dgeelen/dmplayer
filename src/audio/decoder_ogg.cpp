@@ -225,10 +225,12 @@ void OGGDecoder::read_bos_pages(bool from_start_of_stream) {
 		if(page) {
 			long page_serial = ogg_page_serialno(page);
 			if(ogg_page_bos(page)) { // This page belongs to a new stream
+				assert(streams.find(page_serial) == streams.end());
 				streams[page_serial] = stream_decoding_state();
 				streams[page_serial].exhausted = false;
 				streams[page_serial].stream_state = new ogg_stream_state();
-				if(ogg_stream_init(streams[page_serial].stream_state, page_serial)) throw Exception("libogg: could not initialize stream");
+				if(ogg_stream_init(streams[page_serial].stream_state, page_serial))
+					throw Exception("libogg: could not initialize stream");
 				all_bos_pages_handled = false;
 			}
 			if(ogg_stream_pagein(streams[page_serial].stream_state, page)) throw Exception("Could not submit page to stream");
