@@ -10,11 +10,15 @@
 #  BOOST_LIBRARY_SUFFIX, suffix to try for finding the boost libraries (unix only)
 
 find_package(SearchUtils)
+find_package(ExtraLibDir)
+
+FIND_LIB_IN_EXTRALIBS(BOOST *boost* boost lib)
 
 GLOB_PATHS(BOOST_SEARCH_PATHS
 	GLOBS "boost_[0-9_]*"
 	BASES
-		/usr/include /usr/local/include
+		/usr/include
+		/usr/local/include
 		"C:/Program Files/boost"
 		"C:/Program Files"
 		"C:/Boost"
@@ -24,7 +28,7 @@ GLOB_PATHS(BOOST_SEARCH_PATHS
 
 FIND_PATH(BOOST_INCLUDE_DIR
 	NAMES boost/config.hpp
-	PATHS ${BOOST_SEARCH_PATHS}
+	PATHS ${BOOST_SEARCH_PATHS} "${BOOST_EXTRALIB_INCLUDE_PATHS}" "${BOOST_EXTRALIB_INCLUDE_PATHS}/.." 
 )
 
 IF(WIN32 AND NOT MINGW)
@@ -44,6 +48,14 @@ ELSE(WIN32 AND NOT MINGW)
 		CACHE PATH
 		"path to boost library files"
 	)
+	
+	SET(BOOST_LIBRARY_SEARCH_PATHS
+		"${BOOST_LIBRARY_DIR}"
+		"${BOOST_EXTRALIB_LIBRARY_PATHS}"
+		"${BOOST_INCLUDE_DIR}/lib"
+		"${BOOST_INCLUDE_DIR}/../lib"
+		/usr/lib /usr/local/lib
+	)
 
 	IF (NOT BOOST_LIBRARY_SUFFIX)
 		MESSAGE(STATUS "No BOOST_LIBRARY_SUFFIX")
@@ -58,42 +70,27 @@ ELSE(WIN32 AND NOT MINGW)
 
 	FIND_LIBRARY(BOOST_THREAD_LIBRARY
 		NAMES boost_thread-mt boost_thread${BOOST_LIBRARY_SUFFIX}
-		PATHS "${BOOST_LIBRARY_DIR}"
-		      "${BOOST_INCLUDE_DIR}/lib"
-		      "${BOOST_INCLUDE_DIR}/../lib"
-		      /usr/lib /usr/local/lib
+		PATHS ${BOOST_LIBRARY_SEARCH_PATHS}
 	)
 
 	FIND_LIBRARY(BOOST_PROGRAM_OPTIONS_LIBRARY
 		NAMES boost_program_options-mt boost_program_options${BOOST_LIBRARY_SUFFIX}
-		PATHS "${BOOST_LIBRARY_DIR}"
-		      "${BOOST_INCLUDE_DIR}/lib"
-		      "${BOOST_INCLUDE_DIR}/../lib"
-		      /usr/lib /usr/local/lib
+		PATHS ${BOOST_LIBRARY_SEARCH_PATHS}
 	)
 
 	FIND_LIBRARY(BOOST_FILESYSTEM_LIBRARY
 		NAMES boost_filesystem-mt boost_filesystem${BOOST_LIBRARY_SUFFIX}
-		PATHS "${BOOST_LIBRARY_DIR}"
-		      "${BOOST_INCLUDE_DIR}/lib"
-		      "${BOOST_INCLUDE_DIR}/../lib"
-		      /usr/lib /usr/local/lib
+		PATHS ${BOOST_LIBRARY_SEARCH_PATHS}
 	)
 
 	FIND_LIBRARY(BOOST_SIGNALS_LIBRARY
 		NAMES boost_signals-mt boost_signals${BOOST_LIBRARY_SUFFIX}
-		PATHS "${BOOST_LIBRARY_DIR}"
-		      "${BOOST_INCLUDE_DIR}/lib"
-		      "${BOOST_INCLUDE_DIR}/../lib"
-		      /usr/lib /usr/local/lib
+		PATHS ${BOOST_LIBRARY_SEARCH_PATHS}
 	)
 
 	FIND_LIBRARY(BOOST_SERIALIZATION_LIBRARY
 		NAMES boost_serialization-mt boost_serialization${BOOST_LIBRARY_SUFFIX}
-		PATHS "${BOOST_LIBRARY_DIR}"
-		      "${BOOST_INCLUDE_DIR}/lib"
-		      "${BOOST_INCLUDE_DIR}/../lib"
-		      /usr/lib /usr/local/lib
+		PATHS ${BOOST_LIBRARY_SEARCH_PATHS}
 	)
 ENDIF(WIN32 AND NOT MINGW)
 
