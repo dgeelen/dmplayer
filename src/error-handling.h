@@ -60,6 +60,10 @@ class ErrorHandler {
 				const char* msg = e.what();
 				PRINT_MSG;
 				throw;
+			} catch (const std::exception& e) { // catch by reference to ensure virtual calls work as needed
+				const char* msg = e.what();
+				PRINT_MSG;
+				throw;
 			} catch (const char* msg) {
 				PRINT_MSG;
 				throw;
