@@ -99,7 +99,7 @@ void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiate
 
 	// TODO: rest of function, protocol implementation
 	while(!are_we_done && client_tcp_connection_running) {
-		sleep(100000);
+		usleep(100000);
 	}
 }
 
