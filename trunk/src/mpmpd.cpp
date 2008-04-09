@@ -3,6 +3,7 @@
 #include "network-handler.h"
 #include "error-handling.h"
 #include <boost/program_options.hpp>
+#include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 #include "audio/audio_controller.h"
 #include "playlist_management.h"
@@ -73,8 +74,8 @@ int main_impl(int argc, char* argv[])
 	m["FILENAME"] = findtext;
 	Track t(0, "", m);
 	vector<Track> s = tdb.search(t);
-	for(vector<Track>::iterator i = s.begin(); i!=s.end(); ++i) {
-		dcerr( i->filename );
+	BOOST_FOREACH(Track& tr, s) {
+		dcerr( tr.filename );
 	}
 
 	cout << "Press any key to quit\n";
