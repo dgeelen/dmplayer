@@ -56,6 +56,7 @@ Exception::~Exception() throw ()
 	msglen = -1;
 }
 
+#ifdef DEBUG
 /*
  * error logging stuff
  */
@@ -94,3 +95,4 @@ namespace {
 
 	int x = (logsignal.connect(&logfunc1), 1);
 }
+#endif

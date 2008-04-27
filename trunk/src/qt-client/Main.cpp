@@ -35,9 +35,11 @@ int main_impl(int argc, char **argv )
 		)
 	);
 
+#ifdef DEBUG
 	lognamespace::logsignal.connect(
 		QTBOOSTER(&mainwindow, MainWindow::DebugLogger)
 	);
+#endif
 
 	return app.exec();
 }
