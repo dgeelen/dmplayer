@@ -5,17 +5,24 @@
 #define FRAMES_PER_BUFFER (64)  /* number of frames(=samples) per buffer */
 #define NUM_BUFFERS        (0)  /* number of buffers, if zero then use default minimum */
 
-#define OUTPUT_DEVICE Pa_GetDefaultOutputDeviceID()
-
+#if PA_VERSION == 18
 static int pa_callback( void *inputBuffer, void *outputBuffer,
-                        unsigned long framesPerBuffer,
+                        unsigned long frameCount,
                         PaTimestamp outTime, void *userData )
+#endif
+#if PA_VERSION == 19
+static int pa_callback(const void *inputBuffer, void *outputBuffer,
+                       unsigned long frameCount,
+                       const PaStreamCallbackTimeInfo* timeInfo,
+                       PaStreamCallbackFlags statusFlags,
+                       void *userData )
+#endif
 {
 	AudioController* ac = (AudioController*)userData;
 	char *out = (char*)outputBuffer;
 
 	// 2 byte samples + 2 channels -> 2*2=4 -> 4 bytes/frame
-	uint32 act = ac->getData((uint8*)out, framesPerBuffer*4);
+	uint32 act = ac->getData((uint8*)out, frameCount*4);
 	return 0;
 }
 
@@ -31,13 +38,14 @@ PortAudioBackend::PortAudioBackend(AudioController* dec)
 	af.SignedSample = true;
 	af.LittleEndian = true;
 
+#if PA_VERSION == 18
 	err = Pa_OpenStream(
 		&stream,
 		paNoDevice,        /* no input device */
 		0,                 /* no input */
 		paInt16,           /* 16 bit signed input */
 		NULL,
-		OUTPUT_DEVICE,
+		Pa_GetDefaultOutputDeviceID(),
 		2,                 /* stereo output */
 		paInt16,           /* 16 bit signed output */
 		NULL,
@@ -47,6 +55,24 @@ PortAudioBackend::PortAudioBackend(AudioController* dec)
 		paClipOff,         /* we won't output out of range samples so don't bother clipping them */
 		pa_callback,
 		dec );
+#endif
+#if PA_VERSION == 19
+	PaStreamParameters outparams;
+	outparams.channelCount = 2;
+	outparams.device = Pa_GetDefaultOutputDevice();
+	outparams.sampleFormat = paInt16;
+	outparams.hostApiSpecificStreamInfo = NULL;
+	outparams.suggestedLatency = 0.2;
+	err = Pa_OpenStream(
+		&stream,
+		NULL,
+		&outparams,
+		SAMPLE_RATE,
+		FRAMES_PER_BUFFER,
+		0,
+		pa_callback,
+		dec );
+#endif
 
 	if (err != paNoError) throw SoundException("failed to open portaudio stream");
 };
