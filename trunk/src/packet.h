@@ -88,56 +88,6 @@ class packet {
  *      TCP Packets       *
  ** ** ** ** ** ** ** ** **/
 
-/* Typical usage scenario:*
- *  .--------.       .----------.      .--------.
- *  | USER_A |       | 'SERVER' |      | USER_B |
- *  '--------'       '----------'      '--------'
- *      |                 |                |
- *      |     Connect     |                |
- *      |---------------->|                |       # User A wants to connect to the server (request to connect)
- *      |     Disconnect  |                |
- *      |<----------------|                |       # A's request is denied   (server closes TCP connection)
- *      |     Connect     |                |
- *      |---------------->|                |       # A has altered his settings and tries again
- *      |     Connect     |                |
- *      |<----------------|                |       # Now A's request is accepted (connect message from server->client)
- *      | PlaylistUpdate  |                |
- *      |<----------------|                |       # The server informs A of the current state of the playlist
- *      |  QueryTrackDB   |                |
- *      |---------------->|                |       # Next user A wants to search (for a song, by title, artist, etc)
- *      |  QueryTrackDB   |  QueryTrackDB  |
- *      |<----------------|--------------->|       # The server forwards A's request to all clients (1)
- *      |   QTDB_Result   |                |
- *      |---------------->|  QTDB_Result   |       # A searches his private TrackDB and returns the results (2)
- *      |   QTDB_Result   |<---------------|       # So does B
- *      |<----------------|                |       # The server aggregates and returns the results to A (3)(4)
- *      |      Vote       |                |
- *      |---------------->|                |       # A find a nice song in the results and adds it to the playlist
- *      | PlaylistUpdate  | PlaylistUpdate |
- *      |<----------------|--------------->|       # The playlist is updated and all clients are notified of the new situation
- *      |   RequestFile   |                |
- *      |-----------------+--------------->|       # When it's time to play the song, A requests the file from B (4)
- *      |                 | ReqFileResult  |
- *      |<----------------+----------------|       # B transfers the file to A
- *      |                 |                |
- *      |                 |                |
- *      |                 |                |
- *      |                 |                |
- *      |                 |                |
- *      |                 |                |
- *      |                 |                |
- *      |                 |                |
- *      |                 |                |
- *      |                 |                |
- *      |                 |                |
- *
- *  (1) Possibly A is omitted and performs the search locally
- *  (2) If (1), then A does not return the results to the server, saving a network round trip
- *  (3) After receiving the results from all other clients A must add his own results from (1)
- *  (4) The result of the QueryTrackDB is an std::vector<TrackID>, so that A knows where each file can be downloaded
- */
-
-
 #define NETWERK_PROTOCOL_VERSION 0
 
 class message {
