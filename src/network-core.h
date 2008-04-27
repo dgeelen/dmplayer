@@ -64,6 +64,7 @@
 			void operator>>(      message*& msg);
 			uint32 receive( const uint8* buf, const uint32 len );
 			void disconnect();
+			SOCKET getSocketHandle() { return sock; };
 		private:
 			SOCKET sock;
 			ipv4_socket_addr peer;
@@ -75,6 +76,7 @@
 			tcp_listen_socket(const ipv4_addr addr, const uint16 portnumber);
 			tcp_listen_socket(const ipv6_addr addr, const uint16 portnumber);
 			tcp_socket* accept();
+			SOCKET getSocketHandle() { return sock; };
 		private:
 			SOCKET sock;
 	};
@@ -95,9 +97,47 @@
 			uint32 receive( ipv4_addr* from_addr, uint16* from_port, packet& p );
 
 			void close();
+			SOCKET getSocketHandle() { return sock; };
 		private:
 			SOCKET sock;
 	};
+
+	enum {
+		SELECT_READ  = 1 << 0,
+		SELECT_WRITE = 1 << 1,
+		SELECT_ERROR = 1 << 2,
+	};
+
+	template <typename T>
+	uint32 doselect(T& sock, uint32 timeout = 1000) {
+		SOCKET handle = sock.getSocketHandle();
+		fd_set rset;
+		fd_set wset;
+		fd_set eset;
+		FD_ZERO(&rset);
+		FD_ZERO(&wset);
+		FD_ZERO(&eset);
+		FD_SET(handle, &rset);
+		FD_SET(handle, &wset);
+		FD_SET(handle, &eset);
+
+		timeval tv;
+		tv.tv_sec = timeout / 1000;
+		tv.tv_usec = 1000 * (timeout % 1000);
+
+		uint32 retval = 0;
+		int sel = select(0, &rset, &wset, &eset, &tv);
+
+		if (sel > 0) {
+			if (FD_ISSET(handle, &rset)) retval |= SELECT_READ;
+			if (FD_ISSET(handle, &wset)) retval |= SELECT_WRITE;
+			if (FD_ISSET(handle, &eset)) retval |= SELECT_ERROR;
+		} else if (sel != 0) {
+			retval |= SELECT_ERROR;
+		}
+
+		return retval;
+	}
 
 	std::ostream& operator<<(std::ostream& os, const ipv4_addr& addr);
 	std::ostream& operator<<(std::ostream& os, const ipv4_socket_addr& saddr);
