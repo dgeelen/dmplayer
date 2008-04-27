@@ -15,6 +15,7 @@
 #include "packet.h"
 #include "error-handling.h"
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 
 using namespace std;
 
@@ -64,12 +65,13 @@ uint16 network_handler::get_port_number() {
 
 
 void network_handler::server_tcp_connection_listener() { // Listens for incoming connections (Server)
+	typedef pair<tcp_socket*, pair<boost::thread*, bool*> > pairtype;
 	dcerr("");
 	ipv4_addr addr;
 	addr.full = INADDR_ANY;
 	tcp_listen_socket lsock(addr, tcp_port_number);
 
-	vector<pair<tcp_socket*, pair<boost::thread*, bool*> > > connections;
+	vector<pairtype> connections;
 	while(!are_we_done) {
 		tcp_socket* sock = lsock.accept();
 		dcerr("Accepted a client connection from " << sock->get_ipv4_socket_addr());
@@ -82,10 +84,11 @@ void network_handler::server_tcp_connection_listener() { // Listens for incoming
 		                                   sock,
 		                                   b)));
 		pair<boost::thread*, bool*> cc(t, b);
-		pair<tcp_socket*, pair<boost::thread*, bool*> > c(sock, cc);
+		pairtype c(sock, cc);
 		connections.push_back(c);
 	}
-	for(vector<pair<tcp_socket*, pair<boost::thread*, bool*> > >::iterator i = connections.begin(); i!=connections.end(); ++i) {
+	BOOST_FOREACH(pairtype tpair, connections) {
+	//for(vector<pair<tcp_socket*, pair<boost::thread*, bool*> > >::iterator i = connections.begin(); i!=connections.end(); ++i) {
 		//TODO: disconnect
 	}
 }
@@ -99,16 +102,57 @@ void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiate
 
 	// TODO: rest of function, protocol implementation
 	while(!are_we_done && client_tcp_connection_running) {
-		usleep(100000);
+		uint32 sockstat = doselect(sock);
+		if (sockstat & SELECT_READ) {
+			message* m;
+			sock >> m;
+			switch (m->get_type()) {
+				case message::MSG_CONNECT: {
+					// TODO: ?maybe?
+				}; break;
+				case message::MSG_DISCONNECT: {
+					client_tcp_connection_running = false;
+
+				}; break;
+//				case message::MSG_CONNECT: {
+//					// TODO: ?maybe?
+//				}; break;
+
+			}
+		}
+		if (sockstat & SELECT_ERROR) {
+			// TOTO: error handling
+//			*active = false;
+		}
 	}
 }
 
 void network_handler::server_tcp_connection_handler(tcp_socket* sock, bool* active) { // One thread per client (Server)
-	dcerr("");
-	while(!are_we_done && active) {
-		message* m;
-		(*sock) >> m;
-		usleep(100000);
+	while(!are_we_done && *active) {
+		uint32 sockstat = doselect(*sock);
+		if (sockstat & SELECT_READ) {
+			message* m;
+			(*sock) >> m;
+			switch (m->get_type()) {
+				case message::MSG_CONNECT: {
+					message_connect* msg = static_cast<message_connect*>(m);
+					if (msg->get_version() == NETWERK_PROTOCOL_VERSION) {
+						message_accept smsg;
+						message* smptr = & smsg;
+						(*sock) << smptr;
+					} else {
+						message_disconnect smsg;
+						message* smptr = & smsg;
+						(*sock) << smptr;
+						*active = false;
+					}
+				}; break;
+			}
+		}
+		if (sockstat & SELECT_ERROR) {
+			// TOTO: error handling
+			*active = false;
+		}
 	}
 }
 

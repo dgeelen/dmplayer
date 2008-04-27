@@ -88,13 +88,15 @@ class packet {
  *      TCP Packets       *
  ** ** ** ** ** ** ** ** **/
 
-#define NETWERK_PROTOCOL_VERSION 0
+#define NETWERK_PROTOCOL_VERSION 1
 
 class message {
 	public:
 		uint32 get_type() const { return type; };
+		virtual message* clone() { return new message(type); assert(false); };
 		enum message_types {
 			MSG_CONNECT=0,
+			MSG_ACCEPT,
 			MSG_DISCONNECT,
 			MSG_PLAYLIST_UPDATE,
 			MSG_QUERY_TRACKDB,
@@ -119,6 +121,7 @@ class message {
 class message_connect : public message {
 	public:
 		message_connect() : message(MSG_CONNECT), version(NETWERK_PROTOCOL_VERSION) {};
+		uint32 get_version() { return version; };
 	private:
 		friend class boost::serialization::access;
 		template<class Archive>
@@ -133,6 +136,17 @@ class message_connect : public message {
 class message_disconnect : public message {
 	public:
 		message_disconnect() : message(MSG_DISCONNECT) {};
+	private:
+		friend class boost::serialization::access;
+		template<class Archive>
+		void serialize(Archive & ar, const unsigned int version) {
+			ar & boost::serialization::base_object<message>(*this);
+		}
+};
+
+class message_accept : public message {
+	public:
+		message_accept() : message(MSG_ACCEPT) {};
 	private:
 		friend class boost::serialization::access;
 		template<class Archive>
