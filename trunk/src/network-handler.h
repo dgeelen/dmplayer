@@ -31,6 +31,7 @@
 			uint64      ping_last_seen;
 			uint64      ping_micro_secs;
 			ipv4_socket_addr sock_addr;
+			bool        connected; // todo
 
 			server_info() : ping_last_seen(0), ping_micro_secs(0) {};
 	};

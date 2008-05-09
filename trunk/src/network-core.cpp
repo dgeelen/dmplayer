@@ -15,6 +15,7 @@
 #include <sstream>
 
 #include <boost/serialization/shared_ptr.hpp>
+#include <boost/shared_array.hpp>
 
 using namespace std;
 
@@ -82,7 +83,7 @@ void tcp_socket::operator>>(      messageref& msg) {
 		if (rnum != sizeof(long))
 			throw NetworkException("receive failed");
 		l = ntohl(l);
-		boost::shared_ptr<uint8> a = boost::shared_ptr<uint8>(new uint8[l]);
+		boost::shared_array<uint8> a = boost::shared_array<uint8>(new uint8[l]);
 		rnum = receive(a.get(),l);
 		if (rnum != l)
 			throw NetworkException("receive failed");
