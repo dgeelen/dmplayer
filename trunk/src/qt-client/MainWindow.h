@@ -31,6 +31,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		void on_RefreshButton_clicked();
 		void on_DisconnectButton_clicked();
 		void updateProgressBar();
+		void handleReceivedMessage(const messageref m);
 
 		void DebugLogger(std::string msg, std::string file, std::string func, int);
 

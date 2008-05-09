@@ -160,6 +160,7 @@ void MainWindow::on_NextButton_clicked()
 void MainWindow::on_ConnectButton_clicked()
 {
 	int index = serverlist->indexOfTopLevelItem(serverlist->currentItem());
+
 	if (index > -1)
 	{
 		lblServerName->setText(currentServers[index].name.c_str());
@@ -190,4 +191,14 @@ void MainWindow::on_RefreshButton_clicked()
 void MainWindow::DebugLogger(std::string msg, std::string file, std::string func, int line)
 {
 	textEdit->append(QString(msg.c_str()));
+}
+
+void MainWindow::handleReceivedMessage(const messageref m)
+{
+	switch (m->get_type()) {
+		case message::MSG_ACCEPT: {
+			labelConnected->setText("Yes");
+		}
+	}
+	m.get();
 }
