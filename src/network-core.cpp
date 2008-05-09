@@ -80,15 +80,24 @@ void tcp_socket::operator<<(const messagecref msg) {
 }
 
 void tcp_socket::operator>>(      messageref& msg) {
-	long l;
-	receive((uint8*)&l, sizeof(long));
-	l = ntohl(l);
-	boost::shared_ptr<uint8> a = boost::shared_ptr<uint8>(new uint8[l]);
-	receive(a.get(),l);
-	stringstream ss((char*)a.get());
-	cout << "Received on network:\n\""<<ss.str()<<"\"\n";
-	boost::archive::text_iarchive ia(ss);
-	ia >> msg;
+	try {
+		long l;
+		int rnum;
+		rnum = receive((uint8*)&l, sizeof(long));
+		if (rnum != sizeof(long))
+			throw NetworkException("receive failed");
+		l = ntohl(l);
+		boost::shared_ptr<uint8> a = boost::shared_ptr<uint8>(new uint8[l]);
+		rnum = receive(a.get(),l);
+		if (rnum != l)
+			throw NetworkException("receive failed");
+		stringstream ss((char*)a.get());
+		cout << "Received on network:\n\""<<ss.str()<<"\"\n";
+		boost::archive::text_iarchive ia(ss);
+		ia >> msg;
+	} catch (NetworkException e) {
+		msg = messageref(new message_disconnect);
+	}
 }
 
 void tcp_socket::disconnect()
