@@ -5,11 +5,13 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/export.hpp>
+#include <boost/serialization/vector.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits.hpp>
 #include <string>
 #include <map>
 #include "types.h"
+#include "playlist_management.h"
 
 /** ** ** ** ** ** ** ** **
  *       UDP Packet       *
@@ -91,9 +93,14 @@ class packet {
 #define NETWERK_PROTOCOL_VERSION 1
 
 class message {
+	// is not used, but marks inheritance as virtual
+	// this affect serialisation somehow, removing it breaks it all
+	// why? how? what? where?
+	private:
+		virtual message* clone() { return new message(type); assert(false); };
 	public:
 		uint32 get_type() const { return type; };
-		virtual message* clone() { return new message(type); assert(false); };
+
 		enum message_types {
 			MSG_CONNECT=0,
 			MSG_ACCEPT,
@@ -159,5 +166,27 @@ class message_accept : public message {
 		}
 };
 typedef boost::shared_ptr<message_accept> message_accept_ref;
+
+class message_playlist_update : public message {
+	public:
+		message_playlist_update(Playlist playlist) : message(MSG_PLAYLIST_UPDATE) {
+			do_clear = true;
+			do_pushback = playlist.entries;
+		};
+	private:
+		bool do_clear;
+		std::vector<Track> do_pushback;
+
+		friend class boost::serialization::access;
+		template<class Archive>
+		void serialize(Archive & ar, const unsigned int version) {
+			ar & boost::serialization::base_object<message>(*this);
+
+			ar & do_clear;
+			ar & do_pushback;
+		}
+		message_playlist_update() : message(MSG_PLAYLIST_UPDATE) {};
+};
+typedef boost::shared_ptr<message_playlist_update> message_playlist_update_ref;
 
 #endif //PACKET_H

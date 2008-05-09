@@ -198,7 +198,11 @@ void MainWindow::handleReceivedMessage(const messageref m)
 	switch (m->get_type()) {
 		case message::MSG_ACCEPT: {
 			labelConnected->setText("Yes");
-		}
+		}; break;
+		case message::MSG_PLAYLIST_UPDATE: {
+			message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
+			labelConnected->setText("Yes");
+		}; break;
 	}
 	m.get();
 }

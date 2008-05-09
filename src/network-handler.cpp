@@ -117,6 +117,9 @@ void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiate
 					dcerr("Accepted a client connection from " << sock.get_ipv4_socket_addr());
 					message_receive_signal(m);
 				}; break;
+				case message::MSG_PLAYLIST_UPDATE: {
+					message_receive_signal(m);
+				}; break;
 				//case message::
 
 			}
@@ -135,6 +138,7 @@ void network_handler::server_tcp_connection_handler(tcp_socket* sock, bool* acti
 					message_connect_ref msg = boost::static_pointer_cast<message_connect>(m);
 					if (msg->get_version() == NETWERK_PROTOCOL_VERSION) {
 						(*sock) << messageref(new message_accept());
+						(*sock) << messageref(new message_playlist_update(playlist));
 					} else {
 						(*sock) << messageref(new message_disconnect());
 						*active = false;

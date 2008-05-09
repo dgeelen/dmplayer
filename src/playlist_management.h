@@ -8,11 +8,32 @@
 #include <boost/filesystem.hpp>
 #include <boost/strong_typedef.hpp>
 
+#include <boost/serialization/utility.hpp>
+#include <boost/serialization/map.hpp>
+
 //NOTE: Using an average of 5MB per song (reasonable for good quality MP3)
 //      a uint32 should suffice to hold 20 pebibytes worth of music (2^32*(5*1024^2)/1024^5)
 
 BOOST_STRONG_TYPEDEF(uint32, ClientID);
 BOOST_STRONG_TYPEDEF(uint32, LocalTrackID);
+
+template<class Archive>
+void serialize(
+    Archive &ar,
+    ClientID & i,
+    const unsigned version
+){
+    ar & i.t;
+} 
+
+template<class Archive>
+void serialize(
+    Archive &ar,
+    LocalTrackID & i,
+    const unsigned version
+){
+    ar & i.t;
+} 
 
 typedef std::pair<ClientID, LocalTrackID> TrackID;
 
@@ -31,9 +52,19 @@ struct LocalTrack {
 };
 
 class Track {
+public:
 	TrackID id;
 	MetaDataMap metadata;
 	Track(TrackID id_, MetaDataMap metadata_);
+
+private:
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive & ar, const unsigned int version) {
+		ar & id;
+		ar & metadata;
+	}
+	Track() {};
 };
 
 class TrackDataBase {
@@ -52,7 +83,7 @@ class Playlist {
 	public:
 		Playlist();
 		void vote(TrackID id);
-	private:
+//	private:
 		std::vector<Track> entries;
 };
 
