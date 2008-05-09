@@ -1,20 +1,25 @@
 #include "playlist_management.h"
 #include "error-handling.h"
 #include "boost/algorithm/string/case_conv.hpp"
+#include <boost/foreach.hpp>
 
 namespace fs = boost::filesystem;
 namespace ba = boost::algorithm;
 using namespace std;
 
-/* Class Track */
-Track::Track() {
-	id = -1;
+/* Class LocalTrack */
+LocalTrack::LocalTrack(LocalTrackID id_, fspath filename_, MetaDataMap metadata_)
+:	id(id_)
+,	filename(filename_)
+,	metadata(metadata_)
+{
 }
 
-Track::Track(uint32 id, string filename, map<string, string> meta_data) {
-	this->id = id;
-	this->filename = filename;
-	this->meta_data = meta_data;
+/* Class Track */
+Track::Track(TrackID id_, MetaDataMap metadata_)
+:	id(id_)
+,	metadata(metadata_)
+{
 }
 
 /* Class TrackDataBase */
@@ -22,27 +27,25 @@ TrackDataBase::TrackDataBase() {
 
 }
 
-uint32 TrackDataBase::get_first_free_id() {
-	uint32 result = 0;
-	for(vector<Track>::iterator i = entries.begin(); i!=entries.end(); ++i) {
-		if(result != i->id) break;
+LocalTrackID TrackDataBase::get_first_free_id() {
+	static LocalTrackID result(0);
+	++result;
+	return result;
+	/* huh? how does this work? are entries ordered?
+	BOOST_FOREACH(LocalTrack& t, entries) {
+		if (result != t.id) break;
 		++result;
 	}
 	return result;
+	*/
 }
 
-void TrackDataBase::add(Track t) {
-	t.id = get_first_free_id();
-	entries.push_back(t);
-}
-
-vector<Track> TrackDataBase::search(Track t) {
-	vector<Track> result;
-	string filename = ba::to_lower_copy(t.meta_data["FILENAME"]);
-	for(vector<Track>::iterator i = entries.begin(); i!=entries.end(); ++i) {
-		//TODO: Real reg-ex foo on all meta-data fields
-		if( ba::to_lower_copy(i->meta_data["FILENAME"]).find(filename, -1) != -1 ) {
-			result.push_back(*i);
+vector<LocalTrack> TrackDataBase::search(MetaDataMap t) {
+	vector<LocalTrack> result;
+	string filename = ba::to_lower_copy(t["FILENAME"]);
+	BOOST_FOREACH(LocalTrack& tr, entries) {
+		if( ba::to_lower_copy(tr.metadata["FILENAME"]).find(filename, -1) != -1 ) {
+			result.push_back(tr);
 		}
 	}
 	return result;
@@ -59,9 +62,15 @@ void TrackDataBase::add_directory(fs::path path) {
 		}
 	}
 	else { // Some kind of file //FIXME: Handle recursive symlinks
-		map<string, string> meta_data;
-		meta_data["FILENAME"] = path.leaf();
-		add(Track(get_first_free_id(), path.string(), meta_data ));
+		add(path);
 	}
 }
 
+void TrackDataBase::add(fs::path path) {
+	MetaDataMap meta_data;
+	meta_data["FILENAME"] = path.leaf();
+	entries.push_back(LocalTrack(get_first_free_id(), path, meta_data));
+}
+
+Playlist::Playlist() {
+}
