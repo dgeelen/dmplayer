@@ -74,8 +74,7 @@ void network_handler::server_tcp_connection_listener() { // Listens for incoming
 	vector<pairtype> connections;
 	while(!are_we_done) {
 		tcp_socket* sock = lsock.accept();
-		dcerr("Accepted a client connection from " << sock->get_ipv4_socket_addr());
-		bool* b = new bool;
+		bool* b = new bool(true);
 // 		boost::thread* t = new WRAP(server_tcp_connection_handler, this);
 		boost::thread* t = new boost::thread(
 		                       makeErrorHandler(
@@ -114,6 +113,7 @@ void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiate
 					client_tcp_connection_running = false;
 				}; break;
 				case message::MSG_ACCEPT: {
+					dcerr("Accepted a client connection from " << sock.get_ipv4_socket_addr());
 					message_receive_signal(m);
 				}; break;
 
