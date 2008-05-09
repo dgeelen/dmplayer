@@ -14,6 +14,8 @@
 #include <iostream>
 #include <sstream>
 
+#include <boost/serialization/shared_ptr.hpp>
+
 using namespace std;
 
 tcp_socket::tcp_socket()
@@ -65,7 +67,7 @@ uint32 tcp_socket::receive( const uint8* buf, const uint32 len )
 
 // void tcp_socket::operator<<(const message*& msg) {
 // void tcp_socket::operator<<(const message* const & msg) {
-void tcp_socket::operator<<(const message* const & msg) {
+void tcp_socket::operator<<(const messagecref msg) {
 	stringstream ss;
 	boost::archive::text_oarchive oa(ss);
 // 	const message_connect msg2;
@@ -77,7 +79,7 @@ void tcp_socket::operator<<(const message* const & msg) {
 	send((const uint8*)ss.str().c_str(), ss.str().size() +1);
 }
 
-void tcp_socket::operator>>(      message*& msg) {
+void tcp_socket::operator>>(      messageref& msg) {
 	long l;
 	receive((uint8*)&l, sizeof(long));
 	l = ntohl(l);
