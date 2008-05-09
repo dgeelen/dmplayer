@@ -142,6 +142,9 @@ void network_handler::server_tcp_connection_handler(tcp_socket* sock, bool* acti
 						*active = false;
 					}
 				}; break;
+				case message::MSG_DISCONNECT: {
+					*active = false;
+				}
 			}
 		}
 		if (sockstat & SELECT_ERROR) {
