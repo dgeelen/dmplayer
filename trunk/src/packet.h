@@ -116,6 +116,8 @@ class message {
 
 		uint32 type;
 };
+typedef boost::shared_ptr<message> messageref;
+typedef boost::shared_ptr<const message> messagecref;
 
 
 class message_connect : public message {
@@ -132,6 +134,7 @@ class message_connect : public message {
 		}
 		uint32 version;
 };
+typedef boost::shared_ptr<message_connect> message_connect_ref;
 
 class message_disconnect : public message {
 	public:
@@ -143,6 +146,7 @@ class message_disconnect : public message {
 			ar & boost::serialization::base_object<message>(*this);
 		}
 };
+typedef boost::shared_ptr<message_disconnect> message_disconnect_ref;
 
 class message_accept : public message {
 	public:
@@ -154,5 +158,6 @@ class message_accept : public message {
 			ar & boost::serialization::base_object<message>(*this);
 		}
 };
+typedef boost::shared_ptr<message_accept> message_accept_ref;
 
 #endif //PACKET_H

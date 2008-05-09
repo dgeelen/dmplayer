@@ -95,16 +95,16 @@ void network_handler::server_tcp_connection_listener() { // Listens for incoming
 
 void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiates a connection to the server (Client)
 	tcp_socket sock(dest.first, dest.second);
-	message_connect m;
-	message* mptr = &m;
 
-	sock << mptr;
+	messageref msg(new message_connect());
+
+	sock << msg;
 
 	// TODO: rest of function, protocol implementation
 	while(!are_we_done && client_tcp_connection_running) {
-		uint32 sockstat = doselect(sock);
+		uint32 sockstat = doselect(sock, 1000, SELECT_READ|SELECT_ERROR);
 		if (sockstat & SELECT_READ) {
-			message* m;
+			messageref m;
 			sock >> m;
 			switch (m->get_type()) {
 				case message::MSG_CONNECT: {
@@ -112,16 +112,15 @@ void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiate
 				}; break;
 				case message::MSG_DISCONNECT: {
 					client_tcp_connection_running = false;
-
 				}; break;
-//				case message::MSG_CONNECT: {
-//					// TODO: ?maybe?
-//				}; break;
+				case message::MSG_ACCEPT: {
+					message_receive_signal(m);
+				}; break;
 
 			}
 		}
 		if (sockstat & SELECT_ERROR) {
-			// TOTO: error handling
+			// TODO: error handling
 //			*active = false;
 		}
 	}
@@ -129,21 +128,17 @@ void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiate
 
 void network_handler::server_tcp_connection_handler(tcp_socket* sock, bool* active) { // One thread per client (Server)
 	while(!are_we_done && *active) {
-		uint32 sockstat = doselect(*sock);
+		uint32 sockstat = doselect(*sock, 1000, SELECT_READ|SELECT_ERROR);
 		if (sockstat & SELECT_READ) {
-			message* m;
+			messageref m;
 			(*sock) >> m;
 			switch (m->get_type()) {
 				case message::MSG_CONNECT: {
-					message_connect* msg = static_cast<message_connect*>(m);
+					message_connect_ref msg = boost::static_pointer_cast<message_connect>(m);
 					if (msg->get_version() == NETWERK_PROTOCOL_VERSION) {
-						message_accept smsg;
-						message* smptr = & smsg;
-						(*sock) << smptr;
+						(*sock) << messageref(new message_accept());
 					} else {
-						message_disconnect smsg;
-						message* smptr = & smsg;
-						(*sock) << smptr;
+						(*sock) << messageref(new message_disconnect());
 						*active = false;
 					}
 				}; break;

@@ -60,8 +60,8 @@
 			bool bind( const ipv6_addr addr, const uint16 port );
 			ipv4_socket_addr get_ipv4_socket_addr();
 			uint32 send( const uint8* buf, const uint32 len );
-			void operator<<(const message* const & msg);
-			void operator>>(      message*& msg);
+			void operator<<(const messagecref msg);
+			void operator>>(      messageref& msg);
 			uint32 receive( const uint8* buf, const uint32 len );
 			void disconnect();
 			SOCKET getSocketHandle() { return sock; };
@@ -109,7 +109,7 @@
 	};
 
 	template <typename T>
-	uint32 doselect(T& sock, uint32 timeout = 1000) {
+	uint32 doselect(T& sock, uint32 timeout = 1000, uint32 mask = SELECT_READ|SELECT_WRITE|SELECT_ERROR) {
 		SOCKET handle = sock.getSocketHandle();
 		fd_set rset;
 		fd_set wset;
@@ -117,9 +117,12 @@
 		FD_ZERO(&rset);
 		FD_ZERO(&wset);
 		FD_ZERO(&eset);
-		FD_SET(handle, &rset);
-		FD_SET(handle, &wset);
-		FD_SET(handle, &eset);
+		if (mask & SELECT_READ)
+			FD_SET(handle, &rset);
+		if (mask & SELECT_WRITE)
+			FD_SET(handle, &wset);
+		if (mask & SELECT_ERROR)
+			FD_SET(handle, &eset);
 
 		timeval tv;
 		tv.tv_sec = timeout / 1000;
@@ -135,6 +138,8 @@
 		} else if (sel != 0) {
 			retval |= SELECT_ERROR;
 		}
+
+		retval &= mask;
 
 		return retval;
 	}
