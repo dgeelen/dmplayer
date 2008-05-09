@@ -129,7 +129,7 @@
 		tv.tv_usec = 1000 * (timeout % 1000);
 
 		uint32 retval = 0;
-		int sel = select(0, &rset, &wset, &eset, &tv);
+		int sel = select(handle+1, &rset, &wset, &eset, &tv);
 
 		if (sel > 0) {
 			if (FD_ISSET(handle, &rset)) retval |= SELECT_READ;
