@@ -14,6 +14,7 @@
 	#define NETWORK_PROTOCOL_H
 	#include "cross-platform.h"
 	#include "network-core.h"
+	#include "playlist_management.h"
 	#include <boost/thread/thread.hpp>
 	#include <boost/signal.hpp>
 	#include <map>
@@ -74,6 +75,12 @@
 			udp_socket udp_ssock;
 			udp_socket udp_rsock;
 			udp_socket udp_qsock;
+ 
+			/* server stuff */
+			Playlist playlist;
+
+			/* client stuff */
+			TrackDataBase tracks;
 
 			/* Client connection with server */
 			void client_tcp_connection(ipv4_socket_addr dest6);

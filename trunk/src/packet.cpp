@@ -5,3 +5,4 @@ using namespace std;
 BOOST_CLASS_EXPORT(message_connect);
 BOOST_CLASS_EXPORT(message_accept);
 BOOST_CLASS_EXPORT(message_disconnect);
+BOOST_CLASS_EXPORT(message_playlist_update);
