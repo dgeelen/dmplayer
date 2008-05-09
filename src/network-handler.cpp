@@ -102,7 +102,7 @@ void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiate
 	// TODO: rest of function, protocol implementation
 	while(!are_we_done && client_tcp_connection_running) {
 		uint32 sockstat = doselect(sock, 1000, SELECT_READ|SELECT_ERROR);
-		if (sockstat & SELECT_READ) {
+		if (sockstat & (SELECT_READ|SELECT_ERROR)) {
 			messageref m;
 			sock >> m;
 			switch (m->get_type()) {
@@ -111,17 +111,15 @@ void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiate
 				}; break;
 				case message::MSG_DISCONNECT: {
 					client_tcp_connection_running = false;
+					message_receive_signal(m);
 				}; break;
 				case message::MSG_ACCEPT: {
 					dcerr("Accepted a client connection from " << sock.get_ipv4_socket_addr());
 					message_receive_signal(m);
 				}; break;
+				//case message::
 
 			}
-		}
-		if (sockstat & SELECT_ERROR) {
-			// TODO: error handling
-//			*active = false;
 		}
 	}
 }
@@ -129,7 +127,7 @@ void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiate
 void network_handler::server_tcp_connection_handler(tcp_socket* sock, bool* active) { // One thread per client (Server)
 	while(!are_we_done && *active) {
 		uint32 sockstat = doselect(*sock, 1000, SELECT_READ|SELECT_ERROR);
-		if (sockstat & SELECT_READ) {
+		if (sockstat & (SELECT_READ|SELECT_ERROR)) {
 			messageref m;
 			(*sock) >> m;
 			switch (m->get_type()) {
@@ -146,10 +144,6 @@ void network_handler::server_tcp_connection_handler(tcp_socket* sock, bool* acti
 					*active = false;
 				}
 			}
-		}
-		if (sockstat & SELECT_ERROR) {
-			// TOTO: error handling
-			*active = false;
 		}
 	}
 }
