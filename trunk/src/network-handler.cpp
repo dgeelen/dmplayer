@@ -73,18 +73,21 @@ void network_handler::server_tcp_connection_listener() { // Listens for incoming
 
 	vector<pairtype> connections;
 	while(!are_we_done) {
-		tcp_socket* sock = lsock.accept();
-		bool* b = new bool(true);
-// 		boost::thread* t = new WRAP(server_tcp_connection_handler, this);
-		boost::thread* t = new boost::thread(
-		                       makeErrorHandler(
-		                       boost::bind(&network_handler::server_tcp_connection_handler,
-		                                   this,
-		                                   sock,
-		                                   b)));
-		pair<boost::thread*, bool*> cc(t, b);
-		pairtype c(sock, cc);
-		connections.push_back(c);
+		if (doselect(lsock, 1000, SELECT_READ)) {
+			tcp_socket* sock = lsock.accept();
+
+			bool* b = new bool(true);
+		// 		boost::thread* t = new WRAP(server_tcp_connection_handler, this);
+			boost::thread* t = new boost::thread(
+								   makeErrorHandler(
+								   boost::bind(&network_handler::server_tcp_connection_handler,
+											   this,
+											   sock,
+											   b)));
+			pair<boost::thread*, bool*> cc(t, b);
+			pairtype c(sock, cc);
+			connections.push_back(c);
+		}
 	}
 	BOOST_FOREACH(pairtype tpair, connections) {
 	//for(vector<pair<tcp_socket*, pair<boost::thread*, bool*> > >::iterator i = connections.begin(); i!=connections.end(); ++i) {
