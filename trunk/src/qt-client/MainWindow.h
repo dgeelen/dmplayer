@@ -11,10 +11,12 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 {
 	Q_OBJECT
 
+	protected:
+		void closeEvent(QCloseEvent * evnt);
+
 	public:
 		MainWindow();
 		~MainWindow();
-
 
 	public Q_SLOTS:
 		void UpdateServerList(std::vector<server_info>);

@@ -3,14 +3,51 @@
 #include <QFileDialog>
 
 #include "../util/StrFormat.h"
+#include "../error-handling.h"
 #include <QString>
+
+#include <boost/foreach.hpp>
 
 MainWindow::MainWindow()
 {
 	setupUi(this);
+
+	/* remove central widget & statusbar */
+	this->centralWidget()->setParent(&QWidget());
+	//this->setStatusBar(NULL);
+
+	/* fill view menu & force docks to top*/
+	BOOST_FOREACH(QObject* obj, children()) {
+		if (QString(obj->metaObject()->className()) == "QDockWidget") {
+			QDockWidget* dock = (QDockWidget*)obj;
+			menu_View->addAction(dock->toggleViewAction());
+			dock->setAllowedAreas(Qt::TopDockWidgetArea);
+			this->addDockWidget(Qt::TopDockWidgetArea, dock);
+		}
+	}
+
+	/* load/set dock layout */
+	{
+		QFile layoutfile("layout.dat");
+		if (layoutfile.open(QIODevice::ReadOnly)) {
+			QRect rect;
+			layoutfile.read((char*)&rect, sizeof(QRect));
+			this->setGeometry(rect);
+			QByteArray data = layoutfile.readAll();
+			if (data.size() > 0)
+				restoreState(data);
+			layoutfile.close();
+		} else {
+			// default layout
+			this->splitDockWidget (dockFileHistory, dockServerList , Qt::Vertical  );
+			this->splitDockWidget (dockFileHistory, dockDebugLog   , Qt::Horizontal);
+			this->splitDockWidget (dockServerList , dockServerInfo , Qt::Horizontal);
+			this->tabifyDockWidget(dockServerInfo , dockAudioPlayer);
+		}
+	}
+	
 	progressTimer.stop();
-	trackProgress->setMinimum(0);
-	trackProgress->setValue(0);
+
 	QObject::connect(&progressTimer, SIGNAL(timeout()), this, SLOT(updateProgressBar()));
 
 	QFile rcfile("recent_files_cache.txt");
@@ -35,6 +72,21 @@ MainWindow::MainWindow()
 			rcfile.write("\n",1);
 		}
 	}
+}
+
+void MainWindow::closeEvent(QCloseEvent * evnt)
+{
+	// save layout to file
+	QFile layoutfile("layout.dat");
+	if (layoutfile.open(QIODevice::WriteOnly)) {
+		QRect rect = this->geometry();
+		layoutfile.write((char*)&rect, sizeof(QRect));
+		QByteArray data = saveState();
+		if (data.size() > 0)
+			layoutfile.write(data);
+		layoutfile.close();
+	}
+	QWidget::closeEvent(evnt);
 }
 
 MainWindow::~MainWindow()

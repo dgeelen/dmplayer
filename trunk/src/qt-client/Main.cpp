@@ -8,9 +8,52 @@
 
 using namespace std;
 
+class MyQApplication : public QApplication {
+	private:
+#ifdef DEBUG
+		int stack;
+#endif
+	public:
+		MyQApplication(int& argc, char** argv)
+			:	QApplication(argc,argv)
+#ifdef DEBUG
+			,	stack(0)
+#endif
+		{};
+
+		bool notify(QObject *receiver, QEvent *e)
+		{
+#ifdef DEBUG
+			if (stack == 0) {
+				bool ret;
+				++stack;
+				try {
+					// boost::bind will bind QApplication::notify, but because it is virtual
+					// the function actually called will be MyQApplication::notify
+					// the 'stack' variable is nonzero now though, so an infinite loop is prevented
+					ret = makeErrorHandler(boost::bind(&QApplication::notify, this, receiver, e))();
+				} catch (...) {
+					dcerr("Exception caught in qt event loop, see cerr for details");
+					ret = false;
+				};
+				--stack;
+				return ret;
+			} else
+				return QApplication::notify(receiver, e);
+#else
+			try {
+				return QApplication::notify(receiver, e);
+			} catch (...) {
+				/// @todo gracefull shutdown here or something
+				return false;
+			}
+#endif
+		}
+};
+
 int main_impl(int argc, char **argv )
 {
-	QApplication app(argc, argv);
+	MyQApplication app(argc, argv);
 
 	MainWindow mainwindow;
 	mainwindow.show();
