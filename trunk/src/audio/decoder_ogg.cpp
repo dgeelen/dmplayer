@@ -280,6 +280,7 @@ IDecoderRef OGGDecoder::tryDecode(IDataSourceRef ds) {
 		return IDecoderRef();;
 	}
 	catch (Exception& e) {
+		VAR_UNUSED(e); // in debug mode
 		dcerr("OGG tryDecode failed: " << e.what());
 		return IDecoderRef();
 	}

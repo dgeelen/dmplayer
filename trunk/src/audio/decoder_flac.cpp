@@ -38,6 +38,7 @@ IDecoderRef FlacDecoder::tryDecode(IDataSourceRef ds) {
 		return ret;
 	}
 	catch (Exception& e) {
+		VAR_UNUSED(e); // in debug mode
 		dcerr("Flac tryDecode failed: " << e.what());
 		return IDecoderRef();
 	}
