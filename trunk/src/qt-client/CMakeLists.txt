@@ -11,13 +11,16 @@ ENDIF(AUTODETECT_QT_GUI)
 
 IF(ENABLE_QT_GUI)
 	# CMake >= 2.4.0 is needed for Qt4
-	cmake_minimum_required(VERSION 2.4.0)
+	# already done in main CMakeList.txt
+	# cmake_minimum_required(VERSION 2.4.0)
 
 	# find and setup Qt4 for this project
 	find_package(Qt4 REQUIRED)
 
 	# add definitions needed for Qt4
 	add_definitions("${QT_DEFINITIONS} -DQT_NO_KEYWORDS")
+	
+	SET(QT_USE_QTMAIN 1)
 
 	# include Qt4 cmake file
 	include(${QT_USE_FILE})
@@ -81,4 +84,7 @@ IF(ENABLE_QT_GUI)
 		mpmp_util
 	)
 
+	IF(MSVC)
+		SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /SUBSYSTEM:WINDOWS")
+	ENDIF(MSVC)
 ENDIF(ENABLE_QT_GUI)
