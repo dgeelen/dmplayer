@@ -84,6 +84,7 @@ void AudioController::test_functie(std::string file) {
 			ds = IDataSourceRef(new FileReaderDataSource(file));
 		}
 		catch (Exception& e) {
+			VAR_UNUSED(e); // in debug mode
 			dcerr("Error message: " << e.what());
 			ds.reset();
 		}
@@ -94,6 +95,7 @@ void AudioController::test_functie(std::string file) {
 			ds = IDataSourceRef(new HTTPStreamDataSource(file));
 		}
 		catch (Exception& e) {
+			VAR_UNUSED(e); // in debug mode
 			dcerr("Error message: " << e.what());
 			ds.reset();
 		}

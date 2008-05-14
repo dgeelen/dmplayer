@@ -131,6 +131,7 @@ IDecoderRef VorbisDecoder::tryDecode(IDataSourceRef ds) {
 	try {
 		decoder = IDecoderRef(new VorbisDecoder(ds));
 	} catch (Exception &e) {
+		VAR_UNUSED(e); // in debug mode
 		dcerr("VorbisDecoder::tryDecode failed: " << e.what());
 	}
 	return decoder;

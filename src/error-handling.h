@@ -83,6 +83,7 @@ ErrorHandler<typename T::result_type> makeErrorHandler(T f) {
 	return ErrorHandler<typename T::result_type>(f);
 }
 
+#define VAR_UNUSED(x) do { x; } while (false)
 /* DEBUG #define's */
 #ifdef DEBUG
 	#include <string>
