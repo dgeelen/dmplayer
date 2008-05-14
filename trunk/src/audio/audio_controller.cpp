@@ -1,5 +1,7 @@
 #include <cstdlib>
 #include <iostream>
+#include "../cross-platform.h" // fixes header order problems
+
 #include "audio_controller.h"
 #include "backend_interface.h"
 #include "../error-handling.h"
