@@ -1,6 +1,7 @@
 #ifndef NETWORK_CORE_H
 	#define NETWORK_CORE_H
 	#include "cross-platform.h"
+	#include "error-handling.h"
 	#include "packet.h"
 	#include <sstream>
 	#include <iostream>   /* for std::istream, std::ostream, std::string */
@@ -69,6 +70,7 @@
 			SOCKET sock;
 			ipv4_socket_addr peer;
 	};
+	typedef boost::shared_ptr<tcp_socket> tcp_socket_ref;
 
 	class tcp_listen_socket {
 		public:
@@ -130,7 +132,6 @@
 
 		uint32 retval = 0;
 		int sel = select(handle+1, &rset, &wset, &eset, &tv);
-
 		if (sel > 0) {
 			if (FD_ISSET(handle, &rset)) retval |= SELECT_READ;
 			if (FD_ISSET(handle, &wset)) retval |= SELECT_WRITE;

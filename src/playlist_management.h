@@ -24,7 +24,7 @@ void serialize(
     const unsigned version
 ){
     ar & i.t;
-} 
+}
 
 template<class Archive>
 void serialize(
@@ -33,7 +33,7 @@ void serialize(
     const unsigned version
 ){
     ar & i.t;
-} 
+}
 
 typedef std::pair<ClientID, LocalTrackID> TrackID;
 

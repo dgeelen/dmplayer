@@ -8,9 +8,57 @@
 #include "audio/audio_controller.h"
 #include "playlist_management.h"
 #include "boost/filesystem.hpp"
+#include "playlist_management.h"
 
 namespace po = boost::program_options;
 using namespace std;
+
+class Server {
+	public:
+		Server(int listen_port, string server_name) {
+		dcerr("Starting network_handler");
+		networkhandler = boost::shared_ptr<network_handler>(new network_handler(listen_port, server_name));
+		networkhandler->message_receive_signal_with_id.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
+		}
+
+		void handle_received_message(const messageref m, ClientID id) {
+			switch(m->get_type()) {
+				case message::MSG_CONNECT: {
+					dcerr("Received a MSG_CONNECT from " << id);
+					networkhandler->send_message(id, messageref(new message_playlist_update(playlist)));
+				} break;
+				case message::MSG_ACCEPT: {
+					dcerr("Received a MSG_ACCEPT from " << id);
+				}; break;
+				case message::MSG_DISCONNECT: {
+					dcerr("Received a MSG_DISCONNECT from " << id);
+				} break;
+				case message::MSG_PLAYLIST_UPDATE: {
+					dcerr("Received a MSG_PLAYLIST_UPDATE from " << id);
+				}; break;
+				case message::MSG_QUERY_TRACKDB: {
+					dcerr("Received a MSG_QUERY_TRACKDB from " << id);
+				}; break;
+				case message::MSG_QUERY_TRACKDB_RESULT: {
+					dcerr("Received a MSG_QUERY_TRACKDB_RESULT from " << id);
+				}; break;
+				case message::MSG_REQUEST_FILE: {
+					dcerr("Received a MSG_REQUEST_FILE from " << id);
+				}; break;
+				case message::MSG_REQUEST_FILE_RESULT: {
+					dcerr("Received a MSG_REQUEST_FILE_RESULT from " << id);
+				}; break;
+				default: {
+					dcerr("Ignoring unknown message of type " << m->get_type() << " from " << id);
+				} break;
+			}
+			// 					message_connect_ref msg = boost::static_pointer_cast<message_connect>(m);
+		}
+
+	private:
+		Playlist playlist;
+		boost::shared_ptr<network_handler> networkhandler;
+};
 
 int main_impl(int argc, char* argv[])
 {
@@ -46,10 +94,9 @@ int main_impl(int argc, char* argv[])
 		return 1;
 	}
 
-	dcerr("Starting network_handler");
-	network_handler nh(listen_port, server_name);
+	Server svr(listen_port, server_name);
 
-	AudioController ac;;
+	AudioController ac;
 	if(filename!= "") {
 		ac.test_functie(filename);
 	}

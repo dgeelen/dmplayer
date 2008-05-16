@@ -25,7 +25,6 @@
 	#define MPMP_CLIENT false
 	#define MPMP_SERVER true
 
-
 	struct server_info {
 		public:
 			std::string name;
@@ -52,9 +51,11 @@
 			boost::signal<void(const std::vector<server_info>&)> server_list_update_signal;
 			boost::signal<void(const server_info&)> server_list_added_signal; // fixme: actually call this
 			boost::signal<void(const server_info&)> server_list_removed_signal;
-			boost::signal<void(const messageref)> message_receive_signal;
-
+			boost::signal<void(const messageref)> message_receive_signal; // For client
+			boost::signal<void(const messageref, ClientID)> message_receive_signal_with_id; // for server
 			void client_connect_to_server( ipv4_socket_addr dest );
+			void send_message(ClientID id, messageref msg);
+
 		private:
 			bool server_mode;
 			boost::thread* thread_server_tcp_connection_listener;
@@ -75,12 +76,6 @@
 			udp_socket udp_ssock;
 			udp_socket udp_rsock;
 			udp_socket udp_qsock;
- 
-			/* server stuff */
-			Playlist playlist;
-
-			/* client stuff */
-			TrackDataBase tracks;
 
 			/* Client connection with server */
 			void client_tcp_connection(ipv4_socket_addr dest6);
@@ -89,8 +84,10 @@
 			ipv4_socket_addr target_server;
 
 			/* Server connection with client */
-			void server_tcp_connection_handler(tcp_socket* sock, bool* active);
+			void server_tcp_connection_handler(tcp_socket_ref sock);
 			void server_tcp_connection_listener();
+			ClientID next_client_id;
+			std::map<ClientID, boost::shared_ptr<tcp_socket> > clients;
 		};
 
 
