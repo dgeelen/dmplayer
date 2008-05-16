@@ -45,16 +45,9 @@
 		}\
 	}
 
-	/* NOTE:
-	 * According to the standard this should also be valid:
-	 *   if( (int x = y) == z() ) { foo() }
-	 * But gcc doesn't agree, so we use two if's
-	 */
 	#define try_with_widget(xml_source, widget_name, widget) \
-	if( GtkWidget* widget = glade_xml_get_widget (xml_source, #widget_name) ) if(widget==NULL) { \
-		cerr << "Error: can not find widget `" #widget_name "'!\n"; \
-		false; \
-	} else
+	for( GtkWidget* widget = glade_xml_get_widget (xml_source, #widget_name); \
+	     (widget==NULL)?(cerr << "Error: can not find widget `" #widget_name "'!\n", false):(widget!=(GtkWidget*)-1); widget=(GtkWidget*)-1)
 
 	uint32 show_gui();
 #endif
