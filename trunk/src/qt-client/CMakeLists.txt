@@ -19,7 +19,7 @@ IF(ENABLE_QT_GUI)
 
 	# add definitions needed for Qt4
 	add_definitions("${QT_DEFINITIONS} -DQT_NO_KEYWORDS")
-	
+
 	SET(QT_USE_QTMAIN 1)
 
 	# include Qt4 cmake file
@@ -80,6 +80,7 @@ IF(ENABLE_QT_GUI)
 		${BOOST_SIGNALS_LIBRARY}
 		${BOOST_THREAD_LIBRARY}
 		${BOOST_SERIALIZATION_LIBRARY}
+		${BOOST_FILESYSTEM_LIBRARY}
 		mpmp_audio
 		mpmp_util
 	)
