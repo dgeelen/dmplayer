@@ -65,34 +65,22 @@ uint16 network_handler::get_port_number() {
 
 
 void network_handler::server_tcp_connection_listener() { // Listens for incoming connections (Server)
-	typedef pair<tcp_socket*, pair<boost::thread*, bool*> > pairtype;
 	dcerr("");
 	ipv4_addr addr;
 	addr.full = INADDR_ANY;
 	tcp_listen_socket lsock(addr, tcp_port_number);
-
-	vector<pairtype> connections;
 	while(!are_we_done) {
 		if (doselect(lsock, 1000, SELECT_READ)) {
-			tcp_socket* sock = lsock.accept();
+			tcp_socket_ref sock(lsock.accept());
 
-			bool* b = new bool(true);
-		// 		boost::thread* t = new WRAP(server_tcp_connection_handler, this);
 			boost::thread* t = new boost::thread(
 								   makeErrorHandler(
 								   boost::bind(&network_handler::server_tcp_connection_handler,
 											   this,
-											   sock,
-											   b)));
-			pair<boost::thread*, bool*> cc(t, b);
-			pairtype c(sock, cc);
-			connections.push_back(c);
+											   sock)));
 		}
 	}
-	BOOST_FOREACH(pairtype tpair, connections) {
-	//for(vector<pair<tcp_socket*, pair<boost::thread*, bool*> > >::iterator i = connections.begin(); i!=connections.end(); ++i) {
-		//TODO: disconnect
-	}
+	dcerr("bye!");
 }
 
 void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiates a connection to the server (Client)
@@ -129,8 +117,10 @@ void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiate
 	}
 }
 
-void network_handler::server_tcp_connection_handler(tcp_socket* sock, bool* active) { // One thread per client (Server)
-	while(!are_we_done && *active) {
+void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // One thread per client (Server)
+	ClientID cid(next_client_id++);
+	bool active = true;
+	while(!are_we_done && active) {
 		uint32 sockstat = doselect(*sock, 1000, SELECT_READ|SELECT_ERROR);
 		if (sockstat & (SELECT_READ|SELECT_ERROR)) {
 			messageref m;
@@ -139,19 +129,31 @@ void network_handler::server_tcp_connection_handler(tcp_socket* sock, bool* acti
 				case message::MSG_CONNECT: {
 					message_connect_ref msg = boost::static_pointer_cast<message_connect>(m);
 					if (msg->get_version() == NETWERK_PROTOCOL_VERSION) {
-						dcerr("Accepted a client connection from " << sock->get_ipv4_socket_addr());
+						dcerr("Accepted a client connection from " << sock->get_ipv4_socket_addr() << " ClientID="<<cid);
+						clients[cid] = sock;
 						(*sock) << messageref(new message_accept());
-						(*sock) << messageref(new message_playlist_update(playlist));
+						message_receive_signal_with_id(m, cid);
 					} else {
+						dcerr("Client tried to connect with wrong version (got " << msg->get_version() << ", expected " << NETWERK_PROTOCOL_VERSION<< ")");
 						(*sock) << messageref(new message_disconnect());
-						*active = false;
+						active = false;
 					}
 				}; break;
 				case message::MSG_DISCONNECT: {
-					*active = false;
+					active = false;
 				}
+				default:
+					dcerr("Ignoring unknown message type " << m->get_type());
 			}
 		}
+	}
+	clients.erase(cid);
+}
+
+void network_handler::send_message(ClientID id, messageref msg) {
+	map<ClientID, boost::shared_ptr<tcp_socket> >::iterator sock = clients.find(id);
+	if(sock != clients.end()) {
+		(*(sock->second)) << msg;
 	}
 }
 
