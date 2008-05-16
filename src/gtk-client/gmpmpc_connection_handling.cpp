@@ -1,7 +1,7 @@
 #include "gmpmpc_connection_handling.h"
 #include "../error-handling.h"
 
-void handle_received_message(const message& m) {
+void handle_received_message(const messageref m) {
 // 	switch(m.get_message_type()) {
 // 		case message::MSG_CAPABILITIES: {
 // 			dcerr("Received a MSG_CAPABILITIES");
