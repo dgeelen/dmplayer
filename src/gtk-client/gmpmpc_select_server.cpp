@@ -4,6 +4,7 @@
 #include "gmpmpc_connection_handling.h"
 #include "../network-handler.h"
 #include "../error-handling.h"
+#include "../util/StrFormat.h"
 #include <vector>
 
 using namespace std;
@@ -43,11 +44,19 @@ void select_server_update_treeview( const vector<server_info>& si) {
 	try_with_widget(select_server_window, treeview_discovered_servers, tv) {
 		GtkTreeStore* tree_store_servers = GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(tv)));
 		GtkTreeModel* tree_model_servers = GTK_TREE_MODEL(tree_store_servers);
+		GtkTreeSelection* selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tv));
 		GtkTreeIter invalid_iter;
 		invalid_iter.stamp = 0;
 		invalid_iter.user_data = NULL;
 		invalid_iter.user_data2 = NULL;
 		invalid_iter.user_data3 = NULL;
+		GtkTreeIter selected_server_iter = invalid_iter;
+		ipv4_socket_addr* selected_server_address;
+		if(gtk_tree_selection_get_selected(selection, &tree_model_servers, &selected_server_iter)) {
+			gtk_tree_model_get(tree_model_servers, &selected_server_iter, SERVER_TREE_COLUMN_SOCK_ADDR_PTR, &selected_server_address,-1);
+		}
+		g_object_ref(tree_model_servers); /* Make sure the model stays with us after the tree view unrefs it */
+		gtk_tree_view_set_model(GTK_TREE_VIEW(tv), NULL); /* Detach model from view */
 		GtkTreeIter iter_a = invalid_iter, iter_b = invalid_iter, append_new_servers_here = invalid_iter;
 		if(gtk_tree_model_get_iter_first(tree_model_servers, &iter_a)) {
 			if(gtk_tree_model_iter_children(tree_model_servers, &iter_b, &iter_a)) {
@@ -56,7 +65,7 @@ void select_server_update_treeview( const vector<server_info>& si) {
 					gtk_tree_model_get(tree_model_servers, &iter_b, SERVER_TREE_COLUMN_SOCK_ADDR, &server_address,-1); //server_address should never be NULL after this
 					vector<server_info>::iterator s = my_si.end();
 					for(vector<server_info>::iterator i = my_si.begin(); i != my_si.end(); ++i ) {
-						if( strncmp( server_address, i->sock_addr.std_str().c_str(), i->sock_addr.std_str().size()) ==0 )
+						if( strncmp( server_address, i->sock_addr.std_str().c_str(), i->sock_addr.std_str().size()) == 0 )
 							s = i; //assume servers are uniquely identified by their sock_addr
 					}
 					if(s!=my_si.end()) { // We already know about this server
@@ -73,6 +82,9 @@ void select_server_update_treeview( const vector<server_info>& si) {
 					else { // This server no longer exists
 						ipv4_socket_addr* addr;
 						gtk_tree_model_get(tree_model_servers, &iter_b, SERVER_TREE_COLUMN_SOCK_ADDR, &addr,-1);
+						if( string(server_address) == STRFORMAT("%s", *selected_server_address) ) {
+							selected_server_iter = invalid_iter;
+						}
 						delete addr;
 						if(!gtk_tree_store_remove(tree_store_servers, &iter_b)) {
 							// If iter is no longer valid we don't want to call gtk_tree_model_iter_next
@@ -86,7 +98,7 @@ void select_server_update_treeview( const vector<server_info>& si) {
 		} else { //set up structure
 			GtkTreeIter iter;
 			gtk_tree_store_append(tree_store_servers, &iter, NULL);
-			gtk_tree_store_set(tree_store_servers, &iter, 0, &"Discovered servers", -1);
+			gtk_tree_store_set(tree_store_servers, &iter, 0, "Discovered servers", -1);
 			iter_a = iter;
 			gtk_tree_store_append(tree_store_servers, &iter, NULL);
 			gtk_tree_store_set(tree_store_servers, &iter, 0, "Manually added servers", -1);
@@ -103,6 +115,11 @@ void select_server_update_treeview( const vector<server_info>& si) {
 													SERVER_TREE_COLUMN_SOCK_ADDR, i->sock_addr.std_str().c_str(),
 													SERVER_TREE_COLUMN_SOCK_ADDR_PTR, addr,
 													-1);
+		}
+		gtk_tree_view_set_model(GTK_TREE_VIEW(tv), tree_model_servers); /* Re-attach model to view */
+		gtk_tree_view_expand_all(GTK_TREE_VIEW(tv));
+		if(selected_server_iter.stamp != 0) {
+			gtk_tree_selection_select_iter(selection, &selected_server_iter);
 		}
 	}
 }
@@ -144,13 +161,13 @@ bool select_server_initialise_window() {
 			gtk_tree_view_append_column(GTK_TREE_VIEW(tv), col); /* pack tree view column into tree view */
 			gtk_tree_view_column_pack_start(col, renderer, TRUE); /* pack cell renderer into tree view column */
 			gtk_tree_view_column_add_attribute(col, renderer, "text", SERVER_TREE_COLUMN_PING); /* What column (of treestore) to render */
-			/* Column 3 */
-			col = gtk_tree_view_column_new();
-			renderer = gtk_cell_renderer_text_new();
-			gtk_tree_view_column_set_title(col, "Last seen");
-			gtk_tree_view_append_column(GTK_TREE_VIEW(tv), col); /* pack tree view column into tree view */
-			gtk_tree_view_column_pack_start(col, renderer, TRUE); /* pack cell renderer into tree view column */
-			gtk_tree_view_column_add_attribute(col, renderer, "text", SERVER_TREE_COLUMN_LAST_SEEN); /* What column (of treestore) to render */
+// 			/* Column 3 */
+// 			col = gtk_tree_view_column_new();
+// 			renderer = gtk_cell_renderer_text_new();
+// 			gtk_tree_view_column_set_title(col, "Last seen");
+// 			gtk_tree_view_append_column(GTK_TREE_VIEW(tv), col); /* pack tree view column into tree view */
+// 			gtk_tree_view_column_pack_start(col, renderer, TRUE); /* pack cell renderer into tree view column */
+// 			gtk_tree_view_column_add_attribute(col, renderer, "text", SERVER_TREE_COLUMN_LAST_SEEN); /* What column (of treestore) to render */
 			/* Column 4 */
 			col = gtk_tree_view_column_new();
 			renderer = gtk_cell_renderer_text_new();
@@ -201,11 +218,28 @@ void imagemenuitem_select_server_activate(GtkWidget *widget, gpointer user_data)
 }
 
 void button_cancel_server_selection_clicked(GtkWidget *widget, gpointer user_data) {
-	window_select_server_delete_event(widget, NULL, user_data);
+	try_with_widget(select_server_window, button_accept_server_selection, b) {
+		if(GTK_WIDGET_IS_SENSITIVE(b)) {
+			window_select_server_delete_event(widget, NULL, user_data);
+		}
+		gtk_widget_set_sensitive(b, true);
+	}
+	try_with_widget(select_server_window, button_cancel_server_selection, b) {
+		gtk_button_set_label((GtkButton*)b, "Cancel");
+	}
+}
+
+void select_server_accepted() {
+	try_with_widget(select_server_window, button_accept_server_selection, b) {
+		gtk_widget_set_sensitive(b, true);
+	}
+	try_with_widget(select_server_window, button_cancel_server_selection, b) {
+		gtk_button_set_label((GtkButton*)b, "Cancel");
+	}
+	window_select_server_delete_event(NULL, NULL, NULL);
 }
 
 void button_accept_server_selection_clicked(GtkWidget *widget, gpointer user_data) {
-	dcerr("");
 	try_with_widget(select_server_window, treeview_discovered_servers, tv) {
 		GtkTreeView*  tree_view_servers  = GTK_TREE_VIEW(tv);
 		GtkTreeStore* tree_store_servers = GTK_TREE_STORE(gtk_tree_view_get_model(tree_view_servers));
@@ -214,6 +248,12 @@ void button_accept_server_selection_clicked(GtkWidget *widget, gpointer user_dat
 		GtkTreeIter iter;
 		if(gtk_tree_selection_get_selected(selection, &tree_model_servers, &iter)) {
 			ipv4_socket_addr* server_address;
+			try_with_widget(select_server_window, button_accept_server_selection, b) {
+				gtk_widget_set_sensitive(b, false);
+			}
+			try_with_widget(select_server_window, button_cancel_server_selection, b) {
+				gtk_button_set_label((GtkButton*)b, "Abort");
+			}
 			gtk_tree_model_get(tree_model_servers, &iter, SERVER_TREE_COLUMN_SOCK_ADDR_PTR, &server_address,-1);
 			if(server_address) { //FIXME: Bit hacky, better use gtk_tree_selection_set_select_function()
 				gmpmpc_network_handler->message_receive_signal.connect(handle_received_message);
