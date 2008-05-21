@@ -102,13 +102,13 @@ void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiate
 				}; break;
 				case message::MSG_DISCONNECT: {
 					client_tcp_connection_running = false;
-					message_receive_signal(m);
+					client_message_receive_signal(m);
 				}; break;
 				case message::MSG_ACCEPT: {
-					message_receive_signal(m);
+					client_message_receive_signal(m);
 				}; break;
 				case message::MSG_PLAYLIST_UPDATE: {
-					message_receive_signal(m);
+					client_message_receive_signal(m);
 				}; break;
 				//case message::
 
@@ -132,7 +132,7 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 						dcerr("Accepted a client connection from " << sock->get_ipv4_socket_addr() << " ClientID="<<cid);
 						clients[cid] = sock;
 						(*sock) << messageref(new message_accept());
-						message_receive_signal_with_id(m, cid);
+						server_message_receive_signal(m, cid);
 					} else {
 						dcerr("Client tried to connect with wrong version (got " << msg->get_version() << ", expected " << NETWERK_PROTOCOL_VERSION<< ")");
 						(*sock) << messageref(new message_disconnect());

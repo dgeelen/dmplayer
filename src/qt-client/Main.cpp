@@ -78,7 +78,7 @@ int main_impl(int argc, char **argv )
 		QTBOOSTER(&mainwindow, MainWindow::UpdateServerList_remove)
 	);
 
-	nh.message_receive_signal.connect(
+	nh.client_message_receive_signal.connect(
 		QTBOOSTER(&mainwindow, MainWindow::handleReceivedMessage)
 	);
 
