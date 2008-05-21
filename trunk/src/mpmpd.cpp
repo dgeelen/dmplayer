@@ -13,6 +13,60 @@
 namespace po = boost::program_options;
 using namespace std;
 
+class ServerPlaylist : public IPlaylist {
+	private:
+		std::deque<message_playlist_update_ref> msgque;
+		PlaylistVector data;
+		//virtual void vote(TrackID id) { Playlist::vote(id); };
+		//virtual void add(Track track)  { Playlist::add(track); };
+		//virtual void clear()  { Playlist::clear(); };
+	public:
+		virtual void add(const Track& track) {
+			msgque.push_back(message_playlist_update_ref(new message_playlist_update(track)));
+		}
+
+		/// removes track at given position from the playlist
+		virtual void remove(uint32 pos) {
+			msgque.push_back(message_playlist_update_ref(new message_playlist_update(pos)));
+		}
+
+		/// inserts given track at given position in the playlist
+		virtual void insert(uint32 pos, const Track& track) {
+			msgque.push_back(message_playlist_update_ref(new message_playlist_update(track, pos)));
+		}
+
+		/// moves track from a given position to another one
+		virtual void move(uint32 from, uint32 to) {
+			msgque.push_back(message_playlist_update_ref(new message_playlist_update(from, to)));
+		}
+
+		/// clears all tracks from the playlist
+		virtual void clear() {
+			msgque.push_back(message_playlist_update_ref(new message_playlist_update()));
+		}
+
+		/// returns the number of tracks in the playlist
+		virtual uint32 size() const {
+			return data.size();
+		}
+
+		/// returns the track at the given position
+		virtual const Track& get(uint32 pos) const {
+			return data.get(pos);
+		}
+		
+		messageref pop_msg() {
+			message_playlist_update_ref ret;
+			if (!msgque.empty()) {
+				ret = msgque.front();
+				ret->apply(&data);
+				msgque.pop_front();
+			}
+
+			return ret;
+		}
+};
+
 class Server {
 	public:
 		Server(int listen_port, string server_name)
@@ -23,6 +77,7 @@ class Server {
 		}
 
 		void handle_received_message(const messageref m, ClientID id) {
+			//playlist.q_clear();
 			switch(m->get_type()) {
 				case message::MSG_CONNECT: {
 					dcerr("Received a MSG_CONNECT from " << id);
@@ -57,7 +112,7 @@ class Server {
 		}
 
 	private:
-		Playlist playlist;
+		ServerPlaylist playlist;
 		network_handler networkhandler;
 };
 
