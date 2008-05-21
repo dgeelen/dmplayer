@@ -57,6 +57,7 @@ public:
 	MetaDataMap metadata;
 	Track(TrackID id_, MetaDataMap metadata_);
 
+	Track() {};
 private:
 	friend class boost::serialization::access;
 	template<class Archive>
@@ -64,7 +65,6 @@ private:
 		ar & id;
 		ar & metadata;
 	}
-	Track() {};
 };
 
 class TrackDataBase {
@@ -79,12 +79,87 @@ class TrackDataBase {
 		std::vector<LocalTrack> entries;
 };
 
-class Playlist {
+class IPlaylist {
 	public:
-		Playlist();
-		void vote(TrackID id);
-//	private:
-		std::vector<Track> entries;
+		/// adds given track to the end of the playlist
+		virtual void add(const Track& track) = 0;
+
+		/// removes track at given position from the playlist
+		virtual void remove(uint32 pos) = 0;
+
+		/// inserts given track at given position in the playlist
+		virtual void insert(uint32 pos, const Track& track) = 0;
+
+		/// moves track from a given position to another one
+		virtual void move(uint32 from, uint32 to) = 0;
+
+		/// clears all tracks from the playlist
+		virtual void clear() = 0;
+
+		/// returns the number of tracks in the playlist
+		virtual uint32 size() const = 0;
+
+		/// returns the track at the given position
+		virtual const Track& get(uint32 pos) const = 0;
+
+		/// here comes iterator magix
+		struct const_iterator {
+			const_iterator() : playlist(NULL), pos(0) {};
+			const_iterator(const class IPlaylist* playlist_, int32 pos_) : playlist(playlist_), pos(pos_) {};
+			const class IPlaylist* playlist;
+			int32 pos;
+			const Track& operator*() { return playlist->get(pos); };
+			typedef std::random_access_iterator_tag iterator_category;
+			typedef int32 difference_type;
+			typedef const Track value_type;
+			typedef const Track* pointer;
+			typedef const Track& reference;
+			bool operator==(const const_iterator& o) const { return (playlist == o.playlist) && (pos == o.pos); };
+			const_iterator operator++() { ++pos; return *this; };
+		};
+
+		const_iterator begin() const { return const_iterator(this, 0); };
+		const_iterator end() const { return const_iterator(this, size()); };
+};
+
+class PlaylistVector : public IPlaylist {
+	private:
+		std::vector<Track> data;
+	public:
+		virtual void add(const Track& track) {
+			data.push_back(track);
+		}
+
+		virtual void remove(uint32 pos) {
+			data.erase(data.begin()+pos);
+		}
+
+		virtual void insert(uint32 pos, const Track& track) {
+			data.insert(data.begin()+pos, track);
+		}
+
+		virtual void move(uint32 from, uint32 to) {
+			Track t = get(from);
+			if (from <= to) {
+				insert(to, t);
+				remove(from);
+			} else {
+				remove(from);
+				insert(to, t);
+			}
+		}
+
+		virtual void clear() {
+			data.clear();
+		}
+
+		virtual uint32 size() const {
+			return data.size();
+		}
+
+		virtual const Track& get(uint32 pos) const {
+			return data[pos];
+		}
 };
 
 #endif
