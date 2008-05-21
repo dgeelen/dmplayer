@@ -13,7 +13,8 @@
 #ifndef NETWORK_PROTOCOL_H
 	#define NETWORK_PROTOCOL_H
 	#include "cross-platform.h"
-	#include "network-core.h"
+	#include "network/network-core.h"
+	#include "packet.h"
 	#include "playlist_management.h"
 	#include <boost/thread/thread.hpp>
 	#include <boost/signal.hpp>

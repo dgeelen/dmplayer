@@ -2,7 +2,7 @@
 #define DECODER_HTTPSTREAM_H
 
 #include "decoder_interface.h"
-#include "../network-core.h"
+#include "../network/network-core.h"
 
 #include <string>
 

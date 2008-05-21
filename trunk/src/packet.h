@@ -13,6 +13,8 @@
 #include <map>
 #include "types.h"
 #include "playlist_management.h"
+#include "network/network-core.h"
+
 
 /** ** ** ** ** ** ** ** **
  *       UDP Packet       *
@@ -27,17 +29,31 @@ enum packet_types {
 #define PACKET_SIZE 1400
 
 class packet {
+	private:
+		uint8 databuf[PACKET_SIZE];
+		int curpos;
 	public:
-		uint8 data[PACKET_SIZE];
 
 		packet() {
 			reset();
 		}
 
+		uint8* data() {
+			return databuf;
+		}
+
+		uint32 size() {
+			return data_length();
+		}
+
+		uint32 maxsize() {
+			return PACKET_SIZE;
+		}
+
 		template <typename T>
 		typename boost::enable_if<boost::is_unsigned<T> >::type serialize(const T& var) {
 			for (int i = 0; i < sizeof(T); ++i)
-				data[curpos++] = (uint8)((var >> (i<<3)) & 0xFF);
+				databuf[curpos++] = (uint8)((var >> (i<<3)) & 0xFF);
 		}
 
 		template <typename T>
@@ -45,7 +61,7 @@ class packet {
 		deserialize(T& var) {
 			var = 0;
 			for (int i = 0; i < sizeof(T); ++i)
-				var |= data[curpos++] << (i<<3);
+				var |= databuf[curpos++] << (i<<3);
 		}
 
 		template <typename T>
@@ -83,8 +99,6 @@ class packet {
 				var[i] = t;
 			}
 		}
-		private:
-			int curpos;
 };
 
 /** ** ** ** ** ** ** ** **
@@ -247,5 +261,8 @@ class message_playlist_update : public message {
 //		message_playlist_update() : message(MSG_PLAYLIST_UPDATE) {};
 };
 typedef boost::shared_ptr<message_playlist_update> message_playlist_update_ref;
+
+void operator<<(tcp_socket& sock, const messagecref msg);
+void operator>>(tcp_socket& sock,       messageref& msg);
 
 #endif //PACKET_H
