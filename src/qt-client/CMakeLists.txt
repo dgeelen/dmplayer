@@ -44,11 +44,13 @@ IF(ENABLE_QT_GUI)
 	SET(SRC_FILES
 		Main.cpp
 		MainWindow.cpp
+		QPlaylist.cpp
 	)
 
 	# List other files used
 	SET(OTHER_FILES
 		MainWindow.h
+		QPlaylist.h
 		../network-handler.h
 		../network-handler.cpp
 		../error-handling.cpp
