@@ -8,10 +8,11 @@ SUBDIRS(util)
 SUBDIRS(gtk-client)
 SUBDIRS(qt-client)
 SUBDIRS(audio)
+SUBDIRS(network)
+
 
 ADD_EXECUTABLE(mpmpd
 	mpmpd.h mpmpd.cpp
-	network-core.h network-core.cpp
 	network-handler.h network-handler.cpp
 	cross-platform.h
 	error-handling.h error-handling.cpp
@@ -28,6 +29,7 @@ TARGET_LINK_LIBRARIES(mpmpd
 	${BOOST_SERIALIZATION_LIBRARY}
 	mpmp_audio
 	mpmp_util
+	lib_network
 )
 
 INCLUDE_DIRECTORIES("D:/Stuff/Projects/dMPlayer/portaudio_v18_1/pa_common")
