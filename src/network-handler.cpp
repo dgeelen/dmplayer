@@ -224,6 +224,7 @@ void network_handler::receive_packet_handler() {
 		if(message_length == SOCKET_ERROR)
 			dcerr("network_handler: Network reports error #" << NetGetLastError());
 		else {
+			received_packet.reset();
 			int packet_type = received_packet.deserialize<uint8>();
 			switch(packet_type) {
 				case PT_QUERY_SERVERS: {
