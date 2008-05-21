@@ -8,6 +8,7 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits.hpp>
+#include <boost/foreach.hpp>
 #include <string>
 #include <map>
 #include "types.h"
@@ -90,7 +91,7 @@ class packet {
  *      TCP Packets       *
  ** ** ** ** ** ** ** ** **/
 
-#define NETWERK_PROTOCOL_VERSION 1
+#define NETWERK_PROTOCOL_VERSION 2
 
 class message {
 	// is not used, but marks inheritance as virtual
@@ -169,23 +170,81 @@ typedef boost::shared_ptr<message_accept> message_accept_ref;
 
 class message_playlist_update : public message {
 	public:
-		message_playlist_update(Playlist playlist) : message(MSG_PLAYLIST_UPDATE) {
-			do_clear = true;
-			do_pushback = playlist.entries;
+		enum update_type {
+			UPDATE_CLEAR,
+			UPDATE_MOVE,
+			UPDATE_INSERT,
 		};
+	public:
+		message_playlist_update() : message(MSG_PLAYLIST_UPDATE) {
+			utype = UPDATE_CLEAR;
+			data_list.clear();
+		};
+		message_playlist_update(const IPlaylist& playlist) : message(MSG_PLAYLIST_UPDATE) {
+			utype = UPDATE_CLEAR;
+			data_list.clear();
+			BOOST_FOREACH(const Track& track, playlist)
+				data_list.push_back(track);
+		};
+		message_playlist_update(Track track, uint32 pos = 0xFFFFFFFF) : message(MSG_PLAYLIST_UPDATE) {
+			utype = UPDATE_INSERT;
+			data_track = track;
+			data_index = pos;
+
+		};
+		message_playlist_update(uint32 from, uint32 to = 0xFFFFFFFF) : message(MSG_PLAYLIST_UPDATE) {
+			utype = UPDATE_MOVE;
+			data_index = from;
+			data_index2 = to;
+		};
+
+		void apply(IPlaylist* playlist) {
+			switch (utype) {
+				case UPDATE_CLEAR: {
+					playlist->clear();
+					BOOST_FOREACH(const Track& t, data_list)
+						playlist->add(t);
+				}; break;
+				case UPDATE_INSERT: {
+					if (data_index == 0xFFFFFFFF)
+						playlist->add(data_track);
+					else
+						playlist->insert(data_index, data_track);
+				}; break;
+				case UPDATE_MOVE: {
+					if (data_index2 == 0xFFFFFFFF)
+						playlist->remove(data_index);
+					else
+						playlist->move(data_index, data_index2);
+				}; break;
+			};
+		}
 	private:
-		bool do_clear;
-		std::vector<Track> do_pushback;
+		update_type utype;
+		std::vector<Track> data_list;
+		Track data_track;
+		uint32 data_index, data_index2;
 
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive & ar, const unsigned int version) {
 			ar & boost::serialization::base_object<message>(*this);
-
-			ar & do_clear;
-			ar & do_pushback;
+			ar & utype;
+			switch (utype) {
+				case UPDATE_CLEAR: {
+					ar & data_list;
+				}; break;
+				case UPDATE_INSERT: {
+					ar & data_index;
+					ar & data_track;
+				}; break;
+				case UPDATE_MOVE: {
+					ar & data_index;
+					ar & data_index2;
+				}; break;
+			};
 		}
-		message_playlist_update() : message(MSG_PLAYLIST_UPDATE) {};
+//		message_playlist_update() : message(MSG_PLAYLIST_UPDATE) {};
 };
 typedef boost::shared_ptr<message_playlist_update> message_playlist_update_ref;
 

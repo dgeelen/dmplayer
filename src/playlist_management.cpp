@@ -71,6 +71,3 @@ void TrackDataBase::add(fs::path path) {
 	meta_data["FILENAME"] = path.leaf();
 	entries.push_back(LocalTrack(get_first_free_id(), path, meta_data));
 }
-
-Playlist::Playlist() {
-}
