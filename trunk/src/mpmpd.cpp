@@ -15,17 +15,18 @@ using namespace std;
 
 class Server {
 	public:
-		Server(int listen_port, string server_name) {
-		dcerr("Starting network_handler");
-		networkhandler = boost::shared_ptr<network_handler>(new network_handler(listen_port, server_name));
-		networkhandler->message_receive_signal_with_id.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
+		Server(int listen_port, string server_name)
+			: networkhandler(listen_port, server_name) 
+		{
+			dcerr("Started network_handler");
+			networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
 		}
 
 		void handle_received_message(const messageref m, ClientID id) {
 			switch(m->get_type()) {
 				case message::MSG_CONNECT: {
 					dcerr("Received a MSG_CONNECT from " << id);
-					networkhandler->send_message(id, messageref(new message_playlist_update(playlist)));
+					networkhandler.send_message(id, messageref(new message_playlist_update(playlist)));
 				} break;
 				case message::MSG_ACCEPT: {
 					dcerr("Received a MSG_ACCEPT from " << id);
@@ -57,7 +58,7 @@ class Server {
 
 	private:
 		Playlist playlist;
-		boost::shared_ptr<network_handler> networkhandler;
+		network_handler networkhandler;
 };
 
 int main_impl(int argc, char* argv[])

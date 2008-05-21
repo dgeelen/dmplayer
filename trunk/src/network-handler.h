@@ -51,8 +51,8 @@
 			boost::signal<void(const std::vector<server_info>&)> server_list_update_signal;
 			boost::signal<void(const server_info&)> server_list_added_signal; // fixme: actually call this
 			boost::signal<void(const server_info&)> server_list_removed_signal;
-			boost::signal<void(const messageref)> message_receive_signal; // For client
-			boost::signal<void(const messageref, ClientID)> message_receive_signal_with_id; // for server
+			boost::signal<void(const messageref)> client_message_receive_signal;
+			boost::signal<void(const messageref, ClientID)> server_message_receive_signal;
 			void client_connect_to_server( ipv4_socket_addr dest );
 			void send_message(ClientID id, messageref msg);
 
