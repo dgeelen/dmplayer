@@ -54,7 +54,6 @@ IF(ENABLE_QT_GUI)
 		../network-handler.h
 		../network-handler.cpp
 		../error-handling.cpp
-		../network-core.cpp
 		../playlist_management.cpp
 		../packet.h ../packet.cpp
 	)
@@ -68,7 +67,7 @@ IF(ENABLE_QT_GUI)
 	QT4_ADD_RESOURCES(ResourceFiles icons.qrc)
 
 	# List sources needed by our executable
-	ADD_EXECUTABLE(qt-simple-test
+	ADD_EXECUTABLE(qt-mpmp-client
 		${SRC_FILES}
 		${UI_FILES}
 		${OTHER_FILES}
@@ -77,7 +76,7 @@ IF(ENABLE_QT_GUI)
 	)
 
 	# Link our executable against needed Qt4 libraries
-	TARGET_LINK_LIBRARIES(qt-simple-test
+	TARGET_LINK_LIBRARIES(qt-mpmp-client
 		${QT_LIBRARIES}
 		${BOOST_SIGNALS_LIBRARY}
 		${BOOST_THREAD_LIBRARY}
@@ -85,6 +84,7 @@ IF(ENABLE_QT_GUI)
 		${BOOST_FILESYSTEM_LIBRARY}
 		mpmp_audio
 		mpmp_util
+		lib_network
 	)
 
 	IF(MSVC)
