@@ -58,7 +58,14 @@ tcp_socket::tcp_socket( const ipv4_addr addr, const uint16 port )
 
 uint32 tcp_socket::send( const uint8* buf, const uint32 len )
 {
-	return ::send(sock, (char*)buf, len, 0);
+	uint32 done = 0;
+	while (done < len) {
+		int sent = ::send(sock, (char*)buf+done, len-done, 0);
+		if (sent <= 0)
+			return done;
+		done += sent;
+	}
+	return done;
 }
 
 uint32 tcp_socket::receive( const uint8* buf, const uint32 len )
@@ -101,6 +108,11 @@ void tcp_socket::disconnect()
 		closesocket(sock);
 		sock = INVALID_SOCKET;
 	}
+}
+
+tcp_socket::~tcp_socket()
+{
+	disconnect();
 }
 
 ipv4_socket_addr tcp_socket::get_ipv4_socket_addr() {
