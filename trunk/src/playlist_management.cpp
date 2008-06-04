@@ -1,6 +1,9 @@
 #include "playlist_management.h"
 #include "error-handling.h"
-#include "boost/algorithm/string/case_conv.hpp"
+
+#include "util/StrFormat.h"
+
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/foreach.hpp>
 
 namespace fs = boost::filesystem;
@@ -70,4 +73,8 @@ void TrackDataBase::add(fs::path path) {
 	MetaDataMap meta_data;
 	meta_data["FILENAME"] = path.leaf();
 	entries.push_back(LocalTrack(get_first_free_id(), path, meta_data));
+}
+
+std::string Track::idstr() const {
+	return STRFORMAT("%08x%08x", id.first, id.second);
 }

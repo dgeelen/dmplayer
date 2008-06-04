@@ -18,6 +18,7 @@ ADD_EXECUTABLE(mpmpd
 	error-handling.h error-handling.cpp
 	playlist_management.h playlist_management.cpp
 	types.h
+	libexecstream/exec-stream.cpp
 	packet.h packet.cpp
 )
 
@@ -33,6 +34,7 @@ TARGET_LINK_LIBRARIES(mpmpd
 )
 
 INCLUDE_DIRECTORIES("D:/Stuff/Projects/dMPlayer/portaudio_v18_1/pa_common")
+INCLUDE_DIRECTORIES("libexecstream")
 
 IF(WIN32)
 	TARGET_LINK_LIBRARIES(mpmpd

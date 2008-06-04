@@ -52,24 +52,7 @@ HTTPStreamDataSource::HTTPStreamDataSource(std::string url)
 		hoststr.erase(colonpos);
 	}
 
-	ipv4_addr address;
-	{
-		unsigned long hostaddr = inet_addr( hoststr.c_str() );
-		if( hostaddr == INADDR_NONE )
-		{
-			hostent *host = gethostbyname( hoststr.c_str() );
-			if(host)
-				hostaddr = *reinterpret_cast<unsigned long *>( host->h_addr_list[0] );
-			else
-				hostaddr = INADDR_NONE;
-
-			if( hostaddr == INADDR_NONE )
-			{
-				throw HTTPException("failed to find host adress");
-			}
-		}
-		address.full = hostaddr;
-	}
+	ipv4_addr address = ipv4_lookup(hoststr);
 
 	conn = new tcp_socket(address, port);
 
