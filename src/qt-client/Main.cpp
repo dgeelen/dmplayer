@@ -6,6 +6,9 @@
 #include <boost/bind.hpp>
 #include "QtBooster.h"
 
+#include <QProcess>
+#include <QDir>
+
 using namespace std;
 
 class MyQApplication : public QApplication {

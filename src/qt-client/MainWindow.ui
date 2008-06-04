@@ -533,7 +533,7 @@
  <customwidgets>
   <customwidget>
    <class>QPlaylist</class>
-   <extends>QListWidget</extends>
+   <extends>QTreeWidget</extends>
    <header>QPlaylist.h</header>
   </customwidget>
  </customwidgets>
