@@ -148,6 +148,13 @@ void tcp_listen_socket::listen(const ipv4_addr addr, const uint16 portnumber)
 		throw std::exception(ss.str().c_str());
 	}
 
+	int addrlen = sizeof( addr_in );
+	if (getsockname(sock, ( sockaddr* )&addr_in, &addrlen) == SOCKET_ERROR ) {
+		closesocket(sock);
+		throw std::exception("unable to retrieve port");
+	}
+	port = htons(addr_in.sin_port); // assume x = htons(htons(x))
+
 	if(::listen(sock, 16)) { //Queue up to 16 connections
 		cout << "tcp_listen_socket: Could not listen() on socket: error " << NetGetLastError() << "\n";
 	}
@@ -163,6 +170,10 @@ tcp_socket* tcp_listen_socket::accept() {
 }
 
 udp_socket::udp_socket(const ipv4_addr addr, const uint16 portnumber) {
+	bind(addr, portnumber);
+}
+
+bool udp_socket::bind(const ipv4_addr addr, const uint16 portnumber) {
 	sock = socket( AF_INET, SOCK_DGRAM, 0 );
 
 	sockaddr_in addr_in;
@@ -170,7 +181,7 @@ udp_socket::udp_socket(const ipv4_addr addr, const uint16 portnumber) {
 	addr_in.sin_addr.s_addr = (addr.full == 0) ? INADDR_ANY : addr.full;
 	addr_in.sin_port = htons( portnumber );
 
-	if (portnumber && ::bind( sock, ( sockaddr* )&addr_in, sizeof( addr_in ) ) == SOCKET_ERROR ) {
+	if (/*portnumber && */::bind( sock, ( sockaddr* )&addr_in, sizeof( addr_in ) ) == SOCKET_ERROR ) {
 		closesocket( sock );
 		stringstream ss;
 		ss << "udp_socket: Bind to network failed: error " << NetGetLastError();
@@ -185,6 +196,7 @@ udp_socket::udp_socket(const ipv4_addr addr, const uint16 portnumber) {
 		ss << "udp_socket: Unable to enable broadcasting: error " << NetGetLastError();
 		throw std::exception(ss.str().c_str());
 	};
+	return true;
 }
 
 uint32 udp_socket::send( const ipv4_addr dest_addr, const uint16 dest_port, const uint8* buf, const uint32 len ) {
@@ -198,10 +210,12 @@ uint32 udp_socket::send( const ipv4_addr dest_addr, const uint16 dest_port, cons
 uint32 udp_socket::receive( ipv4_addr* from_addr, uint16* from_port, const uint8* buf, const uint32 len ) {
 	sockaddr_in addr_in;
 	socklen_t addr_in_len = sizeof(addr_in);
-	uint32 retval = recvfrom( sock, (char*)buf, len, 0, (sockaddr*)&addr_in, &addr_in_len);
+	int32 retval = recvfrom( sock, (char*)buf, len, 0, (sockaddr*)&addr_in, &addr_in_len);
 	from_addr->full = addr_in.sin_addr.s_addr;
 	*from_port = ntohs(addr_in.sin_port);
-	return retval;
+	if (retval >0)
+		return retval;
+	return 0;
 }
 
 void udp_socket::close()
@@ -244,12 +258,12 @@ ipv4_addr ipv4_lookup(const std::string& host)
 	return address;
 }
 
-void tcp_socket::swap(tcp_socket* o)
+void tcp_socket::swap(tcp_socket& o)
 {
 	ipv4_socket_addr taddr = peer;
 	SOCKET tsock = sock;
-	peer = o->peer;
-	sock = o->sock;
-	o->peer = taddr;
-	o->sock = tsock;
+	peer = o.peer;
+	sock = o.sock;
+	o.peer = taddr;
+	o.sock = tsock;
 }

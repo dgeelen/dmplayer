@@ -92,7 +92,7 @@ class tcp_socket {
 		uint32 send( const uint8* buf, const uint32 len );
 		uint32 receive( const uint8* buf, const uint32 len );
 		void disconnect();
-		void swap(class tcp_socket* o);
+		void swap(class tcp_socket& o);
 		SOCKET getSocketHandle() { return sock; };
 	private:
 		SOCKET sock;
@@ -111,8 +111,10 @@ class tcp_listen_socket {
 		tcp_listen_socket(const ipv6_addr addr, const uint16 portnumber);
 		tcp_socket* accept();
 		SOCKET getSocketHandle() { return sock; };
+		uint16 getPortNumber() { return port; };
 	private:
 		SOCKET sock;
+		uint16 port;
 };
 
 class udp_socket {
