@@ -45,12 +45,15 @@ IF(ENABLE_QT_GUI)
 		Main.cpp
 		MainWindow.cpp
 		QPlaylist.cpp
+		QToggleHeaderAction.cpp
 	)
 
 	# List other files used
 	SET(OTHER_FILES
 		MainWindow.h
 		QPlaylist.h
+		QtBooster.h
+		QToggleHeaderAction.h
 		../network-handler.h
 		../network-handler.cpp
 		../error-handling.cpp

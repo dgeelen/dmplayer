@@ -1,16 +1,26 @@
 #ifndef QPLAYLIST_H
 #define QPLAYLIST_H
 
-#include <QListWidget>
+#include <QTreeWidget>
+#include <QMenu>
 #include "../playlist_management.h"
 
-class QPlaylist: public PlaylistVector, public QListWidget {
+
+class QPlaylist: public QTreeWidget, public PlaylistVector {
+	Q_OBJECT
+
+	private:
+		QMenu contextMenu;
+
 	public:
 		QPlaylist(QWidget* parent);
-		virtual void vote(TrackID id);
-		virtual void add(Track track);
+		~QPlaylist();
+
+		virtual void add(const Track& track);
+		virtual void remove(uint32 pos);
+		virtual void insert(uint32 pos, const Track& track);
+		virtual void move(uint32 from, uint32 to);
 		virtual void clear();
-		virtual ~QPlaylist();
 };
 
 #endif//QPLAYLIST_H

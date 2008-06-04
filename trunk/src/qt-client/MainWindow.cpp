@@ -14,6 +14,14 @@ MainWindow::MainWindow()
 
 	/* remove central widget & statusbar */
 	this->centralWidget()->setParent(&QWidget());
+
+	{
+		//QStringList headers;
+		//headers << "id";
+		//dcerr("before : " << PlayListWidget->header());
+		//PlayListWidget->setHeaderLabels(headers);
+		//dcerr("after : " << PlayListWidget->header());
+	}
 	//this->setStatusBar(NULL);
 
 	/* fill view menu & force docks to top*/
@@ -256,7 +264,7 @@ void MainWindow::handleReceivedMessage(const messageref m)
 		}; break;
 		case message::MSG_PLAYLIST_UPDATE: {
 			message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
-			//msg->apply(PlayListWidget);
+			msg->apply(PlayListWidget);
 		}; break;
 	}
 	m.get();
