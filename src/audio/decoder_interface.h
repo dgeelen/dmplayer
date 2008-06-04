@@ -11,7 +11,7 @@
 typedef boost::shared_ptr<class IDecoder> IDecoderRef;
 class IDecoder: public IAudioSource {
 	public:
-		IDecoder(AudioFormat af) : IAudioSource(af) {};
+		IDecoder(AudioFormat af = AudioFormat()) : IAudioSource(af) {};
 
 		static IDecoderRef findDecoder(IDataSourceRef ds);
 

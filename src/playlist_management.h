@@ -57,6 +57,8 @@ public:
 	MetaDataMap metadata;
 	Track(TrackID id_, MetaDataMap metadata_);
 
+	std::string idstr() const;
+
 	Track() {};
 private:
 	friend class boost::serialization::access;

@@ -51,10 +51,22 @@ IF(LIBAO_FOUND) # Xiph.org libao backend
 	ADD_DEFINITIONS(-DLIBAO_BACKEND)
 ENDIF(LIBAO_FOUND)
 
+SET(ENABLE_MENCODER_DECODER OFF CACHE BOOL "Enable building of the mencoder decoder")
+
+IF(ENABLE_MENCODER_DECODER)
+	SET(DECODER_NAMES ${DECODER_NAMES} Mencoder)
+	SET(DECODER_SOURCE_FILES ${DECODER_SOURCE_FILES}
+		../libexecstream/exec-stream.cpp ../libexecstream/exec-stream.h
+	)
+ENDIF(ENABLE_MENCODER_DECODER)
+
 # Set up all demuxer before the decoders to prevent the
 # decoders from detecting encapsulated data
 IF(LIBOGG_FOUND) # Xiph.org OGG decoder (demuxer really)
 	SET(DECODER_NAMES ${DECODER_NAMES} OGG)
+	SET(DECODER_SOURCE_FILES ${DECODER_SOURCE_FILES}
+		datasource_oggstream.cpp datasource_oggstream.h
+	)
 	SET(DECODER_LIBRARIES ${DECODER_LIBRARIES} ${LIBOGG_LIBRARY})
 	INCLUDE_DIRECTORIES(${LIBOGG_INCLUDE_DIR})
 	# The OGG decoder has a bundled datasource, since it
