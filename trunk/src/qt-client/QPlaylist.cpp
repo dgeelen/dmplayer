@@ -13,16 +13,20 @@ QPlaylist::QPlaylist(QWidget* parent)
 	{
 		QStringList headers;
 		headers << "id";
+		headers << "filename";
 		//dcerr("before : " << PlayListWidget->header());
 		this->setHeaderLabels(headers);
+		//this->hideColumn(1);
 
 		//dcerr("after : " << PlayListWidget->header());
 	}
 
 	//this->headeri
 
-	QAction* a = new QToggleHeaderAction(this->header(), "id", 0);
+	QAction* a = new QToggleHeaderAction(this, "id", 0);
 	this->header()->addAction(a);
+	QAction* b = new QToggleHeaderAction(this, "filename", 1);
+	this->header()->addAction(b);
 	//QObject::connect(a, SIGNAL(triggered()), this->header(),
 
 	//QAction* a = new QToggleHeaderAction(this->header(), 0);
@@ -35,9 +39,12 @@ QPlaylist::QPlaylist(QWidget* parent)
 void QPlaylist::add(const Track& track)
 {
 	PlaylistVector::add(track);
+	//Track& tr = PlaylistVector::get(PlaylistVector::size()-1);
+
 
 	QTreeWidgetItem* item = new QTreeWidgetItem(this, QStringList());
 	item->setText(0, QString::fromStdString(track.idstr()));
+	item->setText(1, QString::fromStdString(track.metadata.find("FILENAME")->second));
 	//QTreeWidget::addItem(track.id().str());
 }
 

@@ -279,6 +279,8 @@ QtBooster<X, Y> makeQtBooster(X* tgt, Y mtype, char* mdesc)
 
 #define QTBOOSTER(x, y) makeQtBooster(x, &y, #y)
 
+#if 0
+
 #include <fstream>
 #include <string>
 
@@ -334,4 +336,7 @@ void generateQtBoosterImplementation(std::string fname) {
 		out << TABS(0) << "}" << '\n';
 	}
 }
+#endif//#if 0
+
 #endif//QT_BOOSTER_H
+
