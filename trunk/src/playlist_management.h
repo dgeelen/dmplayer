@@ -43,14 +43,6 @@ typedef boost::filesystem::path fspath;
 
 //typedef std::pair<TrackID, MetaDataMap> SearchResult;
 
-struct LocalTrack {
-	LocalTrackID id;
-	fspath filename;
-	MetaDataMap metadata;
-
-	LocalTrack(LocalTrackID id_, fspath filename_, MetaDataMap metadata_);
-};
-
 class Track {
 public:
 	TrackID id;
@@ -68,6 +60,19 @@ private:
 		ar & metadata;
 	}
 };
+
+struct LocalTrack {
+	LocalTrackID id;
+	fspath filename;
+	MetaDataMap metadata;
+
+	LocalTrack(LocalTrackID id_, fspath filename_, MetaDataMap metadata_);
+
+	Track getTrack() {
+		return Track(TrackID(ClientID(-1),id), metadata);
+	}
+};
+
 
 class TrackDataBase {
 	public:

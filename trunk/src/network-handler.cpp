@@ -162,7 +162,7 @@ void network_handler::send_packet_handler() {
 	ipv4_addr broadcast_addr;
 	broadcast_addr.full = INADDR_BROADCAST;
 	uint16 port_number = 0;
-	udp_qsock = udp_socket( broadcast_addr, 0);
+	udp_qsock = udp_socket(0, 0);
 
 	dcerr("Network send thread: starting ping loop");
 	packet request_servers_packet;

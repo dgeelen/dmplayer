@@ -157,13 +157,15 @@ int main_impl(int argc, char* argv[])
 		ac.test_functie(filename);
 	}
 
-	TrackDataBase tdb;
-	tdb.add_directory( musix );
-	map<string, string> m;
-	m["FILENAME"] = findtext;
-	vector<LocalTrack> s = tdb.search(m);
-	BOOST_FOREACH(LocalTrack& tr, s) {
-		dcerr( tr.filename );
+	if (musix != "") {
+		TrackDataBase tdb;
+		tdb.add_directory( musix );
+		map<string, string> m;
+		m["FILENAME"] = findtext;
+		vector<LocalTrack> s = tdb.search(m);
+		BOOST_FOREACH(LocalTrack& tr, s) {
+			dcerr( tr.filename );
+		}
 	}
 
 	cout << "Press any key to quit\n";
