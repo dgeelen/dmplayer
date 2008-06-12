@@ -2,18 +2,20 @@
 
 #include <QTreeWidget>
 
-QToggleHeaderAction::QToggleHeaderAction(QHeaderView* header_, const QString& name_, int pos_)
-: header(header_)
-, pos(pos)
-, QAction(name_, NULL)
+QToggleHeaderAction::QToggleHeaderAction(QTreeView* widget, const QString& name_, int pos_)
+: view(widget)
+, pos(pos_)
+, QAction(name_, widget)
 {
 	QObject::connect(this, SIGNAL(triggered(bool)), this, SLOT(execute(bool)));
+	this->setCheckable(true);
 }
 
 void QToggleHeaderAction::execute(bool checked)
 {
 	if (checked)
-		header->showSection(pos);
+		view->showColumn(pos);
 	else
-		header->hideSection(pos);
+		view->hideColumn(pos);
+	//this->toggle();
 }

@@ -66,12 +66,6 @@ int main_impl(int argc, char **argv )
 	qRegisterMetaType<std::string>("std::string");
 	qRegisterMetaType<messageref>("messageref");
 
-#ifdef DEBUG
-	lognamespace::logsignal.connect(
-		QTBOOSTER(&mainwindow, MainWindow::DebugLogger)
-	);
-#endif
-
 	network_handler nh(12345);
 	nh.server_list_update_signal.connect(
 		QTBOOSTER(&mainwindow, MainWindow::UpdateServerList)

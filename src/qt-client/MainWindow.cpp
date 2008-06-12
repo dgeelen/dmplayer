@@ -8,9 +8,17 @@
 
 #include <boost/foreach.hpp>
 
+#include "QtBooster.h"
+
 MainWindow::MainWindow()
 {
 	setupUi(this);
+
+#ifdef DEBUG
+	lognamespace::logsignal.connect(
+		QTBOOSTER(this, MainWindow::DebugLogger)
+	);
+#endif
 
 	/* remove central widget & statusbar */
 	this->centralWidget()->setParent(&QWidget());
@@ -80,6 +88,19 @@ MainWindow::MainWindow()
 			rcfile.write("\n",1);
 		}
 	}
+
+	// TODO: make gui input for this
+	tdb.add_directory( "d:\\stuff\\music");
+
+	MetaDataMap mdm;
+	mdm["FILENAME"] = "mp3";
+		std::vector<LocalTrack> yay = tdb.search(mdm);
+	BOOST_FOREACH(LocalTrack& tr, yay) {
+		DataBaseWidget->add(tr.getTrack());
+		//dcerr( tr.filename );
+	}
+
+
 }
 
 void MainWindow::closeEvent(QCloseEvent * evnt)

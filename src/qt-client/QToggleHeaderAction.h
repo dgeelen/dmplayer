@@ -2,13 +2,13 @@
 #define Q_TOGGLE_HEADER_ACTION_H
 
 #include <QAction>
-#include <QHeaderView>
+#include <QTreeView>
 
 class QToggleHeaderAction: public QAction {
 	Q_OBJECT
 
 	private:
-		QHeaderView* header;
+		QTreeView* view;
 		int pos;
 		QString name;
 
@@ -16,7 +16,7 @@ class QToggleHeaderAction: public QAction {
 		void execute(bool);
 		
 	public:
-		QToggleHeaderAction(QHeaderView* header_, const QString& name, int pos_);
+		QToggleHeaderAction(QTreeView* widget, const QString& name, int pos_);
 };
 
 #endif//Q_TOGGLE_HEADER_ACTION_H
