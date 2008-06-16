@@ -290,3 +290,13 @@ void MainWindow::handleReceivedMessage(const messageref m)
 	}
 	m.get();
 }
+
+void MainWindow::on_DataBaseWidget_doubleClicked(QModelIndex mi)
+{
+	TrackID theid = DataBaseWidget->get(mi.row()).id;
+
+	message_vote_ref msg(new message_vote(theid));
+
+	nh->send_server_message(msg);
+	
+}

@@ -67,6 +67,7 @@ int main_impl(int argc, char **argv )
 	qRegisterMetaType<messageref>("messageref");
 
 	network_handler nh(12345);
+	mainwindow.setNetworkHandler(&nh);
 	nh.server_list_update_signal.connect(
 		QTBOOSTER(&mainwindow, MainWindow::UpdateServerList)
 	);
