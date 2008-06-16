@@ -12,6 +12,7 @@
 #include "network-core.h"
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
@@ -54,7 +55,7 @@ void tcp_socket::connect( const ipv4_addr addr, const uint16 port )
 	try {
 		sock = socket( AF_INET, SOCK_STREAM, 0 );
 
-		if (sock == INVALID_SOCKET) throw std::exception("failed to create tcp socket");
+		if (sock == INVALID_SOCKET) throw std::runtime_error("failed to create tcp socket");
 
 		sockaddr_in addr_in;
 		addr_in.sin_family = AF_INET;
@@ -62,7 +63,7 @@ void tcp_socket::connect( const ipv4_addr addr, const uint16 port )
 		addr_in.sin_port = htons( port );
 
 		int res = ::connect(sock, (sockaddr*)&addr_in, sizeof(addr_in));
-		if (res == SOCKET_ERROR) throw std::exception("failed to connect tcp socket");
+		if (res == SOCKET_ERROR) throw std::runtime_error("failed to connect tcp socket");
 
 		peer = ipv4_socket_addr(ipv4_addr(addr_in.sin_addr.s_addr), addr_in.sin_port);
 	} catch (...) {
@@ -145,13 +146,13 @@ void tcp_listen_socket::listen(const ipv4_addr addr, const uint16 portnumber)
 		closesocket( sock );
 		stringstream ss;
 		ss << "tcp_listen_socket: Bind to network failed: error " << NetGetLastError();
-		throw std::exception(ss.str().c_str());
+		throw std::runtime_error(ss.str().c_str());
 	}
 
-	int addrlen = sizeof( addr_in );
+	socklen_t addrlen = sizeof( addr_in );
 	if (getsockname(sock, ( sockaddr* )&addr_in, &addrlen) == SOCKET_ERROR ) {
 		closesocket(sock);
-		throw std::exception("unable to retrieve port");
+		throw std::runtime_error("unable to retrieve port");
 	}
 	port = htons(addr_in.sin_port); // assume x = htons(htons(x))
 
@@ -185,7 +186,7 @@ bool udp_socket::bind(const ipv4_addr addr, const uint16 portnumber) {
 		closesocket( sock );
 		stringstream ss;
 		ss << "udp_socket: Bind to network failed: error " << NetGetLastError();
-		throw std::exception(ss.str().c_str());
+		throw std::runtime_error(ss.str().c_str());
 	}
 
 	// now enable broadcasting
@@ -194,7 +195,7 @@ bool udp_socket::bind(const ipv4_addr addr, const uint16 portnumber) {
 		closesocket( sock );
 		stringstream ss;
 		ss << "udp_socket: Unable to enable broadcasting: error " << NetGetLastError();
-		throw std::exception(ss.str().c_str());
+		throw std::runtime_error(ss.str().c_str());
 	};
 	return true;
 }
