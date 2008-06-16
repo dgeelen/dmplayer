@@ -27,6 +27,7 @@ IF(ENABLE_QT_GUI)
 
 	# add binary dir to include path so we can find the Qt4 generated headers
 	include_directories(${CMAKE_CURRENT_BINARY_DIR})
+	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 	# CMake fails to add all libraries needed for linking with staticially built Qt, so we do it ourselves
 	# TODO: maybe this is needed for msvc too
