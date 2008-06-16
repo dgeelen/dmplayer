@@ -123,11 +123,13 @@ ipv4_socket_addr tcp_socket::get_ipv4_socket_addr() {
 
 tcp_listen_socket::tcp_listen_socket(const uint16 portnumber)
 {
+	sock = INVALID_SOCKET;
 	listen(ipv4_addr(0), portnumber);
 }
 
 tcp_listen_socket::tcp_listen_socket(const ipv4_addr addr, const uint16 portnumber)
 {
+	sock = INVALID_SOCKET;
 	listen(addr, portnumber);
 }
 
