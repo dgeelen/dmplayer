@@ -13,6 +13,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 
 	private:
 		network_handler* nh;
+		ClientID localid;
 
 	protected:
 		void closeEvent(QCloseEvent * evnt);

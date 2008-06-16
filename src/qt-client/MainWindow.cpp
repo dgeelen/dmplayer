@@ -10,6 +10,8 @@
 
 #include "QtBooster.h"
 
+using namespace std;
+
 MainWindow::MainWindow()
 {
 	setupUi(this);
@@ -92,9 +94,10 @@ MainWindow::MainWindow()
 	// TODO: make gui input for this
 	tdb.add_directory( "d:\\stuff\\music");
 
-	MetaDataMap mdm;
-	mdm["FILENAME"] = "mp3";
-		std::vector<LocalTrack> yay = tdb.search(mdm);
+	Track mdmt;
+	mdmt.id.second = LocalTrackID(0xffffffff);
+	mdmt.metadata["FILENAME"] = "mp3";
+	std::vector<LocalTrack> yay = tdb.search(mdmt);
 	BOOST_FOREACH(LocalTrack& tr, yay) {
 		DataBaseWidget->add(tr.getTrack());
 		//dcerr( tr.filename );
@@ -278,7 +281,8 @@ void MainWindow::handleReceivedMessage(const messageref m)
 {
 	switch (m->get_type()) {
 		case message::MSG_ACCEPT: {
-			labelConnected->setText("Yes");
+			message_accept_ref msg = boost::static_pointer_cast<message_accept>(m);
+			localid = msg->cid;
 		}; break;
 		case message::MSG_DISCONNECT: {
 			labelConnected->setText("No");
@@ -286,6 +290,18 @@ void MainWindow::handleReceivedMessage(const messageref m)
 		case message::MSG_PLAYLIST_UPDATE: {
 			message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
 			msg->apply(PlayListWidget);
+		}; break;
+		case message::MSG_QUERY_TRACKDB: {
+			message_query_trackdb_ref msg = boost::static_pointer_cast<message_query_trackdb>(m);
+
+			vector<LocalTrack> local = tdb.search(msg->search);
+			vector<Track> result;
+			BOOST_FOREACH(LocalTrack tr, local) {
+				result.push_back(Track(TrackID(localid, tr.id), tr.metadata));
+			}
+
+			message_query_trackdb_result_ref sendmsg(new message_query_trackdb_result(msg->qid, result));
+			nh->send_server_message(sendmsg);
 		}; break;
 	}
 	m.get();
@@ -295,6 +311,7 @@ void MainWindow::on_DataBaseWidget_doubleClicked(QModelIndex mi)
 {
 	TrackID theid = DataBaseWidget->get(mi.row()).id;
 
+	theid.first = localid;
 	message_vote_ref msg(new message_vote(theid));
 
 	nh->send_server_message(msg);

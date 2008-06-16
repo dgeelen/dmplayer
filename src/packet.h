@@ -173,12 +173,17 @@ typedef boost::shared_ptr<message_disconnect> message_disconnect_ref;
 
 class message_accept : public message {
 	public:
-		message_accept() : message(MSG_ACCEPT) {};
+		message_accept(ClientID cid_) : message(MSG_ACCEPT), cid(cid_) {};
+
+		ClientID cid;
 	private:
+		message_accept() {};
+
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive & ar, const unsigned int version) {
 			ar & boost::serialization::base_object<message>(*this);
+			ar & cid;
 		}
 };
 typedef boost::shared_ptr<message_accept> message_accept_ref;
@@ -186,6 +191,8 @@ typedef boost::shared_ptr<message_accept> message_accept_ref;
 class message_vote : public message {
 	public:
 		message_vote(TrackID id_) : message(MSG_VOTE), id(id_) {};
+
+		TrackID getID() { return id; };
 	private:
 		TrackID id;
 
@@ -279,6 +286,50 @@ class message_playlist_update : public message {
 //		message_playlist_update() : message(MSG_PLAYLIST_UPDATE) {};
 };
 typedef boost::shared_ptr<message_playlist_update> message_playlist_update_ref;
+
+class message_query_trackdb : public message {
+	public:
+		message_query_trackdb(uint32 qid_, Track search_) : qid(qid_), message(MSG_QUERY_TRACKDB), search(search_) {};
+
+		uint32 qid;
+		Track search;
+	private:
+
+		message_query_trackdb() {};
+
+		friend class boost::serialization::access;
+		template<class Archive>
+		void serialize(Archive & ar, const unsigned int version) {
+			ar & boost::serialization::base_object<message>(*this);
+			ar & search;
+			ar & qid;
+		}
+};
+typedef boost::shared_ptr<message_query_trackdb> message_query_trackdb_ref;
+
+
+class message_query_trackdb_result : public message {
+	public:
+		message_query_trackdb_result(uint32 qid_, std::vector<Track> result_) : qid(qid_), message(MSG_QUERY_TRACKDB_RESULT), result(result_) {};
+		
+
+		uint32 qid;
+		std::vector<Track> result;
+	private:
+	
+		message_query_trackdb_result() {};
+
+		friend class boost::serialization::access;
+		template<class Archive>
+		void serialize(Archive & ar, const unsigned int version) {
+			ar & boost::serialization::base_object<message>(*this);
+			ar & result;
+			ar & qid;
+		}
+};
+typedef boost::shared_ptr<message_query_trackdb_result> message_query_trackdb_result_ref;
+
+
 
 void operator<<(tcp_socket& sock, const messagecref msg);
 void operator>>(tcp_socket& sock,       messageref& msg);

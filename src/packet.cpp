@@ -10,6 +10,8 @@ BOOST_CLASS_EXPORT(message_accept);
 BOOST_CLASS_EXPORT(message_vote);
 BOOST_CLASS_EXPORT(message_disconnect);
 BOOST_CLASS_EXPORT(message_playlist_update);
+BOOST_CLASS_EXPORT(message_query_trackdb);
+BOOST_CLASS_EXPORT(message_query_trackdb_result);
 
 void operator<<(tcp_socket& sock, const messagecref msg)
 {

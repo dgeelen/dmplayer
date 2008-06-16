@@ -102,10 +102,10 @@ void network_handler::client_tcp_connection(tcp_socket_ref sock) { // Initiates 
 					client_tcp_connection_running = false;
 					client_message_receive_signal(m);
 				}; break;
-				case message::MSG_ACCEPT: {
-					client_message_receive_signal(m);
-				}; break;
-				case message::MSG_PLAYLIST_UPDATE: {
+//				case message::MSG_QUERY_TRACKDB:
+//				case message::MSG_ACCEPT:
+//				case message::MSG_PLAYLIST_UPDATE:
+				default: {
 					client_message_receive_signal(m);
 				}; break;
 				//case message::
@@ -118,6 +118,7 @@ void network_handler::client_tcp_connection(tcp_socket_ref sock) { // Initiates 
 
 void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // One thread per client (Server)
 	ClientID cid(next_client_id++);
+	cqid = 0;
 	bool active = true;
 	while(!are_we_done && active) {
 		uint32 sockstat = doselect(*sock, 1000, SELECT_READ|SELECT_ERROR);
@@ -130,7 +131,7 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 					if (msg->get_version() == NETWERK_PROTOCOL_VERSION) {
 						dcerr("Accepted a client connection from " << sock->get_ipv4_socket_addr() << " ClientID="<<cid);
 						clients[cid] = sock;
-						(*sock) << messageref(new message_accept());
+						(*sock) << messageref(new message_accept(cid));
 						server_message_receive_signal(m, cid);
 					} else {
 						dcerr("Client tried to connect with wrong version (got " << msg->get_version() << ", expected " << NETWERK_PROTOCOL_VERSION<< ")");
@@ -138,9 +139,17 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 						active = false;
 					}
 				}; break;
+				case message::MSG_VOTE: {
+					message_vote_ref msg = boost::static_pointer_cast<message_vote>(m);
+					Track query;
+					query.id = msg->getID();
+					vote_queue[++cqid] =  std::pair<ClientID, TrackID>(cid, query.id);
+					message_query_trackdb_ref sendmsg(new message_query_trackdb(cqid, query));
+					send_message(query.id.first, sendmsg);
+				}; break;
 				case message::MSG_DISCONNECT: {
 					active = false;
-				}
+				}; break;
 				default:
 					dcerr("Ignoring unknown message type " << m->get_type());
 			}
