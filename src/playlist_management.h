@@ -19,20 +19,20 @@ BOOST_STRONG_TYPEDEF(uint32, LocalTrackID);
 
 template<class Archive>
 void serialize(
-    Archive &ar,
-    ClientID & i,
-    const unsigned version
+	Archive &ar,
+	ClientID & i,
+	const unsigned version
 ){
-    ar & i.t;
+	ar & i.t;
 }
 
 template<class Archive>
 void serialize(
-    Archive &ar,
-    LocalTrackID & i,
-    const unsigned version
+	Archive &ar,
+	LocalTrackID & i,
+	const unsigned version
 ){
-    ar & i.t;
+	ar & i.t;
 }
 
 typedef std::pair<ClientID, LocalTrackID> TrackID;
