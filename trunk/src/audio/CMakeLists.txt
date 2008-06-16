@@ -64,9 +64,6 @@ ENDIF(ENABLE_MENCODER_DECODER)
 # decoders from detecting encapsulated data
 IF(LIBOGG_FOUND) # Xiph.org OGG decoder (demuxer really)
 	SET(DECODER_NAMES ${DECODER_NAMES} OGG)
-	SET(DECODER_SOURCE_FILES ${DECODER_SOURCE_FILES}
-		datasource_oggstream.cpp datasource_oggstream.h
-	)
 	SET(DECODER_LIBRARIES ${DECODER_LIBRARIES} ${LIBOGG_LIBRARY})
 	INCLUDE_DIRECTORIES(${LIBOGG_INCLUDE_DIR})
 	# The OGG decoder has a bundled datasource, since it
