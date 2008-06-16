@@ -1,2 +1,8 @@
 .svn
 *~
+*CMakeFiles*
+*.cache
+cmake_install.cmake
+Makefile
+*anjuta*
+*.moc
