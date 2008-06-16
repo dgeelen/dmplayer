@@ -43,11 +43,14 @@ LocalTrackID TrackDataBase::get_first_free_id() {
 	*/
 }
 
-vector<LocalTrack> TrackDataBase::search(MetaDataMap t) {
+vector<LocalTrack> TrackDataBase::search(Track track) {
 	vector<LocalTrack> result;
+	MetaDataMap& t = track.metadata;
 	string filename = ba::to_lower_copy(t["FILENAME"]);
 	BOOST_FOREACH(LocalTrack& tr, entries) {
-		if( ba::to_lower_copy(tr.metadata["FILENAME"]).find(filename) != string::npos ) {
+		if (track.id.second != LocalTrackID(0xffffffff) && track.id.second == tr.id)
+			result.push_back(tr);
+		else if( ba::to_lower_copy(tr.metadata["FILENAME"]).find(filename) != string::npos ) {
 			result.push_back(tr);
 		}
 	}

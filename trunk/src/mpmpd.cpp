@@ -162,7 +162,7 @@ int main_impl(int argc, char* argv[])
 		tdb.add_directory( musix );
 		map<string, string> m;
 		m["FILENAME"] = findtext;
-		vector<LocalTrack> s = tdb.search(m);
+		vector<LocalTrack> s;// = tdb.search(m);
 		BOOST_FOREACH(LocalTrack& tr, s) {
 			dcerr( tr.filename );
 		}

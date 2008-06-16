@@ -80,7 +80,7 @@ class TrackDataBase {
 		void add(boost::filesystem::path path);
 		void remove(LocalTrackID id);
 		void add_directory(boost::filesystem::path path); //DEBUG or Utility?
-		std::vector<LocalTrack> search(MetaDataMap t);
+		std::vector<LocalTrack> search(Track t);
 	private:
 		LocalTrackID get_first_free_id();
 		std::vector<LocalTrack> entries;

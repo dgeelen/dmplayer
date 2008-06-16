@@ -79,6 +79,9 @@
 			udp_socket udp_rsock;
 			udp_socket udp_qsock;
 
+			std::map<uint32, std::pair<ClientID, TrackID> > vote_queue;
+			uint32 cqid;
+
 			boost::weak_ptr<tcp_socket> serversockweakref;
 
 			/* Client connection with server */
