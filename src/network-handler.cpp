@@ -83,19 +83,17 @@ void network_handler::server_tcp_connection_listener() { // Listens for incoming
 	dcerr("bye!");
 }
 
-void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiates a connection to the server (Client)
-	tcp_socket sock(dest.first, dest.second);
-
+void network_handler::client_tcp_connection(tcp_socket_ref sock) { // Initiates a connection to the server (Client)
 	messageref msg(new message_connect());
 
-	sock << msg;
+	*sock << msg;
 
 	// TODO: rest of function, protocol implementation
 	while(!are_we_done && client_tcp_connection_running) {
-		uint32 sockstat = doselect(sock, 1000, SELECT_READ|SELECT_ERROR);
+		uint32 sockstat = doselect(*sock, 1000, SELECT_READ|SELECT_ERROR);
 		if (sockstat & (SELECT_READ|SELECT_ERROR)) {
 			messageref m;
-			sock >> m;
+			*sock >> m;
 			switch (m->get_type()) {
 				case message::MSG_CONNECT: {
 					// TODO: ?maybe?
@@ -115,6 +113,7 @@ void network_handler::client_tcp_connection(ipv4_socket_addr dest) { // Initiate
 			}
 		}
 	}
+	sock.reset();
 }
 
 void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // One thread per client (Server)
@@ -155,6 +154,12 @@ void network_handler::send_message(ClientID id, messageref msg) {
 	if(sock != clients.end()) {
 		(*(sock->second)) << msg;
 	}
+}
+
+void network_handler::send_server_message(messageref msg) {
+	tcp_socket_ref servsock = serversockweakref.lock();
+	if (!servsock) throw std::runtime_error("no valid server connected");
+	*servsock << msg;
 }
 
 void network_handler::send_packet_handler() {
@@ -283,7 +288,9 @@ void network_handler::start() {
 void network_handler::client_connect_to_server( ipv4_socket_addr dest ) {
 	dcerr(dest);
 	client_tcp_connection_running = true;
-	thread_client_tcp_connection = new boost::thread(makeErrorHandler(boost::bind(&network_handler::client_tcp_connection, this, dest)));
+	tcp_socket_ref serversock(new tcp_socket(dest.first, dest.second));
+	serversockweakref = serversock;
+	thread_client_tcp_connection = new boost::thread(makeErrorHandler(boost::bind(&network_handler::client_tcp_connection, this, serversock)));
 }
 
 void network_handler::client_disconnect_from_server(  ) {

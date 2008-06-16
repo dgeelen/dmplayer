@@ -125,6 +125,7 @@ class message {
 			MSG_QUERY_TRACKDB_RESULT,
 			MSG_REQUEST_FILE,
 			MSG_REQUEST_FILE_RESULT,
+			MSG_VOTE,
 		};
 	message() : type(-1) {};
 	protected:
@@ -181,6 +182,23 @@ class message_accept : public message {
 		}
 };
 typedef boost::shared_ptr<message_accept> message_accept_ref;
+
+class message_vote : public message {
+	public:
+		message_vote(TrackID id_) : message(MSG_VOTE), id(id_) {};
+	private:
+		TrackID id;
+
+		message_vote() {};
+
+		friend class boost::serialization::access;
+		template<class Archive>
+		void serialize(Archive & ar, const unsigned int version) {
+			ar & boost::serialization::base_object<message>(*this);
+			ar & id;
+		}
+};
+typedef boost::shared_ptr<message_vote> message_vote_ref;
 
 class message_playlist_update : public message {
 	public:

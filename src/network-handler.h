@@ -56,6 +56,7 @@
 			boost::signal<void(const messageref, ClientID)> server_message_receive_signal;
 			void client_connect_to_server( ipv4_socket_addr dest );
 			void send_message(ClientID id, messageref msg);
+			void send_server_message(messageref msg);
 
 		private:
 			bool server_mode;
@@ -78,8 +79,10 @@
 			udp_socket udp_rsock;
 			udp_socket udp_qsock;
 
+			boost::weak_ptr<tcp_socket> serversockweakref;
+
 			/* Client connection with server */
-			void client_tcp_connection(ipv4_socket_addr dest6);
+			void client_tcp_connection(tcp_socket_ref sock);
 			void client_disconnect_from_server();
 			bool client_tcp_connection_running;
 			ipv4_socket_addr target_server;
