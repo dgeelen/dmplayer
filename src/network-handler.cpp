@@ -147,6 +147,17 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 					message_query_trackdb_ref sendmsg(new message_query_trackdb(cqid, query));
 					send_message(query.id.first, sendmsg);
 				}; break;
+				case message::MSG_QUERY_TRACKDB_RESULT: {
+					message_query_trackdb_ref msg = boost::static_pointer_cast<message_query_trackdb>(m);
+					uint32 qid = msg->qid;
+					std::pair<ClientID, TrackID> vote;
+					std::map<uint32, std::pair<ClientID, TrackID> >::iterator finder = vote_queue.find(qid);
+					if (finder != vote_queue.end()) {
+
+					} else {
+						dcerr("warning: ignoring query result");
+					}
+				}; break;
 				case message::MSG_DISCONNECT: {
 					active = false;
 				}; break;

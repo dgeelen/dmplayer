@@ -303,6 +303,9 @@ void MainWindow::handleReceivedMessage(const messageref m)
 			message_query_trackdb_result_ref sendmsg(new message_query_trackdb_result(msg->qid, result));
 			nh->send_server_message(sendmsg);
 		}; break;
+		default: {
+			dcerr("unknown message type:" << m->get_type() << '\n');
+		};
 	}
 	m.get();
 }
