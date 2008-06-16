@@ -11,12 +11,20 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 {
 	Q_OBJECT
 
+	private:
+		network_handler* nh;
+
 	protected:
 		void closeEvent(QCloseEvent * evnt);
 
 	public:
 		MainWindow();
 		~MainWindow();
+
+		void setNetworkHandler(network_handler* nh_) 
+		{
+			nh = nh_;
+		}
 
 	public Q_SLOTS:
 		void UpdateServerList(std::vector<server_info>);
@@ -32,6 +40,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		void on_ConnectButton_clicked();
 		void on_RefreshButton_clicked();
 		void on_DisconnectButton_clicked();
+		void on_DataBaseWidget_doubleClicked(QModelIndex);
 		void updateProgressBar();
 		void handleReceivedMessage(const messageref m);
 
