@@ -47,11 +47,11 @@ AACDecoder::AACDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 	if (pos<0)
 		throw Exception("This does not appear to be an AAC stream");
 
-	uint32 sample_rate;
-	uint8 channels;
+	uint32 sample_rate = 0;
+	uint8 channels = 0;
 	fill_buffer();
 	long bytes_used = faacDecInit(decoder_handle, buffer, buffer_fill, &sample_rate, &channels);
-	if (bytes_used<0)
+	if ( (bytes_used<0) || (sample_rate == 0) || (channels == 0))
 		throw Exception("Error while initializing AAC stream");
 	if(bytes_used) {
 		memmove(buffer, buffer + bytes_used, BLOCK_SIZE - bytes_used);
