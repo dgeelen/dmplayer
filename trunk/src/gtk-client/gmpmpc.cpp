@@ -7,6 +7,7 @@
 #include "../audio/audio_controller.h"
 #include <boost/program_options.hpp>
 #include "gmpmpc_playlist.h"
+#include "gmpmpc_trackdb.h"
 
 using namespace std;
 namespace po = boost::program_options;
@@ -64,6 +65,9 @@ int main ( int argc, char *argv[] )
 	}
 	if(!playlist_initialize()) {
 		cerr << "Error while initializing playlist!\n";
+	}
+	if(!trackdb_initialize()) {
+		cerr << "Error while initializing trackdb!\n";
 	}
 
 	/* connect the signals in the interface */
