@@ -5,7 +5,7 @@
 using namespace std;
 
 /*
- *  Implementation of Exception class 
+ *  Implementation of Exception class
  */
 
 void Exception::create(const char* amsg) throw ()
@@ -23,7 +23,7 @@ void Exception::create(const char* amsg) throw ()
 void Exception::setMessage(const char* amsg)
 {
 	if (msg != NULL && msglen != -1)
-		delete msg;
+		delete[] msg;
 	create(amsg);
 }
 
@@ -50,7 +50,7 @@ const char* Exception::what() const throw()
 Exception::~Exception() throw ()
 {
 	if (msg != NULL && msglen != -1)
-		delete msg;
+		delete[] msg;
 
 	msg = NULL;
 	msglen = -1;
