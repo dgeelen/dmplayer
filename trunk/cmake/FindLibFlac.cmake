@@ -12,7 +12,7 @@ Find_Path(LIBFLAC_INCLUDE_DIR
 )
 
 Find_Library(LIBFLAC_LIBRARY
-	flac
+	FLAC
 	/usr/lib /usr/local/lib
 	${LIBFLAC_EXTRALIB_LIBRARY_PATHS}
 )
@@ -30,7 +30,7 @@ Find_Path(LIBFLACPP_INCLUDE_DIR
 )
 
 Find_Library(LIBFLACPP_LIBRARY
-	flac++
+	FLAC++
 	/usr/lib /usr/local/lib
 	${LIBFLAC_EXTRALIB_LIBRARY_PATHS}
 )
