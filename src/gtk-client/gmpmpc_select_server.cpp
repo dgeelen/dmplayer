@@ -1,9 +1,7 @@
 #include "gmpmpc.h"
 #include "gmpmpc_select_server.h"
-#include "gmpmpc_select_server_window.glade.h"
 #include "gmpmpc_connection_handling.h"
 #include "../network-handler.h"
-#include "../error-handling.h"
 #include "../util/StrFormat.h"
 #include <vector>
 
@@ -256,7 +254,7 @@ void button_accept_server_selection_clicked(GtkWidget *widget, gpointer user_dat
 			}
 			gtk_tree_model_get(tree_model_servers, &iter, SERVER_TREE_COLUMN_SOCK_ADDR_PTR, &server_address,-1);
 			if(server_address) { //FIXME: Bit hacky, better use gtk_tree_selection_set_select_function()
-				gmpmpc_network_handler->message_receive_signal.connect(handle_received_message);
+				gmpmpc_network_handler->client_message_receive_signal.connect(handle_received_message);
 				gmpmpc_network_handler->client_connect_to_server( *server_address );
 			}
 		}

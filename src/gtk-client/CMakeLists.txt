@@ -54,10 +54,11 @@ IF(ENABLE_GTK_GUI)
 		gmpmpc.cpp gmpmpc.h
 		gmpmpc_select_server.h       gmpmpc_select_server.cpp
 		gmpmpc_connection_handling.h gmpmpc_connection_handling.cpp
+		gmpmpc_playlist.h            gmpmpc_playlist.cpp
 		../network-handler.cpp       ../network-handler.h
 		../error-handling.cpp        ../error-handling.h
-		../network-core.cpp          ../network-core.h
 		../packet.cpp                ../packet.h
+		../playlist_management.cpp   ../playlist_management.h
 		"${CMAKE_CURRENT_BINARY_DIR}/gmpmpc_main_window.glade.h"
 		"${CMAKE_CURRENT_BINARY_DIR}/gmpmpc_select_server_window.glade.h"
 	)
@@ -67,7 +68,9 @@ IF(ENABLE_GTK_GUI)
 		${BOOST_SIGNALS_LIBRARY}
 		${BOOST_PROGRAM_OPTIONS_LIBRARY}
 		${BOOST_SERIALIZATION_LIBRARY}
+		${BOOST_FILESYSTEM_LIBRARY}
 		${GTKMM_LIBRARIES}
+		lib_network
 		mpmp_audio
 		mpmp_util
 	)

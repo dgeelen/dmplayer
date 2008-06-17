@@ -1,6 +1,8 @@
 #include "gmpmpc_connection_handling.h"
 #include "gmpmpc_select_server.h"
-#include "../error-handling.h"
+#include "gmpmpc_playlist.h"
+
+extern TreeviewPlaylist* treeview_playlist;
 
 void handle_received_message(const messageref m) {
 	switch(m->get_type()) {
@@ -13,10 +15,12 @@ void handle_received_message(const messageref m) {
 		}; break;
 		case message::MSG_DISCONNECT: {
 			dcerr("Received a MSG_DISCONNECT");
-			gmpmpc_network_handler->message_receive_signal.disconnect(handle_received_message);
+			gmpmpc_network_handler->client_message_receive_signal.disconnect(handle_received_message);
 		} break;
 		case message::MSG_PLAYLIST_UPDATE: {
 			dcerr("Received a MSG_PLAYLIST_UPDATE");
+			message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
+			msg->apply(treeview_playlist);
 		}; break;
 		case message::MSG_QUERY_TRACKDB: {
 			dcerr("Received a MSG_QUERY_TRACKDB");
