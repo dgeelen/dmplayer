@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.4.0 on Tue Jun 17 21:39:29 2008 -->
+<!--Generated with glade3 3.4.0 on Tue Jun 17 21:48:45 2008 -->
 <glade-interface>
   <widget class="GtkWindow" id="gmpmpc_main_window">
     <property name="visible">True</property>
@@ -294,7 +294,7 @@
                   <widget class="GtkLabel" id="label_trackdb">
                     <property name="visible">True</property>
                     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Media Library&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">&lt;b&gt;TrackDB:&lt;/b&gt;</property>
                     <property name="use_markup">True</property>
                   </widget>
                   <packing>

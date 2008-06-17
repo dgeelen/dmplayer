@@ -55,6 +55,7 @@ IF(ENABLE_GTK_GUI)
 		gmpmpc_select_server.h       gmpmpc_select_server.cpp
 		gmpmpc_connection_handling.h gmpmpc_connection_handling.cpp
 		gmpmpc_playlist.h            gmpmpc_playlist.cpp
+		gmpmpc_trackdb.h             gmpmpc_trackdb.cpp
 		../network-handler.cpp       ../network-handler.h
 		../error-handling.cpp        ../error-handling.h
 		../packet.cpp                ../packet.h
