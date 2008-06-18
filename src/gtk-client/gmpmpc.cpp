@@ -8,6 +8,7 @@
 #include <boost/program_options.hpp>
 #include "gmpmpc_playlist.h"
 #include "gmpmpc_trackdb.h"
+#include <glib.h>
 
 using namespace std;
 namespace po = boost::program_options;
@@ -48,12 +49,20 @@ int main ( int argc, char *argv[] )
 		return 1;
 	}
 
+	//we need to initialize all these functions so that gtk knows
+	//to be thread-aware
+	if (!g_thread_supported()) {
+		g_thread_init(NULL);
+		gdk_threads_init();
+	}
+	gdk_threads_enter();
+	gtk_init (&argc, &argv);
+	glade_init();
+
 	network_handler nh(listen_port);
 	AudioController ac;
 	gmpmpc_network_handler = &nh;
 
-	gtk_init (&argc, &argv);
-	glade_init();
 
 	main_window = glade_xml_new_from_buffer(gmpmpc_main_window_glade_definition,
 	                                        gmpmpc_main_window_glade_definition_size,
@@ -78,6 +87,7 @@ int main ( int argc, char *argv[] )
 		treeview_playlist = new TreeviewPlaylist((GtkTreeView*)playlist);
 	}
 
-	gtk_main ();
+	gtk_main();
+	gdk_threads_leave();
 	return 0;
 }
