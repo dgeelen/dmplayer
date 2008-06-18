@@ -16,8 +16,9 @@ int button_vote_clicked_signal_id = 0;
 
 extern TreeviewPlaylist* treeview_playlist;
 extern network_handler* gmpmpc_network_handler;
+extern ClientID gmpmpc_client_id;
 
-volatile bool update_treeview_trackdb = false;
+volatile bool treeview_trackdb_update_trackdb = false;
 
 extern GladeXML* main_window;
 TrackDataBase trackDB;
@@ -34,9 +35,9 @@ void entry_trackdb_insert_text(GtkEntry    *entry,
                                gint         length,
                                gint        *position,
                                gpointer     data) {
-	if(!update_treeview_trackdb) {
-		update_treeview_trackdb = true;
-		g_timeout_add(250, update_treeview, NULL);
+	if(!treeview_trackdb_update_trackdb) {
+		treeview_trackdb_update_trackdb = true;
+		g_timeout_add(250, treeview_trackdb_update, NULL);
 	}
 }
 
@@ -45,9 +46,9 @@ void entry_trackdb_delete_text(GtkEntry    *entry,
                                gint         length,
                               gint        *position,
                                gpointer     data) {
-	if(!update_treeview_trackdb) {
-		update_treeview_trackdb = true;
-		g_timeout_add(250, update_treeview, NULL);
+	if(!treeview_trackdb_update_trackdb) {
+		treeview_trackdb_update_trackdb = true;
+		g_timeout_add(250, treeview_trackdb_update, NULL);
 	}
 }
 
@@ -73,7 +74,6 @@ void button_vote_clicked(GtkButton *widget, gpointer user_data) {
 			selected_row = g_list_next(selected_row);
 		}
 
-// 		g_list_foreach(selected_rows, gtk_tree_path_free, NULL);
 		g_list_free(selected_rows);
 	}
 }
@@ -91,6 +91,12 @@ void clear_treeview() {
 				TrackID* tid;
 				gtk_tree_model_get(model, &iter, TRACKDB_TREE_COLUMN_TRACKPTR, &tid,-1);
 				delete tid;
+
+				char *c;
+				gtk_tree_model_get(model, &iter, TRACKDB_TREE_COLUMN_SONG_ID, &c,-1);
+				delete c;
+				gtk_tree_model_get(model, &iter, TRACKDB_TREE_COLUMN_SONG_TITLE, &c,-1);
+				delete c;
 			} while(gtk_tree_model_iter_next(model, &iter));
 		}
 
@@ -152,7 +158,7 @@ bool trackdb_initialize() {
 		BOOST_FOREACH(string s, urilist_convert("file:///home/dafox/sharedfolder/music/\r\n")) {
 			trackDB.add_directory(s);
 		}
-		update_treeview(NULL);
+		treeview_trackdb_update(NULL);
 
 		return true;
 	}
@@ -194,7 +200,7 @@ vector<string> urilist_convert(string urilist) {
 	return files;
 }
 
-gboolean update_treeview(void *data) {
+gboolean treeview_trackdb_update(void *data) {
 	try_with_widget(main_window, treeview_trackdb, tv) {
 		GtkTreeStore* store = GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(tv)));
 		GtkTreeModel* model = GTK_TREE_MODEL(store);
@@ -209,14 +215,14 @@ gboolean update_treeview(void *data) {
 		Track query(TrackID(ClientID(0xffffffff), LocalTrackID(0xffffffff)), m);
 		vector<LocalTrack> s = trackDB.search(query);
 		BOOST_FOREACH(LocalTrack& tr, s) {
-			Track track(TrackID(ClientID(0),tr.id), tr.metadata );
+			Track track(TrackID( gmpmpc_client_id, tr.id), tr.metadata );
 			GtkTreeIter iter;
 			gtk_tree_store_append(store, &iter, NULL);
-			char id[10];
-			char filename[1024];
-			snprintf(id, sizeof(id), "%04x:%04x", int(track.id.first), int(track.id.second));
+			char *id = new char[10];
+			char *filename = new char[1024];
+			snprintf(id, 10, "%08x:%08x", int(track.id.first), int(track.id.second));
 			MetaDataMap::const_iterator i = track.metadata.find("FILENAME");
-			snprintf(filename, sizeof(filename), "%s", i->second.c_str());
+			snprintf(filename, 1024, "%s", i->second.c_str());
 			TrackID* tid = new TrackID(track.id);
 			gtk_tree_store_set(store, &iter,
 												TRACKDB_TREE_COLUMN_SONG_ID, id,
@@ -227,7 +233,7 @@ gboolean update_treeview(void *data) {
 
 		gtk_tree_view_set_model(GTK_TREE_VIEW(tv), model); /* Re-attach model to view */
 	}
-	update_treeview_trackdb = false;
+	treeview_trackdb_update_trackdb = false;
 	return false;
 }
 
@@ -248,7 +254,7 @@ void treeview_trackdb_drag_data_received(GtkWidget *widget,
 			BOOST_FOREACH(string s, urilist_convert((char*)selection_data->data)) {
 				trackDB.add_directory(s);
 			}
-			update_treeview(NULL);
+			treeview_trackdb_update(NULL);
 		default:
 		break;
 	}

@@ -5,6 +5,7 @@
 	bool trackdb_initialize();
 	gboolean update_treeview(void *data);
 	std::vector<std::string> urilist_convert(std::string urilist);
+	gboolean treeview_trackdb_update(void *data);
 	void treeview_trackdb_drag_data_received(GtkWidget *widget,
                                            GdkDragContext *dc,
                                            gint x,
