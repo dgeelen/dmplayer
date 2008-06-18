@@ -86,9 +86,14 @@ uint32 tcp_socket::send( const uint8* buf, const uint32 len )
 
 uint32 tcp_socket::receive( const uint8* buf, const uint32 len )
 {
-	int read = ::recv(sock, (char*)buf, len, 0);
-	if (read >= 0) return read;
-	return 0;
+	uint32 done = 0;
+	while (done < len) {
+		int sent = ::recv(sock, (char*)buf+done, len-done, 0);
+		if (sent <= 0)
+			return done;
+		done += sent;
+	}
+	return done;
 }
 
 void tcp_listen_socket::disconnect()
