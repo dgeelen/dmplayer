@@ -56,6 +56,7 @@
 			boost::signal<void(const messageref, ClientID)> server_message_receive_signal;
 			void client_connect_to_server( ipv4_socket_addr dest );
 			void send_message(ClientID id, messageref msg);
+			void send_message_allclients(messageref m);
 			void send_server_message(messageref msg);
 
 		private:

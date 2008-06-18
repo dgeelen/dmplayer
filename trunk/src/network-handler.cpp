@@ -169,6 +169,12 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 	clients.erase(cid);
 }
 
+void network_handler::send_message_allclients(messageref m) {
+	typedef std::pair<ClientID, tcp_socket_ref> vtype;
+	BOOST_FOREACH(vtype cr, clients) {
+		send_message(cr.first, m);
+	}
+}
 void network_handler::send_message(ClientID id, messageref msg) {
 	map<ClientID, boost::shared_ptr<tcp_socket> >::iterator sock = clients.find(id);
 	if(sock != clients.end()) {
