@@ -54,7 +54,7 @@ class ServerPlaylist : public IPlaylist {
 		virtual const Track& get(uint32 pos) const {
 			return data.get(pos);
 		}
-		
+
 		messageref pop_msg() {
 			message_playlist_update_ref ret;
 			if (!msgque.empty()) {
@@ -70,7 +70,7 @@ class ServerPlaylist : public IPlaylist {
 class Server {
 	public:
 		Server(int listen_port, string server_name)
-			: networkhandler(listen_port, server_name) 
+			: networkhandler(listen_port, server_name)
 		{
 			dcerr("Started network_handler");
 			cqid =0;
@@ -152,9 +152,9 @@ class Server {
 			}
 			// 					message_connect_ref msg = boost::static_pointer_cast<message_connect>(m);
 		}
-
+ServerPlaylist playlist;//debug
 	private:
-		ServerPlaylist playlist;
+// 		ServerPlaylist playlist;
 		network_handler networkhandler;
 		std::map<uint32, std::pair<ClientID, TrackID> > vote_queue;
 		uint32 cqid;
@@ -206,10 +206,14 @@ int main_impl(int argc, char* argv[])
 	if (musix != "") {
 		TrackDataBase tdb;
 		tdb.add_directory( musix );
-		map<string, string> m;
+		MetaDataMap m;
 		m["FILENAME"] = findtext;
-		vector<LocalTrack> s;// = tdb.search(m);
+		Track query(TrackID(ClientID(0xffffffff), LocalTrackID(0xffffffff)), m);
+		vector<LocalTrack> s = tdb.search(query);
 		BOOST_FOREACH(LocalTrack& tr, s) {
+			Track t(TrackID(ClientID(0),tr.id), tr.metadata );
+			svr.playlist.add(t);
+			svr.playlist.pop_msg();
 			dcerr( tr.filename );
 		}
 	}
