@@ -118,7 +118,6 @@ void network_handler::client_tcp_connection(tcp_socket_ref sock) { // Initiates 
 
 void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // One thread per client (Server)
 	ClientID cid(next_client_id++);
-	cqid = 0;
 	bool active = true;
 	while(!are_we_done && active) {
 		uint32 sockstat = doselect(*sock, 1000, SELECT_READ|SELECT_ERROR);
@@ -139,30 +138,11 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 						active = false;
 					}
 				}; break;
-				case message::MSG_VOTE: {
-					message_vote_ref msg = boost::static_pointer_cast<message_vote>(m);
-					Track query;
-					query.id = msg->getID();
-					vote_queue[++cqid] =  std::pair<ClientID, TrackID>(cid, query.id);
-					message_query_trackdb_ref sendmsg(new message_query_trackdb(cqid, query));
-					send_message(query.id.first, sendmsg);
-				}; break;
-				case message::MSG_QUERY_TRACKDB_RESULT: {
-					message_query_trackdb_ref msg = boost::static_pointer_cast<message_query_trackdb>(m);
-					uint32 qid = msg->qid;
-					std::pair<ClientID, TrackID> vote;
-					std::map<uint32, std::pair<ClientID, TrackID> >::iterator finder = vote_queue.find(qid);
-					if (finder != vote_queue.end()) {
-
-					} else {
-						dcerr("warning: ignoring query result");
-					}
-				}; break;
 				case message::MSG_DISCONNECT: {
 					active = false;
 				}; break;
 				default:
-					dcerr("Ignoring unknown message type " << m->get_type());
+					server_message_receive_signal(m, cid);
 			}
 		}
 	}

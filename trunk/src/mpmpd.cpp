@@ -73,7 +73,27 @@ class Server {
 			: networkhandler(listen_port, server_name) 
 		{
 			dcerr("Started network_handler");
+			cqid =0;
+			done = false;
+			message_loop_thread = boost::thread(makeErrorHandler(boost::bind(&Server::message_loop, this)));
 			networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
+		}
+
+		~Server() {
+			done = true;
+			message_loop_thread.join();
+		}
+
+		void message_loop() {
+			while(!done) {
+				messageref m = playlist.pop_msg();
+				if(m) {
+					networkhandler.send_message_allclients(m);
+				}
+				else {
+					usleep(100);
+				}
+			}
 		}
 
 		void handle_received_message(const messageref m, ClientID id) {
@@ -97,12 +117,34 @@ class Server {
 				}; break;
 				case message::MSG_QUERY_TRACKDB_RESULT: {
 					dcerr("Received a MSG_QUERY_TRACKDB_RESULT from " << id);
+					message_query_trackdb_result_ref msg = boost::static_pointer_cast<message_query_trackdb_result>(m);
+					uint32 qid = msg->qid;
+					std::pair<ClientID, TrackID> vote;
+					std::map<uint32, std::pair<ClientID, TrackID> >::iterator finder = vote_queue.find(qid);
+					if (finder != vote_queue.end()) {
+						if(msg->result.size()==1) {
+							playlist.add(msg->result.front());
+						}
+						vote_queue.erase(finder);
+					} else {
+						dcerr("warning: ignoring query result");
+					}
 				}; break;
 				case message::MSG_REQUEST_FILE: {
 					dcerr("Received a MSG_REQUEST_FILE from " << id);
 				}; break;
 				case message::MSG_REQUEST_FILE_RESULT: {
 					dcerr("Received a MSG_REQUEST_FILE_RESULT from " << id);
+				}; break;
+				case message::MSG_VOTE: {
+					dcerr("Received a MSG_VOTE from " << id);
+					message_vote_ref msg = boost::static_pointer_cast<message_vote>(m);
+					Track query;
+					query.id = msg->getID();
+					vote_queue[++cqid] =  std::pair<ClientID, TrackID>(id, query.id);
+					message_query_trackdb_ref sendmsg(new message_query_trackdb(cqid, query));
+					dcerr("Sending to " << query.id.first);
+					networkhandler.send_message(query.id.first, sendmsg);
 				}; break;
 				default: {
 					dcerr("Ignoring unknown message of type " << m->get_type() << " from " << id);
@@ -114,6 +156,10 @@ class Server {
 	private:
 		ServerPlaylist playlist;
 		network_handler networkhandler;
+		std::map<uint32, std::pair<ClientID, TrackID> > vote_queue;
+		uint32 cqid;
+		bool done;
+		boost::thread message_loop_thread;
 };
 
 int main_impl(int argc, char* argv[])
