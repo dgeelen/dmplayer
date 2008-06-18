@@ -2,13 +2,20 @@
 #include "gmpmpc_trackdb.h"
 #include "../error-handling.h"
 #include "../playlist_management.h"
+#include "../network-handler.h"
+#include "gmpmpc_playlist.h"
 #include <string>
 #include <vector>
 #include <glib.h>
+
 using namespace std;
 int treeview_trackdb_drag_data_received_signal_id = 0;
 int entry_trackdb_insert_text_signal_id = 0;
 int entry_trackdb_delete_text_signal_id = 0;
+int button_vote_clicked_signal_id = 0;
+
+extern TreeviewPlaylist* treeview_playlist;
+extern network_handler* gmpmpc_network_handler;
 
 volatile bool update_treeview_trackdb = false;
 
@@ -18,6 +25,7 @@ TrackDataBase trackDB;
 enum {
 	TRACKDB_TREE_COLUMN_SONG_ID=0,
 	TRACKDB_TREE_COLUMN_SONG_TITLE,
+	TRACKDB_TREE_COLUMN_TRACKPTR,
 	TRACKDB_TREE_COLUMN_COUNT
 };
 
@@ -43,15 +51,65 @@ void entry_trackdb_delete_text(GtkEntry    *entry,
 	}
 }
 
+void button_vote_clicked(GtkButton *widget, gpointer user_data) {
+	try_with_widget(main_window, treeview_trackdb, tv) {
+		GtkTreeStore* store = GTK_TREE_STORE(gtk_tree_view_get_model((GtkTreeView*)tv));
+		GtkTreeModel* model = GTK_TREE_MODEL(store);
+		GtkTreeSelection* selection = gtk_tree_view_get_selection((GtkTreeView*)tv);
+		GtkTreeIter iter;
+		GList* selected_rows = gtk_tree_selection_get_selected_rows(selection, &model);
+		GList* selected_row = g_list_first(selected_rows);
+		while(selected_row != NULL) {
+			GtkTreePath* path = (GtkTreePath*)(selected_row->data);
+			GtkTreeIter iter;
+			gtk_tree_model_get_iter(model, &iter, path);
+			TrackID* tid;
+			gtk_tree_model_get(model, &iter, TRACKDB_TREE_COLUMN_TRACKPTR, &tid,-1);
+
+			dcerr("Voting " << tid->first << ":" << tid->second);
+			message_vote_ref msg(new message_vote( *tid ));
+			gmpmpc_network_handler->send_server_message(msg);
+
+			selected_row = g_list_next(selected_row);
+		}
+
+// 		g_list_foreach(selected_rows, gtk_tree_path_free, NULL);
+		g_list_free(selected_rows);
+	}
+}
+
+void clear_treeview() {
+	try_with_widget(main_window, treeview_trackdb, tv) {
+		GtkTreeStore* store = GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(tv)));
+		GtkTreeModel* model = GTK_TREE_MODEL(store);
+		g_object_ref(model); /* Make sure the model stays with us after the tree view unrefs it */
+		gtk_tree_view_set_model(GTK_TREE_VIEW(tv), NULL); /* Detach model from view */
+
+		GtkTreeIter iter;
+		if(gtk_tree_model_get_iter_first(model, &iter)) {
+			do {
+				TrackID* tid;
+				gtk_tree_model_get(model, &iter, TRACKDB_TREE_COLUMN_TRACKPTR, &tid,-1);
+				delete tid;
+			} while(gtk_tree_model_iter_next(model, &iter));
+		}
+
+		gtk_tree_view_set_model(GTK_TREE_VIEW(tv), model); /* Re-attach model to view */
+		gtk_tree_store_clear(store);
+	}
+}
+
 bool trackdb_uninitialize() {
 	disconnect_signal(main_window, treeview_trackdb, drag_data_received);
+	clear_treeview();
 	return true;
 }
 
 bool trackdb_initialize() {
 	GtkTreeStore *tree_store_trackdb = gtk_tree_store_new(TRACKDB_TREE_COLUMN_COUNT,
 	                                                       G_TYPE_STRING,
-	                                                       G_TYPE_STRING
+	                                                       G_TYPE_STRING,
+	                                                       G_TYPE_POINTER
 	                                                      );
 	/* Connect View to Store */
 	try_with_widget(main_window, treeview_trackdb, tv) {
@@ -61,6 +119,10 @@ bool trackdb_initialize() {
 		gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(tv), true);
 		DISPLAY_TREEVIEW_COLUMN(tv, "ID", text, TRACKDB_TREE_COLUMN_SONG_ID);
 		DISPLAY_TREEVIEW_COLUMN(tv, "Title", text, TRACKDB_TREE_COLUMN_SONG_TITLE);
+
+		GtkTreeSelection *selection;
+		selection = gtk_tree_view_get_selection(GTK_TREE_VIEW (tv));
+		gtk_tree_selection_set_mode (selection, GTK_SELECTION_MULTIPLE);
 
 		GtkTargetEntry tgt_file;
 		tgt_file.target   = "text/uri-list";
@@ -84,6 +146,13 @@ bool trackdb_initialize() {
 
 		try_connect_signal(main_window, entry_trackdb, insert_text);
 		try_connect_signal(main_window, entry_trackdb, delete_text);
+		try_connect_signal(main_window, button_vote, clicked);
+
+		/* Debug */
+		BOOST_FOREACH(string s, urilist_convert("file:///home/dafox/sharedfolder/music/\r\n")) {
+			trackDB.add_directory(s);
+		}
+		update_treeview(NULL);
 
 		return true;
 	}
@@ -129,10 +198,10 @@ gboolean update_treeview(void *data) {
 	try_with_widget(main_window, treeview_trackdb, tv) {
 		GtkTreeStore* store = GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(tv)));
 		GtkTreeModel* model = GTK_TREE_MODEL(store);
+		clear_treeview();
 		g_object_ref(model); /* Make sure the model stays with us after the tree view unrefs it */
 		gtk_tree_view_set_model(GTK_TREE_VIEW(tv), NULL); /* Detach model from view */
 
-		gtk_tree_store_clear(store);
 		MetaDataMap m;
 		try_with_widget(main_window, entry_trackdb, txt) {
 			m["FILENAME"] = gtk_entry_get_text((GtkEntry*)txt);
@@ -148,9 +217,11 @@ gboolean update_treeview(void *data) {
 			snprintf(id, sizeof(id), "%04x:%04x", int(track.id.first), int(track.id.second));
 			MetaDataMap::const_iterator i = track.metadata.find("FILENAME");
 			snprintf(filename, sizeof(filename), "%s", i->second.c_str());
+			TrackID* tid = new TrackID(track.id);
 			gtk_tree_store_set(store, &iter,
 												TRACKDB_TREE_COLUMN_SONG_ID, id,
 												TRACKDB_TREE_COLUMN_SONG_TITLE, filename,
+												TRACKDB_TREE_COLUMN_TRACKPTR, tid,
 												-1);
 		}
 

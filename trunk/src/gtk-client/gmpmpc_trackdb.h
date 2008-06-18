@@ -1,7 +1,10 @@
 #ifndef GMPMPC_TRACKDB_H
 	#define GMPMPC_TRACKDB_H
+	#include <vector>
+	#include <string>
 	bool trackdb_initialize();
 	gboolean update_treeview(void *data);
+	std::vector<std::string> urilist_convert(std::string urilist);
 	void treeview_trackdb_drag_data_received(GtkWidget *widget,
                                            GdkDragContext *dc,
                                            gint x,

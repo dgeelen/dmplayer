@@ -28,6 +28,11 @@ bool playlist_initialize() {
 		gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(tv), true);
 		DISPLAY_TREEVIEW_COLUMN(tv, "ID", text, PLAYLIST_TREE_COLUMN_SONG_ID);
 		DISPLAY_TREEVIEW_COLUMN(tv, "Title", text, PLAYLIST_TREE_COLUMN_SONG_TITLE);
+
+		GtkTreeSelection *selection;
+		selection = gtk_tree_view_get_selection(GTK_TREE_VIEW (tv));
+		gtk_tree_selection_set_mode (selection, GTK_SELECTION_MULTIPLE);
+
 		return true;
 	}
 	return false;

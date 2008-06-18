@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.4.0 on Wed Jun 18 11:33:27 2008 -->
+<!--Generated with glade3 3.4.0 on Wed Jun 18 12:20:19 2008 -->
 <glade-interface>
   <widget class="GtkWindow" id="gmpmpc_main_window">
     <property name="visible">True</property>
     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
     <property name="title" translatable="yes">gmpmpc</property>
+    <property name="window_position">GTK_WIN_POS_CENTER</property>
     <child>
       <widget class="GtkVBox" id="vbox_main_container">
         <property name="visible">True</property>
@@ -195,7 +196,9 @@
                         <property name="can_focus">True</property>
                         <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                         <property name="headers_clickable">True</property>
+                        <property name="rules_hint">True</property>
                         <property name="show_expanders">False</property>
+                        <property name="rubber_banding">True</property>
                       </widget>
                     </child>
                   </widget>
@@ -241,6 +244,9 @@
                             <property name="can_focus">True</property>
                             <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                             <property name="headers_clickable">True</property>
+                            <property name="rules_hint">True</property>
+                            <property name="show_expanders">False</property>
+                            <property name="rubber_banding">True</property>
                           </widget>
                         </child>
                       </widget>
@@ -265,7 +271,26 @@
                               </packing>
                             </child>
                             <child>
-                              <placeholder/>
+                              <widget class="GtkLayout" id="layout1">
+                                <property name="visible">True</property>
+                                <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+                              </widget>
+                              <packing>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <widget class="GtkButton" id="button_vote">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">True</property>
+                                <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+                                <property name="label" translatable="yes">Vote</property>
+                                <property name="response_id">0</property>
+                              </widget>
+                              <packing>
+                                <property name="position">2</property>
+                              </packing>
                             </child>
                           </widget>
                         </child>
