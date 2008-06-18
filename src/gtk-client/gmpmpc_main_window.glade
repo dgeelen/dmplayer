@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.4.0 on Tue Jun 17 21:48:45 2008 -->
+<!--Generated with glade3 3.4.0 on Wed Jun 18 11:33:27 2008 -->
 <glade-interface>
   <widget class="GtkWindow" id="gmpmpc_main_window">
     <property name="visible">True</property>
@@ -189,7 +189,7 @@
                     <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
                     <child>
                       <widget class="GtkTreeView" id="treeview_playlist">
-                        <property name="width_request">240</property>
+                        <property name="width_request">480</property>
                         <property name="height_request">320</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
@@ -236,7 +236,7 @@
                         <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
                         <child>
                           <widget class="GtkTreeView" id="treeview_trackdb">
-                            <property name="width_request">240</property>
+                            <property name="width_request">480</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
