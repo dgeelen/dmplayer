@@ -48,8 +48,11 @@ vector<LocalTrack> TrackDataBase::search(Track track) {
 	MetaDataMap& t = track.metadata;
 	string filename = ba::to_lower_copy(t["FILENAME"]);
 	BOOST_FOREACH(LocalTrack& tr, entries) {
-		if (track.id.second != LocalTrackID(0xffffffff) && track.id.second == tr.id)
-			result.push_back(tr);
+		if (track.id.second != LocalTrackID(0xffffffff)) {
+			if(track.id.second == tr.id) {
+				result.push_back(tr);
+			}
+		}
 		else if( ba::to_lower_copy(tr.metadata["FILENAME"]).find(filename) != string::npos ) {
 			result.push_back(tr);
 		}
