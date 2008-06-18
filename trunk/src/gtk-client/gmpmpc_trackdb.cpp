@@ -218,9 +218,9 @@ gboolean treeview_trackdb_update(void *data) {
 			Track track(TrackID( gmpmpc_client_id, tr.id), tr.metadata );
 			GtkTreeIter iter;
 			gtk_tree_store_append(store, &iter, NULL);
-			char *id = new char[10];
+			char *id = new char[8+1+8+1];
 			char *filename = new char[1024];
-			snprintf(id, 10, "%08x:%08x", int(track.id.first), int(track.id.second));
+			snprintf(id, 8+1+8+1, "%08x:%08x", int(track.id.first), int(track.id.second));
 			MetaDataMap::const_iterator i = track.metadata.find("FILENAME");
 			snprintf(filename, 1024, "%s", i->second.c_str());
 			TrackID* tid = new TrackID(track.id);
