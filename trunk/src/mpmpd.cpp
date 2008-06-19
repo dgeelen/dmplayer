@@ -15,6 +15,28 @@
 namespace po = boost::program_options;
 using namespace std;
 
+class ServerPlaylistReceiver: public PlaylistVector {
+	virtual void add(const Track& track)
+	{
+		PlaylistVector::add(track);
+	}
+
+	virtual void remove(uint32 pos)
+	{
+		PlaylistVector::remove(pos);
+	}
+
+	virtual void insert(uint32 pos, const Track& track)
+	{
+		PlaylistVector::insert(pos, track);
+	}
+
+	virtual void clear()
+	{
+		PlaylistVector::clear();
+	}
+};
+
 class Server {
 	public:
 		Server(int listen_port, string server_name)
@@ -60,6 +82,9 @@ class Server {
 				} break;
 				case message::MSG_PLAYLIST_UPDATE: {
 					dcerr("Received a MSG_PLAYLIST_UPDATE from " << id);
+					message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
+					msg->apply(&clientlists[id]);
+					recalculateplaylist();
 				}; break;
 				case message::MSG_QUERY_TRACKDB: {
 					dcerr("Received a MSG_QUERY_TRACKDB from " << id);
@@ -102,13 +127,41 @@ class Server {
 			// 					message_connect_ref msg = boost::static_pointer_cast<message_connect>(m);
 		}
 		SyncedPlaylist playlist;//debug
+
 	private:
 // 		ServerPlaylist playlist;
 		network_handler networkhandler;
 		std::map<uint32, std::pair<ClientID, TrackID> > vote_queue;
+		std::map<ClientID, ServerPlaylistReceiver> clientlists;
 		uint32 cqid;
 		bool done;
 		boost::thread message_loop_thread;
+
+
+		void recalculateplaylist() {
+			playlist.clear();
+			std::vector<std::pair<IPlaylist*, int> > lists;
+			typedef std::pair<const ClientID, ServerPlaylistReceiver> vtype;
+			uint32 maxsize = 0;
+			BOOST_FOREACH(vtype& pair, clientlists) {
+				if (pair.second.size() > 0)
+					lists.push_back(std::pair<IPlaylist*, int>(&pair.second, 0));
+				if (pair.second.size() > maxsize)
+					maxsize = pair.second.size();
+			}
+
+			bool done = false;
+			while (!done) {
+				done = true;
+				typedef std::pair<IPlaylist*, int> vt2;
+				BOOST_FOREACH(vt2& i, lists) {
+					if (i.second < i.first->size()) {
+						playlist.add(i.first->get(i.second++));
+						done = false;
+					}
+				}
+			}
+		}
 };
 
 int main_impl(int argc, char* argv[])
