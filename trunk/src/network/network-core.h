@@ -10,6 +10,10 @@
 #include <iostream>   /* for std::istream, std::ostream, std::string */
 #include <utility>
 
+#ifdef NETWORK_CORE_USE_LOCKS
+#include <boost/thread/mutex.hpp>
+#endif
+
 #ifdef HAVE_WINSOCK
 	class WinSockClass {
 		private:
@@ -97,6 +101,10 @@ class tcp_socket {
 	private:
 		SOCKET sock;
 		ipv4_socket_addr peer;
+		#ifdef NETWORK_CORE_USE_LOCKS
+		boost::mutex send_mutex;
+		boost::mutex recv_mutex;
+		#endif
 };
 typedef boost::shared_ptr<tcp_socket> tcp_socket_ref;
 
