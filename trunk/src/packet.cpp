@@ -45,7 +45,7 @@ void operator>>(tcp_socket& sock,       messageref& msg)
 		stringstream ss((char*)a.get());
 		boost::archive::text_iarchive ia(ss);
 		ia >> msg;
-	} catch (NetworkException e) {
+	} catch (std::exception& e) {
 		msg = messageref(new message_disconnect);
 	}
 }

@@ -71,8 +71,9 @@ void QPlaylist::move(uint32 from, uint32 to)
 
 void QPlaylist::clear()
 {
-	PlaylistVector::clear();
 	QTreeWidget::clear();
+	// will call virtual functions add
+	PlaylistVector::clear();
 }
 
 QPlaylist::~QPlaylist()
