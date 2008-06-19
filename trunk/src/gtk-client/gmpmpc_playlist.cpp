@@ -45,6 +45,7 @@ TreeviewPlaylist::TreeviewPlaylist(GtkTreeView* _tv) {
 void TreeviewPlaylist::add(const Track& track) {
 	PlaylistVector::add(track);
 	try_with_widget(main_window, treeview_playlist, tv) {
+		gdk_threads_enter();
 		dcerr("track: " << track.id.first << ":" << track.id.second);
 		GtkTreeStore* store = GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(tv)));
 		GtkTreeModel* model = GTK_TREE_MODEL(store);
@@ -53,17 +54,18 @@ void TreeviewPlaylist::add(const Track& track) {
 
 		GtkTreeIter iter;
 		gtk_tree_store_append(store, &iter, NULL);
-		char id[10];
-		char filename[1024];
-		snprintf(id, sizeof(id), "%04x:%04x", int(track.id.first), int(track.id.second));
+		char *id = new char[8+1+8+1];
+		char *filename = new char[1024];
+		snprintf(id, 8+1+8+1, "%08x:%08x", int(track.id.first), int(track.id.second));
 		MetaDataMap::const_iterator i = track.metadata.find("FILENAME");
-		snprintf(filename, sizeof(filename), "%s", i->second.c_str());
+		snprintf(filename, 1024, "%s", i->second.c_str());
 		gtk_tree_store_set(store, &iter,
 		                   PLAYLIST_TREE_COLUMN_SONG_ID, id,
 		                   PLAYLIST_TREE_COLUMN_SONG_TITLE, filename,
 		                   -1);
 
 		gtk_tree_view_set_model(GTK_TREE_VIEW(tv), model); /* Re-attach model to view */
+		gdk_threads_leave();
 	}
 }
 
