@@ -102,6 +102,7 @@ class tcp_socket {
 		SOCKET sock;
 		ipv4_socket_addr peer;
 		#ifdef NETWORK_CORE_USE_LOCKS
+	public:
 		boost::mutex send_mutex;
 		boost::mutex recv_mutex;
 		#endif

@@ -74,9 +74,6 @@ void tcp_socket::connect( const ipv4_addr addr, const uint16 port )
 
 uint32 tcp_socket::send( const uint8* buf, const uint32 len )
 {
-	#ifdef NETWORK_CORE_USE_LOCKS
-	boost::mutex::scoped_lock lock(send_mutex);
-	#endif
 	uint32 done = 0;
 	while (done < len) {
 		int sent = ::send(sock, (char*)buf+done, len-done, 0);
@@ -89,9 +86,6 @@ uint32 tcp_socket::send( const uint8* buf, const uint32 len )
 
 uint32 tcp_socket::receive( const uint8* buf, const uint32 len )
 {
-	#ifdef NETWORK_CORE_USE_LOCKS
-	boost::mutex::scoped_lock lock(recv_mutex);
-	#endif
 	uint32 done = 0;
 	while (done < len) {
 		int sent = ::recv(sock, (char*)buf+done, len-done, 0);
