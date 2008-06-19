@@ -16,7 +16,7 @@ BOOST_CLASS_EXPORT(message_query_trackdb_result);
 void operator<<(tcp_socket& sock, const messagecref msg)
 {
 	#ifdef NETWORK_CORE_USE_LOCKS
-	boost::mutex::scoped_lock lock(send_mutex);
+	boost::mutex::scoped_lock lock(sock.send_mutex);
 	#endif
 	stringstream ss;
 	boost::archive::text_oarchive oa(ss);
@@ -29,7 +29,7 @@ void operator<<(tcp_socket& sock, const messagecref msg)
 void operator>>(tcp_socket& sock,       messageref& msg)
 {
 	#ifdef NETWORK_CORE_USE_LOCKS
-	boost::mutex::scoped_lock lock(recv_mutex);
+	boost::mutex::scoped_lock lock(sock.recv_mutex);
 	#endif
 	try {
 		long l;
