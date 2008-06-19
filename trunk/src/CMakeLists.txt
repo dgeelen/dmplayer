@@ -14,6 +14,7 @@ SUBDIRS(network)
 ADD_EXECUTABLE(mpmpd
 	mpmpd.h mpmpd.cpp
 	network-handler.h network-handler.cpp
+	synced_playlist.h
 	cross-platform.h
 	error-handling.h error-handling.cpp
 	playlist_management.h playlist_management.cpp

@@ -312,11 +312,15 @@ void MainWindow::handleReceivedMessage(const messageref m)
 
 void MainWindow::on_DataBaseWidget_doubleClicked(QModelIndex mi)
 {
-	TrackID theid = DataBaseWidget->get(mi.row()).id;
+	Track tr = DataBaseWidget->get(mi.row());
 
-	theid.first = localid;
-	message_vote_ref msg(new message_vote(theid));
+	tr.id.first = localid;
 
-	nh->send_server_message(msg);
-	
+	syncedplaylist.add(tr);
+
+	messageref msg;
+
+	while (msg = syncedplaylist.pop_msg()) {
+		nh->send_server_message(msg);
+	}
 }
