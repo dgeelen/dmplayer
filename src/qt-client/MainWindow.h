@@ -5,6 +5,7 @@
 #include <string>
 #include "../network-handler.h"
 #include "../audio/audio_controller.h"
+#include "../synced_playlist.h"
 #include <QTimer>
 
 class MainWindow: public QMainWindow, public Ui::MainWindow
@@ -14,6 +15,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 	private:
 		network_handler* nh;
 		ClientID localid;
+		SyncedPlaylist syncedplaylist;
 
 	protected:
 		void closeEvent(QCloseEvent * evnt);
