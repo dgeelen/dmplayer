@@ -70,8 +70,11 @@ uint32 AudioController::getData(uint8* buf, uint32 len)
 		update_decoder_flag = false;
 	}
 
-	if (curdecoder)
+	if (curdecoder) {
 		read = curdecoder->getData(buf, len);
+		if (read == 0)
+			curdecoder.reset();
+	}
 	if (read < len) {
 		memset(buf+read, 0, len-read);
 		read = len;

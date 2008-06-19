@@ -103,6 +103,7 @@ uint32 MadDecoder::getData(uint8* buf, uint32 len)
 		if(mad_frame_decode(&Frame, &Stream)){
 			if (!MAD_RECOVERABLE(Stream.error)) {
 				dcerr("Unrecoverable error");
+				BytesInInput = 0;
 				return BytesOut;
 			}
 		}
