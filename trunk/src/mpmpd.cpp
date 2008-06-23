@@ -41,36 +41,55 @@ class Server;
 class ServerDataSource : public IDataSource {
 	public:
 		ServerDataSource(Server& _server) : server(_server) {
+			position = 0;
+			data_exhausted = false;
+			wait_for_data = true;
 		}
 
 		virtual long getpos() {
-
+			return position;
 		}
 
 		virtual bool exhausted() {
-			return false;
+			boost::mutex::scoped_lock lock(data_buffer_mutex);
+			return (!wait_for_data) && data_exhausted;
 		}
 
 		virtual void reset() {
-
+			boost::mutex::scoped_lock lock(data_buffer_mutex);
+			position = 0;
 		}
 
 		virtual uint32 getData(uint8* buffer, uint32 len) {
-			size_t n;
-			memcpy(buffer, data_buffer[0], )
+			boost::mutex::scoped_lock lock(data_buffer_mutex);
+			size_t n = std::min(size_t(len), data_buffer.size());
+			std::vector<uint8>::iterator a = data_buffer.begin();
+			a+=n;
+			memcpy(buffer, &*a, n);
+			position+=n;
+			data_exhausted = (n==0);
+			return n;
 		}
 
-		void addData(uint8* buffer, uint32 len) {
-			boost::mutex::scoped_lock(data_buffer_mutex);
+		void appendData(std::vector<uint8>& data) {
+			boost::mutex::scoped_lock lock(data_buffer_mutex);
 			size_t n = data_buffer.size();
-			data_buffer.resize(n+len);
-			memcpy(&(data_buffer[n]), buffer, len);
+			data_buffer.insert(data_buffer.end(), data.begin(), data.end());
+		}
+
+		void set_wait_for_data(bool b) {
+			boost::mutex::scoped_lock lock(data_buffer_mutex);
+			data_exhausted = false;
+			wait_for_data = b;
 		}
 
 	private:
 		boost::mutex data_buffer_mutex;
 		Server& server;
 		std::vector<uint8> data_buffer;
+		bool data_exhausted;
+		bool wait_for_data;
+		long position;
 };
 
 class Server {
@@ -84,12 +103,19 @@ class Server {
 			boost::thread tt(makeErrorHandler(boost::bind(&Server::message_loop, this)));
 			message_loop_thread.swap(tt);
 			networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
-			server_datasource = new boost::shared_ptr<ServerDataSource>(new ServerDataSource(this));
+			ac.playback_finished.connect(boost::bind(&Server::next_song, this, _1));
+			add_datasource = true;
+// 			server_datasource = boost::shared_ptr<ServerDataSource>(new ServerDataSource(*this));
+// 			ac.set_data_source(server_datasource);
 		}
 
 		~Server() {
 			done = true;
 			message_loop_thread.join();
+		}
+
+		void next_song(uint32 playtime_secs) {
+			dcerr("Next!!! " << playtime_secs);
 		}
 
 		void message_loop() {
@@ -98,14 +124,13 @@ class Server {
 				if(m) {
 					networkhandler.send_message_allclients(m);
 				}
-				else {
+				else { // meh
 					usleep(100);
 				}
 			}
 		}
 
 		void handle_received_message(const messageref m, ClientID id) {
-			//playlist.q_clear();
 			switch(m->get_type()) {
 				case message::MSG_CONNECT: {
 					dcerr("Received a MSG_CONNECT from " << id);
@@ -146,6 +171,13 @@ class Server {
 				}; break;
 				case message::MSG_REQUEST_FILE_RESULT: {
 					dcerr("Received a MSG_REQUEST_FILE_RESULT from " << id);
+					message_request_file_result_ref msg = boost::static_pointer_cast<message_request_file_result>(m);
+					if(msg->data.size()) {
+						server_datasource->appendData(msg->data);
+					}
+					else { // This was the last message, we have received the full file.
+						server_datasource->set_wait_for_data(false);
+					}
 				}; break;
 				case message::MSG_VOTE: {
 					dcerr("Received a MSG_VOTE from " << id);
@@ -156,6 +188,14 @@ class Server {
 					message_query_trackdb_ref sendmsg(new message_query_trackdb(cqid, query));
 					dcerr("Sending to " << query.id.first);
 					networkhandler.send_message(query.id.first, sendmsg);
+
+					if(add_datasource) {
+						message_request_file_ref msg(new message_request_file(query.id));
+						server_datasource = boost::shared_ptr<ServerDataSource>(new ServerDataSource(*this));
+						ac.set_data_source(server_datasource);
+						networkhandler.send_message(query.id.first, msg);
+						add_datasource = false;
+					}
 				}; break;
 				default: {
 					dcerr("Ignoring unknown message of type " << m->get_type() << " from " << id);
@@ -166,7 +206,7 @@ class Server {
 		SyncedPlaylist playlist;//debug
 
 	private:
-// 		ServerPlaylist playlist;
+// 		SyncedPlaylist playlist;
 		network_handler networkhandler;
 		std::map<uint32, std::pair<ClientID, TrackID> > vote_queue;
 		std::map<ClientID, ServerPlaylistReceiver> clientlists;
@@ -174,6 +214,8 @@ class Server {
 		bool done;
 		boost::thread message_loop_thread;
 		boost::shared_ptr<ServerDataSource> server_datasource;
+		AudioController ac;
+		bool add_datasource;
 
 		void recalculateplaylist() {
 			playlist.clear();
@@ -237,10 +279,9 @@ int main_impl(int argc, char* argv[])
 
 	Server svr(listen_port, server_name);
 
-	AudioController ac;
-	if(filename!= "") {
-		ac.test_functie(filename);
-	}
+// 	if(filename!= "") {
+// 		ac.test_functie(filename);
+// 	}
 
 	if (musix != "") {
 		TrackDataBase tdb;
