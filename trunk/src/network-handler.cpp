@@ -69,6 +69,7 @@ void network_handler::server_tcp_connection_listener() { // Listens for incoming
 	ipv4_addr addr;
 	addr.full = INADDR_ANY;
 	tcp_listen_socket lsock(addr, tcp_port_number);
+	tcp_port_number = lsock.getPortNumber();
 	while(!are_we_done) {
 		if (doselect(lsock, 1000, SELECT_READ)) {
 			tcp_socket_ref sock(lsock.accept());
@@ -140,6 +141,7 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 				}; break;
 				case message::MSG_DISCONNECT: {
 					active = false;
+					server_message_receive_signal(m, cid);
 				}; break;
 				default:
 					server_message_receive_signal(m, cid);
