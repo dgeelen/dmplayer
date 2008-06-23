@@ -39,6 +39,10 @@ VorbisDecoder::VorbisDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 VorbisDecoder::~VorbisDecoder() {
 }
 
+bool VorbisDecoder::exhausted() {
+	return datasource->exhausted() && packet.e_o_s;
+}
+
 void VorbisDecoder::construct_next_packet() {
 	packet.bytes = datasource->getData(packet.packet, 1<<16);
 	packet.b_o_s = max(--(packet.b_o_s), (long int)0);

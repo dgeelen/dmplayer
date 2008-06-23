@@ -11,6 +11,10 @@ WaveDecoder::~WaveDecoder()
 {
 }
 
+bool WaveDecoder::exhausted() {
+	return source->exhausted();
+}
+
 IDecoderRef WaveDecoder::tryDecode(IDataSourceRef datasource)
 {
 	datasource->reset();

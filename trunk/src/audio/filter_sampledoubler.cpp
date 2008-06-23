@@ -32,3 +32,7 @@ uint32 SampleDoublerFilter::getData(uint8* buf, uint32 len)
 	}
 	return res;
 }
+
+bool SampleDoublerFilter::exhausted() {
+	return src->exhausted();
+}

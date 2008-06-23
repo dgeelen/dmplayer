@@ -35,6 +35,7 @@ class MadDecoder : public IDecoder {
 		~MadDecoder();
 		IDecoderRef tryDecode(IDataSourceRef datasource);
 		uint32 getData(uint8* buf, uint32 max);
+		bool exhausted();
 };
 
 #endif // DECODER_MAD_H_INCLUDED

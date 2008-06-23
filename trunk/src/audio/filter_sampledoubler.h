@@ -8,7 +8,7 @@ class SampleDoublerFilter : public IAudioSource {
 		IAudioSourceRef src;
 	public:
 		SampleDoublerFilter(IAudioSourceRef as);
-
+		bool exhausted();
 		uint32 getData(uint8* buf, uint32 len);
 };
 

@@ -21,6 +21,10 @@ MadDecoder::MadDecoder() : IDecoder(AudioFormat())
 	eos = false;
 }
 
+bool MadDecoder::exhausted() {
+	return eos;
+}
+
 MadDecoder::MadDecoder(AudioFormat af, IDataSourceRef ds) : IDecoder(af)
 {
 	mad_stream_init(&Stream);
@@ -91,19 +95,22 @@ uint32 MadDecoder::getData(uint8* buf, uint32 len)
 			uint toRead = INPUT_BUFFER_SIZE - BytesInInput;
 			uint Read = datasource->getData(input_buffer + BytesInInput, toRead);
 			BytesInInput += Read;
-			eos = datasource->exhausted();
 		}
 
-		if (BytesInInput == 0) return BytesOut;
+		if (BytesInInput == 0) {
+			eos = datasource->exhausted() && (BytesInOutput == 0);
+			return BytesOut;
+		}
 		//Buffer is sent to MAD to decode to a stream
 		mad_stream_buffer(&Stream, input_buffer, BytesInInput);
 		Stream.error = MAD_ERROR_NONE;
 
 		//Decode the frame here
-		if(mad_frame_decode(&Frame, &Stream)){
+		if(mad_frame_decode(&Frame, &Stream)) {
 			if (!MAD_RECOVERABLE(Stream.error)) {
 				dcerr("Unrecoverable error");
 				BytesInInput = 0;
+				eos = true;
 				return BytesOut;
 			}
 		}
@@ -120,7 +127,7 @@ uint32 MadDecoder::getData(uint8* buf, uint32 len)
 		mad_timer_add(&Timer, Frame.header.duration);
 		if (Stream.error == MAD_ERROR_NONE)
 			mad_synth_frame(&Synth, &Frame);
-		else 
+		else
 			Synth.pcm.length = 0;
 
 		// [hackmode] Because Mads output is 24 bit PCM, we need to convert everything to 16 bit

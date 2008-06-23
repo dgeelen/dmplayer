@@ -23,6 +23,7 @@ class OGGDecoder : public boost::enable_shared_from_this<OGGDecoder>, public IDe
 		~OGGDecoder();
 		static IDecoderRef tryDecode(IDataSourceRef ds);
 		uint32 getData(uint8* buf, uint32 max);
+		bool exhausted();
 
 		/* Functions for DataSources */
 		ogg_packet* get_packet_from_stream(long stream_id);

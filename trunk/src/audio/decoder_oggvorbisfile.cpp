@@ -22,6 +22,7 @@ OGGVorbisFileDecoder::OGGVorbisFileDecoder(AudioFormat af, IDataSourceRef ds, Og
 	datasource(ds),
 	oggFile(f)
 {
+	eos = false;
 }
 
 OGGVorbisFileDecoder::~OGGVorbisFileDecoder()
@@ -51,6 +52,10 @@ IDecoderRef OGGVorbisFileDecoder::tryDecode(IDataSourceRef datasource)
 	return IDecoderRef(new OGGVorbisFileDecoder(af, datasource, oggFile));
 }
 
+bool OGGVorbisFileDecoder::exhausted() {
+	return datasource->exhausted() && eos;
+}
+
 uint32 OGGVorbisFileDecoder::getData(uint8* buf, uint32 len)
 {
 	uint32 res = 0;
@@ -60,5 +65,6 @@ uint32 OGGVorbisFileDecoder::getData(uint8* buf, uint32 len)
 		if (read <= 0) break;
 		res += read;
 	} while (res < len);
+	eos = res==0;
 	return res;
 }

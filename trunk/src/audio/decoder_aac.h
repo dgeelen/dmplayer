@@ -21,7 +21,7 @@ class AACDecoder : public IDecoder {
 		~AACDecoder();
 		static IDecoderRef tryDecode(IDataSourceRef ds);
 		uint32 getData(uint8* buf, uint32 max);
-
+		bool exhausted();
 	private:
 		AACDecoder(IDataSourceRef source);
 
@@ -32,7 +32,7 @@ class AACDecoder : public IDecoder {
 		void fill_buffer();
 
 		IDataSourceRef datasource;
-		
+
 		uint32 buffer_fill;
 		uint8 buffer[BLOCK_SIZE];
 		uint32 sample_buffer_size;

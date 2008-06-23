@@ -12,6 +12,10 @@ struct AudioFormat {
 	bool SignedSample;
 	bool LittleEndian;
 
+	uint32 getBytesPerSecond() {
+		return (SampleRate * Channels * BitsPerSample) / 8;
+	}
+
 	AudioFormat() {
 		SampleRate = -1;
 		Channels = 2;
@@ -19,7 +23,7 @@ struct AudioFormat {
 		SignedSample = true;
 		LittleEndian = true;
 	}
-	
+
 	bool operator==(const AudioFormat& af) const {
 		if (SampleRate    != af.SampleRate   ) return false;
 		if (Channels      != af.Channels     ) return false;
@@ -42,7 +46,7 @@ class IAudioSource {
 		virtual ~IAudioSource() {};
 
 		const AudioFormat getAudioFormat() { return audioformat; };
-
+		virtual bool exhausted() = 0;
 		virtual uint32 getData(uint8* buf, uint32 max) = 0;
 };
 typedef boost::shared_ptr<IAudioSource> IAudioSourceRef;

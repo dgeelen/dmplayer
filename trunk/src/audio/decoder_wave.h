@@ -12,6 +12,7 @@ class WaveDecoder : public IDecoder {
 		~WaveDecoder();
 		static IDecoderRef tryDecode(IDataSourceRef datasource);
 		uint32 getData(uint8* buf, uint32 max);
+		bool exhausted();
 };
 
 #endif//DECODER_RAW_H

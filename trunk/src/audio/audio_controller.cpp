@@ -72,12 +72,16 @@ uint32 AudioController::getData(uint8* buf, uint32 len)
 
 	if (curdecoder) {
 		read = curdecoder->getData(buf, len);
-		if (read == 0)
-			curdecoder.reset();
+		bytes_played += read;
 	}
 	if (read < len) {
 		memset(buf+read, 0, len-read);
 		read = len;
+		if(curdecoder && curdecoder->exhausted()) {
+			playback_finished(bytes_played / backend->getAudioFormat().getBytesPerSecond()); //FIXME: Low resolution!
+			bytes_played = 0;
+			curdecoder.reset();
+		}
 	}
 	return read;
 }

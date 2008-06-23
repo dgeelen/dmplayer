@@ -36,6 +36,10 @@ ReformatFilter::ReformatFilter(IAudioSourceRef as, AudioFormat target)
 	audioformat = src->getAudioFormat();
 }
 
+bool ReformatFilter::exhausted() {
+	return src->exhausted();
+}
+
 uint32 ReformatFilter::getData(uint8* buf, uint32 len)
 {
 	return src->getData(buf, len);

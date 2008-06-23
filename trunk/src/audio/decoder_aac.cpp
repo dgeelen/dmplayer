@@ -34,6 +34,10 @@ void AACDecoder::fill_buffer() {
 	}
 }
 
+bool AACDecoder::exhausted() {
+	return datasource->exhausted() && (buffer_fill==0);
+}
+
 AACDecoder::AACDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 	this->datasource = ds;
 	initialize();
