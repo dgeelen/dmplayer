@@ -82,6 +82,25 @@ uint32 AudioController::getData(uint8* buf, uint32 len)
 	return read;
 }
 
+void AudioController::set_data_source(IDataSourceRef ds) {
+	IAudioSourceRef newdecoder = IDecoder::findDecoder(ds);
+	if (!newdecoder) {
+		dcerr("Cannot find decoder!");
+		return;
+	}
+
+	if(newdecoder->getAudioFormat() != backend->getAudioFormat())
+		newdecoder = IAudioSourceRef(new ReformatFilter(newdecoder, backend->getAudioFormat()));
+	if(!newdecoder) dcerr("All decoders failed!");
+
+	{
+		boost::mutex::scoped_lock lock(update_decoder_mutex);
+		update_decoder_flag = true;
+		update_decoder_source = newdecoder;
+		newdecoder.reset();
+	}
+}
+
 void AudioController::test_functie(std::string file) {
 	IDataSourceRef ds;
 	if (!ds) {
@@ -111,23 +130,7 @@ void AudioController::test_functie(std::string file) {
 		return;
 	}
 
-	IAudioSourceRef newdecoder;
-	newdecoder = IDecoder::findDecoder(ds);
-	if (!newdecoder) {
-		dcerr("Cannot find decoder for file: " << file);
-		return;
-	}
-
-	if (newdecoder->getAudioFormat() != backend->getAudioFormat())
-		newdecoder = IAudioSourceRef(new ReformatFilter(newdecoder, backend->getAudioFormat()));
-	if(!newdecoder) dcerr("All decoders failed!");
-
-	{
-		boost::mutex::scoped_lock lock(update_decoder_mutex);
-		update_decoder_flag = true;
-		update_decoder_source = newdecoder;
-		newdecoder.reset();
-	}
+	set_data_source(ds);
 }
 
 void AudioController::StopPlayback()

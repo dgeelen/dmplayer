@@ -37,6 +37,42 @@ class ServerPlaylistReceiver: public PlaylistVector {
 	}
 };
 
+class Server;
+class ServerDataSource : public IDataSource {
+	public:
+		ServerDataSource(Server& _server) : server(_server) {
+		}
+
+		virtual long getpos() {
+
+		}
+
+		virtual bool exhausted() {
+			return false;
+		}
+
+		virtual void reset() {
+
+		}
+
+		virtual uint32 getData(uint8* buffer, uint32 len) {
+			size_t n;
+			memcpy(buffer, data_buffer[0], )
+		}
+
+		void addData(uint8* buffer, uint32 len) {
+			boost::mutex::scoped_lock(data_buffer_mutex);
+			size_t n = data_buffer.size();
+			data_buffer.resize(n+len);
+			memcpy(&(data_buffer[n]), buffer, len);
+		}
+
+	private:
+		boost::mutex data_buffer_mutex;
+		Server& server;
+		std::vector<uint8> data_buffer;
+};
+
 class Server {
 	public:
 		Server(int listen_port, string server_name)
@@ -48,6 +84,7 @@ class Server {
 			boost::thread tt(makeErrorHandler(boost::bind(&Server::message_loop, this)));
 			message_loop_thread.swap(tt);
 			networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
+			server_datasource = new boost::shared_ptr<ServerDataSource>(new ServerDataSource(this));
 		}
 
 		~Server() {
@@ -136,7 +173,7 @@ class Server {
 		uint32 cqid;
 		bool done;
 		boost::thread message_loop_thread;
-
+		boost::shared_ptr<ServerDataSource> server_datasource;
 
 		void recalculateplaylist() {
 			playlist.clear();
