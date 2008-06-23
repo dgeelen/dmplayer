@@ -60,7 +60,6 @@ class ServerDataSource : public IDataSource {
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
 			position = 0;
 			data_exhausted = false;
-			wait_for_data = true;
 		}
 
 		virtual uint32 getData(uint8* buffer, uint32 len) {
@@ -68,7 +67,11 @@ class ServerDataSource : public IDataSource {
 			size_t n = std::min(size_t(len), size_t(data_buffer.size() - position));
 			memcpy(buffer, &data_buffer[position], n);
 			position+=n;
-			data_exhausted = (n==0);
+			if(n==0) {
+				data_exhausted = true;
+				if(wait_for_data)
+					boost::thread::yield();
+			}
 			return n;
 		}
 
