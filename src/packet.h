@@ -331,7 +331,7 @@ typedef boost::shared_ptr<message_query_trackdb_result> message_query_trackdb_re
 
 class message_request_file : public message {
 	public:
-		message_request_file(TrackID& id_) : message(MSG_REQUEST_FILE), id(id_) {};
+		message_request_file(const TrackID& id_) : message(MSG_REQUEST_FILE), id(id_) {};
 		TrackID id;
 	private:
 		message_request_file() {};
@@ -347,7 +347,7 @@ typedef boost::shared_ptr<message_request_file> message_request_file_ref;
 
 class message_request_file_result : public message {
 	public:
-		message_request_file_result(std::vector<uint8>& data_) : message(MSG_REQUEST_FILE_RESULT), data(data_) {};
+		message_request_file_result(const std::vector<uint8>& data_) : message(MSG_REQUEST_FILE_RESULT), data(data_) {};
 		std::vector<uint8> data;
 	private:
 		message_request_file_result() {};
