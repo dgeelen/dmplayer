@@ -111,8 +111,6 @@ class Server {
 			networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
 			ac.playback_finished.connect(boost::bind(&Server::next_song, this, _1));
 			add_datasource = true;
-// 			server_datasource = boost::shared_ptr<ServerDataSource>(new ServerDataSource(*this));
-// 			ac.set_data_source(server_datasource);
 		}
 
 		~Server() {
@@ -122,6 +120,10 @@ class Server {
 
 		void next_song(uint32 playtime_secs) {
 			dcerr("Next!!! " << playtime_secs);
+
+			vector<ClientID> has_song;
+			vector<ClientID> does_not_have_song;
+
 			Track t = playlist.get(0);
 			typedef std::pair<const ClientID, ServerPlaylistReceiver> vtype;
 			BOOST_FOREACH(vtype& pair, clientlists) {
@@ -131,10 +133,29 @@ class Server {
 						break;
 				if (pos != pair.second.size()) {
 					pair.second.remove(pos);
+					has_song.push_back(pair.first);
 					// TODO: do something with weights!
 				}
+				else {
+					does_not_have_song.push_back(pair.first);
+				}
 			}
+
 			// TODO: do something with weights and playtime_secs
+			double avg_min  = double(playtime_secs)/has_song.size();
+			double avg_plus = double(playtime_secs)/clientlists.size();
+			BOOST_FOREACH( ClientID& id, has_song) {
+				double old = clientlists_zero_sum[id];
+				clientlists_zero_sum[id] -= avg_min;
+				clientlists_zero_sum[id] += avg_plus;
+				dcerr("(min)  for " << id << ": " << old << " -> " << clientlists_zero_sum[id]);
+			}
+			BOOST_FOREACH( ClientID& id, does_not_have_song) {
+				double old = clientlists_zero_sum[id];
+				clientlists_zero_sum[id] += avg_plus;
+				dcerr("(plus) for " << id << ": " << old << " -> " << clientlists_zero_sum[id]);
+			}
+
 			recalculateplaylist();
 			add_datasource = true;
 		}
@@ -243,26 +264,43 @@ class Server {
 		boost::shared_ptr<ServerDataSource> server_datasource;
 		AudioController ac;
 		bool add_datasource;
+		map<ClientID, double> clientlists_zero_sum;
+
+		class listitem {
+			public:
+			map<ClientID, double>* zsm;
+			ClientID id;
+			IPlaylist* pl;
+			int i;
+			listitem(ClientID id_,IPlaylist* pl_, int i_, map<ClientID, double>* zsm_)
+			: id(id_), pl(pl_), i(i_), zsm(zsm_) {};
+			bool operator<(const listitem& o) const
+			{
+				return (*zsm)[id] > (*zsm)[o.id];
+			};
+		};
 
 		void recalculateplaylist() {
 			playlist.clear();
-			std::vector<std::pair<IPlaylist*, int> > lists;
+			std::vector<listitem> lists;
 			typedef std::pair<const ClientID, ServerPlaylistReceiver> vtype;
 			uint32 maxsize = 0;
 			BOOST_FOREACH(vtype& pair, clientlists) {
 				if (pair.second.size() > 0)
-					lists.push_back(std::pair<IPlaylist*, int>(&pair.second, 0));
+					lists.push_back(listitem(pair.first, &pair.second, 0, &clientlists_zero_sum));
 				if (pair.second.size() > maxsize)
 					maxsize = pair.second.size();
 			}
+
+			std::sort(lists.begin(), lists.end());
 
 			bool done = false;
 			while (!done) {
 				done = true;
 				typedef std::pair<IPlaylist*, int> vt2;
-				BOOST_FOREACH(vt2& i, lists) {
-					if (i.second < i.first->size()) {
-						playlist.add(i.first->get(i.second++));
+				BOOST_FOREACH(listitem& i, lists) {
+					if (i.i < i.pl->size()) {
+						playlist.add(i.pl->get(i.i++));
 						done = false;
 					}
 				}
