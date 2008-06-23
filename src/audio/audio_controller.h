@@ -4,6 +4,7 @@
 #include "datasource_interface.h"
 #include <string>
 #include <boost/thread/mutex.hpp>
+#include <boost/signal.hpp>
 
 class IBackend;
 
@@ -13,12 +14,16 @@ class AudioController {
 		~AudioController();
 		void test_functie(std::string file);
 		uint32 getData(uint8* buf, uint32 len);
+
 		void StartPlayback();
 		void StopPlayback();
 		void set_data_source(IDataSourceRef ds);
+		boost::signal<void(uint32)> playback_finished;
 	private:
 		IBackend* backend;
 		IAudioSourceRef curdecoder;
+
+		uint64 bytes_played;
 
 		// possibly overkill here
 		volatile bool update_decoder_flag;

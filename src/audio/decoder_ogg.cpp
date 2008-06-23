@@ -27,6 +27,15 @@ void OGGDecoder::setDecoder(IDecoderRef decoder) {
 	}
 }
 
+bool OGGDecoder::exhausted() {
+	bool b = true;
+	for(map<long, struct stream_decoding_state >::iterator i = streams.begin(); i!=streams.end(); ++i) {
+		stream_decoding_state& s = i->second;
+		b = b && s.exhausted;
+	}
+	return b;
+}
+
 OGGDecoder::~OGGDecoder() {
 	uninitialize();
 }

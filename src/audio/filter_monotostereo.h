@@ -8,7 +8,7 @@ class MonoToStereoFilter : public IAudioSource {
 		IAudioSourceRef src;
 	public:
 		MonoToStereoFilter(IAudioSourceRef as);
-
+		bool exhausted();
 		uint32 getData(uint8* buf, uint32 len);
 };
 

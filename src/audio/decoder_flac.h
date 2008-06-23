@@ -15,10 +15,12 @@ class FlacDecoder: public IDecoder, public FLAC::Decoder::Stream {
 		uint32 buflen;
 		uint32 bufsize;
 		IDataSourceRef ds;
+		bool eos;
 	public:
 		static IDecoderRef tryDecode(IDataSourceRef ds_);
 
 		FlacDecoder(IDataSourceRef ds);
+		bool exhausted();
 
 		/* IDecoder Interface */
 		uint32 getData(uint8* buf, uint32 len);

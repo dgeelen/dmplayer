@@ -28,3 +28,7 @@ uint32 MonoToStereoFilter::getData(uint8* buf, uint32 len)
 	}
 	return res;
 }
+
+bool MonoToStereoFilter::exhausted() {
+	return src->exhausted();
+}

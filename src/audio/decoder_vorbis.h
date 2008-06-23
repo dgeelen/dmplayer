@@ -11,6 +11,7 @@ class VorbisDecoder : public IDecoder {
 		~VorbisDecoder();
 		static IDecoderRef tryDecode(IDataSourceRef ds);
 		uint32 getData(uint8* buf, uint32 max);
+		bool exhausted();
 	private:
 		VorbisDecoder(IDataSourceRef ds);
 		IDataSourceRef datasource;

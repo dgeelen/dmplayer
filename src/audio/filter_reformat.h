@@ -8,7 +8,7 @@ class ReformatFilter : public IAudioSource {
 		IAudioSourceRef src;
 	public:
 		ReformatFilter(IAudioSourceRef as, AudioFormat target);
-
+		bool exhausted();
 		uint32 getData(uint8* buf, uint32 len);
 };
 

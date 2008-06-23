@@ -14,6 +14,12 @@ FlacDecoder::FlacDecoder(IDataSourceRef ds_)
 
 	if (bufptr == NULL) throw Exception("Invalid flac stream");
 
+	eos = false;
+
+}
+
+bool FlacDecoder::exhausted() {
+	return ds->exhausted() && eos;
 }
 
 void FlacDecoder::metadata_callback (const ::FLAC__StreamMetadata *metadata) {
@@ -63,6 +69,7 @@ uint32 FlacDecoder::getData(uint8* buf, uint32 len)
 		}
 	} while (bufdone < len && bufpos < buflen);
 
+	eos = bufdone==0;
 	return bufdone;
 }
 
