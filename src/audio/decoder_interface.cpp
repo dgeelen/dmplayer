@@ -1,5 +1,4 @@
 #include "decoder_interface.h"
-
 #include "../error-handling.h"
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -7,23 +6,25 @@
 
 namespace { namespace ns_reghelper {
 	std::vector<boost::function<IDecoderRef (IDataSourceRef)> > decoderlist;
+	std::vector<std::string> decodernamelist; //#ifdef debug etc...
 
 /*	template<typename T, class F>
 	int doregister(F f);
 */
 	template<typename T>
-	int doregister(IDecoderRef f(IDataSourceRef))
+	int doregister(IDecoderRef f(IDataSourceRef), std::string name)
 	{
 		decoderlist.push_back(
 			boost::bind(& T::tryDecode,
 				_1
 			)
 		);
+		decodernamelist.push_back(name);
 		return 1;
 	}
 
 	template<typename T>
-	int doregister(IDecoderRef (T::*f)(IDataSourceRef))
+	int doregister(IDecoderRef (T::*f)(IDataSourceRef), std::string name)
 	{
 		decoderlist.push_back(
 			boost::bind(& T::tryDecode,
@@ -31,6 +32,7 @@ namespace { namespace ns_reghelper {
 				_1
 			)
 		);
+		decodernamelist.push_back(name);
 		return 2;
 	}
 
@@ -41,7 +43,11 @@ namespace { namespace ns_reghelper {
 	//}
 } } //namespace { namespace nshelper {
 
-#define REGISTER_DECODER_CLASS(cls) namespace { namespace ns_cls_ ## cls { int x = ns_reghelper::doregister<cls>(&cls ::tryDecode); } }
+#define REGISTER_DECODER_CLASS(cls) namespace { \
+	namespace ns_cls_ ## cls { \
+		int x = ns_reghelper::doregister<cls>(&cls ::tryDecode, #cls); \
+		} \
+ }
 
 #include <decoder_linker.inc>
 
@@ -54,7 +60,7 @@ IDecoderRef IDecoder::findDecoder(IDataSourceRef ds)
 		ds->reset();
 		decoder = ns_reghelper::decoderlist[i](ds);
 		if (decoder) {
-			dcerr("Found a decoder; decoder #"<<i);
+			dcerr("Found a decoder: " << ns_reghelper::decodernamelist[i]);
 			break;
 		}
 	}
