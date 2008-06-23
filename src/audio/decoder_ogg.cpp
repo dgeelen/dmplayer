@@ -177,7 +177,7 @@ ogg_page* OGGDecoder::read_page(uint32 time_out) {
 				char* buffer = ogg_sync_buffer(&sync, BLOCK_SIZE);
 				long bytes_read = datasource->getData( (uint8*)buffer, BLOCK_SIZE );
 				if(ogg_sync_wrote(&sync, bytes_read)) throw Exception("Internal error in libogg!");
-				if((bytes_read==0) || ((datasource->getpos() >= (int)time_out ))) {
+				if(bytes_read==0) {
 					if(datasource->exhausted()) {
 						delete page;
 						// Since we're not going to get any more pages (DataSource is exhausted)
@@ -188,6 +188,10 @@ ogg_page* OGGDecoder::read_page(uint32 time_out) {
 						}
 						return NULL;
 					}
+				}
+				if((datasource->getpos() >= time_out)) {
+					delete page;
+					return NULL;
 				}
 				break;
 			}
@@ -294,7 +298,7 @@ IDecoderRef OGGDecoder::tryDecode(IDataSourceRef ds) {
 			oggd->setDecoder(decodable);
 			return oggd;
 		}
-		return IDecoderRef();;
+		return IDecoderRef();
 	}
 	catch (Exception& e) {
 		VAR_UNUSED(e); // in debug mode
