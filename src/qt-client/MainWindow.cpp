@@ -307,8 +307,8 @@ void MainWindow::handleReceivedMessage(const messageref m)
 			err = file.error();
 			while (done < data.size()) {
 				uint64 todo = data.size()-done;
-				if (todo > 1024*1024)
-					todo = 1024*1024;
+				if (todo > 32*1024)
+					todo = 32*1024;
 				std::vector<uint8> vdata;
 				vdata.resize(todo);
 				memcpy(&vdata[0], (uint8*)data.data() + done, todo);
