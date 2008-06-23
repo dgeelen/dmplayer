@@ -178,16 +178,16 @@ ogg_page* OGGDecoder::read_page(uint32 time_out) {
 				long bytes_read = datasource->getData( (uint8*)buffer, BLOCK_SIZE );
 				if(ogg_sync_wrote(&sync, bytes_read)) throw Exception("Internal error in libogg!");
 				if((bytes_read==0) || ((datasource->getpos() >= (int)time_out ))) {
-					delete page;
 					if(datasource->exhausted()) {
+						delete page;
 						// Since we're not going to get any more pages (DataSource is exhausted)
 						// we set all streams to exhausted.
 						for(map<long, struct stream_decoding_state >::iterator i = streams.begin(); i!=streams.end(); ++i) {
 							stream_decoding_state& s = i->second;
 							s.exhausted = true;
 						}
+						return NULL;
 					}
-					return NULL;
 				}
 				break;
 			}
@@ -252,7 +252,7 @@ void OGGDecoder::read_bos_pages(bool from_start_of_stream) {
 			}
 			if(ogg_stream_pagein(streams[page_serial].stream_state, page)) throw Exception("Could not submit page to stream");
 		}
-		done=all_bos_pages_handled;
+		done = all_bos_pages_handled;
 		delete page;
 	}
 }

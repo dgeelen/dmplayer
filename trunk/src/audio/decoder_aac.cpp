@@ -29,7 +29,7 @@ static void printCaps(long caps) {
 void AACDecoder::fill_buffer() {
 	while(buffer_fill != BLOCK_SIZE) {
 		int read = datasource->getData( buffer + buffer_fill, BLOCK_SIZE - buffer_fill);
-		if (read == 0) break;
+		if (read == 0 && datasource->exhausted()) break;
 		buffer_fill += read;
 	}
 }
