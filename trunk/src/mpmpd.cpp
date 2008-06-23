@@ -16,6 +16,7 @@ namespace po = boost::program_options;
 using namespace std;
 
 class ServerPlaylistReceiver: public PlaylistVector {
+	public:
 	virtual void add(const Track& track)
 	{
 		PlaylistVector::add(track);
@@ -58,14 +59,14 @@ class ServerDataSource : public IDataSource {
 		virtual void reset() {
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
 			position = 0;
+			data_exhausted = false;
+			wait_for_data = true;
 		}
 
 		virtual uint32 getData(uint8* buffer, uint32 len) {
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
-			size_t n = std::min(size_t(len), data_buffer.size());
-			std::vector<uint8>::iterator a = data_buffer.begin();
-			a+=n;
-			memcpy(buffer, &*a, n);
+			size_t n = std::min(size_t(len), size_t(data_buffer.size() - position));
+			memcpy(buffer, &data_buffer[position], n);
 			position+=n;
 			data_exhausted = (n==0);
 			return n;
@@ -81,6 +82,11 @@ class ServerDataSource : public IDataSource {
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
 			data_exhausted = false;
 			wait_for_data = b;
+
+// 			dcerr("Dumping file");
+// 			FILE* f = fopen("/tmp/dump.dat", "wb");
+// 			fwrite(&data_buffer[0], 1, data_buffer.size(), f);
+// 			fclose(f);
 		}
 
 	private:
@@ -116,6 +122,21 @@ class Server {
 
 		void next_song(uint32 playtime_secs) {
 			dcerr("Next!!! " << playtime_secs);
+			Track t = playlist.get(0);
+			typedef std::pair<const ClientID, ServerPlaylistReceiver> vtype;
+			BOOST_FOREACH(vtype& pair, clientlists) {
+				int pos = 0;
+				for (;pos < pair.second.size(); ++pos)
+					if (pair.second.get(pos).id == t.id)
+						break;
+				if (pos != pair.second.size()) {
+					pair.second.remove(pos);
+					// TODO: do something with weights!
+				}
+			}
+			// TODO: do something with weights and playtime_secs
+			recalculateplaylist();
+			add_datasource = true;
 		}
 
 		void message_loop() {
@@ -123,6 +144,14 @@ class Server {
 				messageref m = playlist.pop_msg();
 				if(m) {
 					networkhandler.send_message_allclients(m);
+					if(add_datasource && (playlist.size()!=0)) {
+						message_request_file_ref msg(new message_request_file(playlist.get(0).id));
+						server_datasource = boost::shared_ptr<ServerDataSource>(new ServerDataSource(*this));
+						networkhandler.send_message(playlist.get(0).id.first, msg);
+						ac.set_data_source(server_datasource);
+						dcerr("requesting " << playlist.get(0).id.second << " from " << playlist.get(0).id.first);
+						add_datasource = false;
+					}
 				}
 				else { // meh
 					usleep(100);
@@ -141,6 +170,12 @@ class Server {
 				}; break;
 				case message::MSG_DISCONNECT: {
 					dcerr("Received a MSG_DISCONNECT from " << id);
+					if(playlist.size()>0) {
+						Track t = playlist.get(0);
+						if(t.id.first == id) { // Client which is server current file disconnected!
+							server_datasource->set_wait_for_data(false);
+						}
+					}
 				} break;
 				case message::MSG_PLAYLIST_UPDATE: {
 					dcerr("Received a MSG_PLAYLIST_UPDATE from " << id);
@@ -188,14 +223,6 @@ class Server {
 					message_query_trackdb_ref sendmsg(new message_query_trackdb(cqid, query));
 					dcerr("Sending to " << query.id.first);
 					networkhandler.send_message(query.id.first, sendmsg);
-
-					if(add_datasource) {
-						message_request_file_ref msg(new message_request_file(query.id));
-						server_datasource = boost::shared_ptr<ServerDataSource>(new ServerDataSource(*this));
-						ac.set_data_source(server_datasource);
-						networkhandler.send_message(query.id.first, msg);
-						add_datasource = false;
-					}
 				}; break;
 				default: {
 					dcerr("Ignoring unknown message of type " << m->get_type() << " from " << id);
@@ -261,7 +288,7 @@ int main_impl(int argc, char* argv[])
 	po::options_description desc("Allowed options");
 	desc.add_options()
 			("help", po::bool_switch(&showhelp)                   , "produce help message")
-			("port", po::value(&listen_port)->default_value(12345), "listen port for daemon (TCP part)")
+			("port", po::value(&listen_port)->default_value(0), "listen port for daemon (TCP part)")
 			("file", po::value(&filename)->default_value("")      , "file to play (Debug for fmod lib)")
 			("name", po::value(&server_name)->default_value("mpmpd V" MPMP_VERSION_STRING), "Server name")
 			("musix", po::value(&musix)->default_value("")      , "directory to add music from")
