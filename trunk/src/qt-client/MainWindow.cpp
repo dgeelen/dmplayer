@@ -96,7 +96,7 @@ MainWindow::MainWindow()
 
 	Track mdmt;
 	mdmt.id.second = LocalTrackID(0xffffffff);
-	mdmt.metadata["FILENAME"] = "mp3";
+	mdmt.metadata["FILENAME"] = "ogg";
 	std::vector<LocalTrack> yay = tdb.search(mdmt);
 	BOOST_FOREACH(LocalTrack& tr, yay) {
 		DataBaseWidget->add(tr.getTrack());
@@ -290,6 +290,37 @@ void MainWindow::handleReceivedMessage(const messageref m)
 		case message::MSG_PLAYLIST_UPDATE: {
 			message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
 			msg->apply(PlayListWidget);
+		}; break;
+		case message::MSG_REQUEST_FILE: {
+			message_request_file_ref msg = boost::static_pointer_cast<message_request_file>(m);
+
+			Track track;
+			track.id = msg->id;
+			vector<LocalTrack> local = tdb.search(track);
+			fspath filepath = local[0].filename;
+			QFile::FileError err;
+			QFile file (QString::fromStdString(filepath.native_file_string()));
+			file.open(QIODevice::ReadOnly);
+			err = file.error();
+			QByteArray data = file.readAll();
+			uint64 done = 0;
+			err = file.error();
+			while (done < data.size()) {
+				uint64 todo = data.size()-done;
+				if (todo > 1024*1024)
+					todo = 1024*1024;
+				std::vector<uint8> vdata;
+				vdata.resize(todo);
+				memcpy(&vdata[0], (uint8*)data.data() + done, todo);
+				message_request_file_result_ref result(new message_request_file_result(vdata));
+				nh->send_server_message(result);
+				done += todo;
+			}
+			{
+				std::vector<uint8> vdata;
+				message_request_file_result_ref result(new message_request_file_result(vdata));
+				nh->send_server_message(result);
+			}
 		}; break;
 		case message::MSG_QUERY_TRACKDB: {
 			message_query_trackdb_ref msg = boost::static_pointer_cast<message_query_trackdb>(m);
