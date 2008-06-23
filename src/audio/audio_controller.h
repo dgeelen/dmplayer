@@ -15,6 +15,7 @@ class AudioController {
 		uint32 getData(uint8* buf, uint32 len);
 		void StartPlayback();
 		void StopPlayback();
+		void set_data_source(IDataSourceRef ds);
 	private:
 		IBackend* backend;
 		IAudioSourceRef curdecoder;
