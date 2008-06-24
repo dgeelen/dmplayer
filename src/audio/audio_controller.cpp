@@ -35,6 +35,7 @@ using namespace std;
 AudioController::AudioController()
 	: update_decoder_flag(false)
 {
+	bytes_played = 0;
 	backend = NULL;
 	#ifdef PORTAUDIO_BACKEND
 	try {
