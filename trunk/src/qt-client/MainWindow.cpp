@@ -358,3 +358,36 @@ void MainWindow::on_DataBaseWidget_doubleClicked(QModelIndex mi)
 		nh->send_server_message(msg);
 	}
 }
+
+void MainWindow::on_editTrackSearch_textEdited(QString text)
+{
+	MetaDataMap map;
+	map["FILENAME"] = text.toStdString();
+	Track query(TrackID(ClientID(0xffffffff), LocalTrackID(0xffffffff)), map);
+	vector<LocalTrack> s = tdb.search(query);
+	DataBaseWidget->clear();
+
+	BOOST_FOREACH(LocalTrack& tr, s) {
+		DataBaseWidget->add(tr.getTrack());
+	}
+}
+
+void MainWindow::on_buttonMusicAdd_clicked()
+{
+	QString directory;
+	directory = QFileDialog::getExistingDirectory(this,
+		tr("Choose directory to share"),
+		"");
+	tdb.add_directory(directory.toStdString());
+
+	on_editTrackSearch_textEdited(editTrackSearch->text());
+}
+
+void MainWindow::on_buttonPlaylistAdd_clicked()
+{
+	QList<QModelIndex> selected = DataBaseWidget->selectedIndexes();
+
+	BOOST_FOREACH(QModelIndex& mi, selected) {
+		on_DataBaseWidget_doubleClicked(mi);
+	}
+}
