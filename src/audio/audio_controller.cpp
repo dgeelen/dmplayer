@@ -20,6 +20,16 @@
 #include "datasource_httpstream.h"
 #include "filter_reformat.h"
 
+// TODO, also poll for data...
+class NullBackend: public IBackend {
+	public:
+		NullBackend(AudioController* i) : IBackend(i) {};
+		AudioFormat getAudioFormat() { return af;} ;
+		virtual ~NullBackend() {};
+		virtual void StartStream() {};
+		virtual void StopStream()  {};
+};
+
 using namespace std;
 
 AudioController::AudioController()
@@ -48,7 +58,9 @@ AudioController::AudioController()
 	} catch(...) {}
 	#endif
 	if(backend == NULL) {
-		throw SoundException("AudioController(): Could not find a suitable backend!");
+		backend = new NullBackend(this);
+		//throw SoundException("AudioController(): Could not find a suitable backend!");
+		dcerr("AudioController(): Could not find a suitable backend!");
 	}
 
 	/* Now we have a backend */
