@@ -6,14 +6,16 @@ FlacDecoder::FlacDecoder(IDataSourceRef ds_)
 	: IDecoder(AudioFormat())
 	, ds(ds_)
 {
+	try_decode = true;
 	FLAC__StreamDecoderInitStatus stat = init();
 
 	bufptr = NULL;
 
-	process_until_end_of_metadata();
+	process_single();
 
 	if (bufptr == NULL) throw Exception("Invalid flac stream");
 
+	try_decode = false;
 	eos = false;
 
 }
@@ -77,6 +79,10 @@ uint32 FlacDecoder::getData(uint8* buf, uint32 len)
 FLAC__StreamDecoderReadStatus FlacDecoder::read_callback(FLAC__byte buf[],size_t * len)
 {
 	*len = ds->getData(buf, *len);
+	if(((*len==0) && ds->exhausted()) || (try_decode && (ds->getpos()>8*1024))) {
+		bufptr = NULL;
+		return FLAC__STREAM_DECODER_READ_STATUS_ABORT;
+	}
 	return FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
 }
 
@@ -98,4 +104,5 @@ FLAC__StreamDecoderWriteStatus FlacDecoder::write_callback(const FLAC__Frame * h
 void FlacDecoder::error_callback(FLAC__StreamDecoderErrorStatus err)
 {
 	dcerr("flac: error:" << err);
+	if(err) bufptr = NULL;
 }

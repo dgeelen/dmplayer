@@ -16,6 +16,7 @@ class FlacDecoder: public IDecoder, public FLAC::Decoder::Stream {
 		uint32 bufsize;
 		IDataSourceRef ds;
 		bool eos;
+		bool try_decode;
 	public:
 		static IDecoderRef tryDecode(IDataSourceRef ds_);
 
