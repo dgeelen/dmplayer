@@ -3,6 +3,11 @@
 #include "network-handler.h"
 #include "error-handling.h"
 #include <boost/program_options.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/identity.hpp>
+#include <boost/multi_index/member.hpp>
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 #include "audio/audio_controller.h"
@@ -11,6 +16,8 @@
 #include "playlist_management.h"
 #include <boost/thread/mutex.hpp>
 #include "synced_playlist.h"
+#include "util/StrFormat.h"
+#include <algorithm>
 
 namespace po = boost::program_options;
 using namespace std;
@@ -37,6 +44,19 @@ class ServerPlaylistReceiver: public PlaylistVector {
 		PlaylistVector::clear();
 	}
 };
+
+class Client {
+	public:
+		Client(ClientID id_) {
+			id = id_;
+			zero_sum = 0.0;
+		}
+
+		ClientID id;
+		double zero_sum;
+		ServerPlaylistReceiver wish_list;
+};
+typedef boost::shared_ptr<Client> Client_ref;
 
 class Server;
 class ServerDataSource : public IDataSource {
@@ -85,11 +105,6 @@ class ServerDataSource : public IDataSource {
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
 			data_exhausted = false;
 			wait_for_data = b;
-
-// 			dcerr("Dumping file");
-// 			FILE* f = fopen("/tmp/dump.dat", "wb");
-// 			fwrite(&data_buffer[0], 1, data_buffer.size(), f);
-// 			fclose(f);
 		}
 
 	private:
@@ -107,8 +122,7 @@ class Server {
 			: networkhandler(listen_port, server_name)
 		{
 			dcerr("Started network_handler");
-			cqid =0;
-			done = false;
+			message_loop_running = true;
 			boost::thread tt(makeErrorHandler(boost::bind(&Server::message_loop, this)));
 			message_loop_thread.swap(tt);
 			networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
@@ -117,7 +131,7 @@ class Server {
 		}
 
 		~Server() {
-			done = true;
+			message_loop_running = false;
 			message_loop_thread.join();
 		}
 
@@ -128,35 +142,34 @@ class Server {
 			vector<ClientID> does_not_have_song;
 
 			Track t = playlist.get(0);
-			typedef std::pair<const ClientID, ServerPlaylistReceiver> vtype;
-			BOOST_FOREACH(vtype& pair, clientlists) {
+			BOOST_FOREACH(Client_ref c, clients) {
 				int pos = 0;
-				for (;pos < pair.second.size(); ++pos)
-					if (pair.second.get(pos).id == t.id)
+				for (;pos < c->wish_list.size(); ++pos)
+					if (c->wish_list.get(pos).id == t.id)
 						break;
-				if (pos != pair.second.size()) {
-					pair.second.remove(pos);
-					has_song.push_back(pair.first);
+				if (pos != c->wish_list.size()) {
+					c->wish_list.remove(pos);
+					has_song.push_back(c->id);
 					// TODO: do something with weights!
 				}
 				else {
-					does_not_have_song.push_back(pair.first);
+					does_not_have_song.push_back(c->id);
 				}
 			}
 
 			// TODO: do something with weights and playtime_secs
 			double avg_min  = double(playtime_secs)/has_song.size();
-			double avg_plus = double(playtime_secs)/clientlists.size();
-			BOOST_FOREACH( ClientID& id, has_song) {
-				double old = clientlists_zero_sum[id];
-				clientlists_zero_sum[id] -= avg_min;
-				clientlists_zero_sum[id] += avg_plus;
-				dcerr("(min)  for " << id << ": " << old << " -> " << clientlists_zero_sum[id]);
+			double avg_plus = double(playtime_secs)/clients.size();
+			BOOST_FOREACH(ClientID& id, has_song) {
+				double old = (*clients.find(id))->zero_sum;
+				(*clients.find(id))->zero_sum -= avg_min;
+				(*clients.find(id))->zero_sum += avg_plus;
+				dcerr("(min)  for " << STRFORMAT("%08x", id) << ": " << old << " -> " << (*clients.find(id))->zero_sum);
 			}
 			BOOST_FOREACH( ClientID& id, does_not_have_song) {
-				double old = clientlists_zero_sum[id];
-				clientlists_zero_sum[id] += avg_plus;
-				dcerr("(plus) for " << id << ": " << old << " -> " << clientlists_zero_sum[id]);
+				double old = (*clients.find(id))->zero_sum;
+				(*clients.find(id))->zero_sum += avg_plus;
+				dcerr("(plus) for " << STRFORMAT("%08x", id) << ": " << old << " -> " << (*clients.find(id))->zero_sum);
 			}
 
 			recalculateplaylist();
@@ -164,7 +177,7 @@ class Server {
 		}
 
 		void message_loop() {
-			while(!done) {
+			while(message_loop_running) {
 				messageref m = playlist.pop_msg();
 				if(m) {
 					networkhandler.send_message_allclients(m);
@@ -183,10 +196,23 @@ class Server {
 			}
 		}
 
+		void remove_client(ClientID id) {
+			Client_ref cr = *clients.find(id);
+			double total = -cr->zero_sum;
+			BOOST_FOREACH(Client_ref i, clients) {
+				total += i->zero_sum;
+			}
+			BOOST_FOREACH(Client_ref i, clients) {
+				i->zero_sum += (i->zero_sum/total)*cr->zero_sum;
+			}
+			clients.erase(id);
+		}
+
 		void handle_received_message(const messageref m, ClientID id) {
 			switch(m->get_type()) {
 				case message::MSG_CONNECT: {
 					dcerr("Received a MSG_CONNECT from " << id);
+					clients.insert(Client_ref(new Client(id)));
 					networkhandler.send_message(id, messageref(new message_playlist_update(playlist)));
 				} break;
 				case message::MSG_ACCEPT: {
@@ -194,17 +220,17 @@ class Server {
 				}; break;
 				case message::MSG_DISCONNECT: {
 					dcerr("Received a MSG_DISCONNECT from " << id);
-					if(playlist.size()>0) {
-						Track t = playlist.get(0);
-						if(t.id.first == id) { // Client which is server current file disconnected!
-							server_datasource->set_wait_for_data(false);
-						}
+					Track t = playlist.get(0);
+					remove_client(id);
+					recalculateplaylist();
+					if(t.id.first == id) { // Client which is serving current file disconnected!
+						server_datasource->set_wait_for_data(false);
 					}
 				} break;
 				case message::MSG_PLAYLIST_UPDATE: {
 					dcerr("Received a MSG_PLAYLIST_UPDATE from " << id);
 					message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
-					msg->apply(&clientlists[id]);
+					msg->apply(&(*clients.find(id))->wish_list);
 					recalculateplaylist();
 				}; break;
 				case message::MSG_QUERY_TRACKDB: {
@@ -215,12 +241,12 @@ class Server {
 					message_query_trackdb_result_ref msg = boost::static_pointer_cast<message_query_trackdb_result>(m);
 					uint32 qid = msg->qid;
 					std::pair<ClientID, TrackID> vote;
-					std::map<uint32, std::pair<ClientID, TrackID> >::iterator finder = vote_queue.find(qid);
-					if (finder != vote_queue.end()) {
+					std::map<uint32, std::pair<ClientID, TrackID> >::iterator finder = query_queue.find(qid);
+					if (finder != query_queue.end()) {
 						if(msg->result.size()==1) {
 							playlist.add(msg->result.front());
 						}
-						vote_queue.erase(finder);
+						query_queue.erase(finder);
 					} else {
 						dcerr("warning: ignoring query result");
 					}
@@ -240,34 +266,31 @@ class Server {
 				}; break;
 				case message::MSG_VOTE: {
 					dcerr("Received a MSG_VOTE from " << id);
-					message_vote_ref msg = boost::static_pointer_cast<message_vote>(m);
-					Track query;
-					query.id = msg->getID();
-					vote_queue[++cqid] =  std::pair<ClientID, TrackID>(id, query.id);
-					message_query_trackdb_ref sendmsg(new message_query_trackdb(cqid, query));
-					dcerr("Sending to " << query.id.first);
-					networkhandler.send_message(query.id.first, sendmsg);
 				}; break;
 				default: {
 					dcerr("Ignoring unknown message of type " << m->get_type() << " from " << id);
 				} break;
 			}
-			// 					message_connect_ref msg = boost::static_pointer_cast<message_connect>(m);
 		}
-		SyncedPlaylist playlist;//debug
-
 	private:
-// 		SyncedPlaylist playlist;
+		SyncedPlaylist playlist;
 		network_handler networkhandler;
-		std::map<uint32, std::pair<ClientID, TrackID> > vote_queue;
-		std::map<ClientID, ServerPlaylistReceiver> clientlists;
-		uint32 cqid;
-		bool done;
+		AudioController ac;
+		bool message_loop_running;
+		std::map<uint32, std::pair<ClientID, TrackID> > query_queue;
+		typedef boost::multi_index_container<
+			Client_ref,
+			boost::multi_index::indexed_by<
+				boost::multi_index::ordered_unique<boost::multi_index::member<Client, ClientID, &Client::id> >
+			>
+		> ClientMap;
+		ClientMap clients;
+
+
 		boost::thread message_loop_thread;
 		boost::shared_ptr<ServerDataSource> server_datasource;
-		AudioController ac;
+
 		bool add_datasource;
-		map<ClientID, double> clientlists_zero_sum;
 
 		class listitem {
 			public:
@@ -283,27 +306,32 @@ class Server {
 			};
 		};
 
+		struct sorthelper {
+			bool operator()(const std::pair<Client_ref, uint32>& l, const std::pair<Client_ref, uint32>& r) const {
+				return l.first->zero_sum > r.first->zero_sum;
+			}
+		};
+
 		void recalculateplaylist() {
 			playlist.clear();
-			std::vector<listitem> lists;
-			typedef std::pair<const ClientID, ServerPlaylistReceiver> vtype;
+			std::vector<std::pair<Client_ref, uint32> > client_list;
 			uint32 maxsize = 0;
-			BOOST_FOREACH(vtype& pair, clientlists) {
-				if (pair.second.size() > 0)
-					lists.push_back(listitem(pair.first, &pair.second, 0, &clientlists_zero_sum));
-				if (pair.second.size() > maxsize)
-					maxsize = pair.second.size();
+			BOOST_FOREACH(Client_ref c, clients) {
+				if (c->wish_list.size() > 0)
+					client_list.push_back(std::pair<Client_ref, uint32>(c, 0));
+				if(c->wish_list.size() > maxsize)
+					maxsize = c->wish_list.size();
 			}
 
-			std::sort(lists.begin(), lists.end());
+			std::sort(client_list.begin(), client_list.end(), sorthelper() );
 
 			bool done = false;
 			while (!done) {
 				done = true;
-				typedef std::pair<IPlaylist*, int> vt2;
-				BOOST_FOREACH(listitem& i, lists) {
-					if (i.i < i.pl->size()) {
-						playlist.add(i.pl->get(i.i++));
+				typedef std::pair<Client_ref, uint32> vt;
+				BOOST_FOREACH(vt& i, client_list) {
+					if (i.second < i.first->wish_list.size()) {
+						playlist.add(i.first->wish_list.get(i.second++));
 						done = false;
 					}
 				}
@@ -351,20 +379,20 @@ int main_impl(int argc, char* argv[])
 // 		ac.test_functie(filename);
 // 	}
 
-	if (musix != "") {
-		TrackDataBase tdb;
-		tdb.add_directory( musix );
-		MetaDataMap m;
-		m["FILENAME"] = findtext;
-		Track query(TrackID(ClientID(0xffffffff), LocalTrackID(0xffffffff)), m);
-		vector<LocalTrack> s = tdb.search(query);
-		BOOST_FOREACH(LocalTrack& tr, s) {
-			Track t(TrackID(ClientID(0),tr.id), tr.metadata );
-			svr.playlist.add(t);
-			svr.playlist.pop_msg();
-			dcerr( tr.filename );
-		}
-	}
+// 	if (musix != "") {
+// 		TrackDataBase tdb;
+// 		tdb.add_directory( musix );
+// 		MetaDataMap m;
+// 		m["FILENAME"] = findtext;
+// 		Track query(TrackID(ClientID(0xffffffff), LocalTrackID(0xffffffff)), m);
+// 		vector<LocalTrack> s = tdb.search(query);
+// 		BOOST_FOREACH(LocalTrack& tr, s) {
+// 			Track t(TrackID(ClientID(0),tr.id), tr.metadata );
+// 			svr.playlist.add(t);
+// 			svr.playlist.pop_msg();
+// 			dcerr( tr.filename );
+// 		}
+// 	}
 
 	cout << "Press any key to quit\n";
 	getchar();
