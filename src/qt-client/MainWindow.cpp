@@ -93,10 +93,13 @@ MainWindow::MainWindow()
 
 	// TODO: make gui input for this
 	tdb.add_directory( "d:\\stuff\\music");
+	tdb.add_directory( "d:\\mp3");
+	tdb.add_directory( "d:\\audio");
+	tdb.add_directory( "d:\\My Documents\\My Music");
 
 	Track mdmt;
 	mdmt.id.second = LocalTrackID(0xffffffff);
-	mdmt.metadata["FILENAME"] = "ogg";
+	mdmt.metadata["FILENAME"] = "mp3";
 	std::vector<LocalTrack> yay = tdb.search(mdmt);
 	BOOST_FOREACH(LocalTrack& tr, yay) {
 		DataBaseWidget->add(tr.getTrack());
