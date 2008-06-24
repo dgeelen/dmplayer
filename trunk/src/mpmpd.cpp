@@ -178,7 +178,7 @@ class Server {
 					}
 				}
 				else { // meh
-					usleep(100);
+					usleep(100*1000);
 				}
 			}
 		}
