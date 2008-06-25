@@ -11,6 +11,7 @@ extern TrackDataBase trackDB;
 extern network_handler* gmpmpc_network_handler;
 ClientID gmpmpc_client_id;
 
+
 void handle_received_message(const messageref m) {
 	switch(m->get_type()) {
 		case message::MSG_CONNECT: {
@@ -20,9 +21,7 @@ void handle_received_message(const messageref m) {
 			dcerr("Received a MSG_ACCEPT");
 			select_server_accepted();
 			gmpmpc_client_id = boost::static_pointer_cast<message_accept>(m)->cid;
-			gdk_threads_enter();
-			treeview_trackdb_update(NULL);
-			gdk_threads_leave();
+			g_idle_add(treeview_trackdb_update, NULL);
 		}; break;
 		case message::MSG_DISCONNECT: {
 			dcerr("Received a MSG_DISCONNECT");
