@@ -65,6 +65,7 @@ class ServerDataSource : public IDataSource {
 			position = 0;
 			data_exhausted = false;
 			wait_for_data = true;
+			finished = false;
 		}
 
 		virtual long getpos() {
@@ -86,7 +87,9 @@ class ServerDataSource : public IDataSource {
 
 		virtual uint32 getData(uint8* buffer, uint32 len) {
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
-			size_t n = std::min(size_t(len), size_t(data_buffer.size() - position));
+			size_t n = 0;
+			if (!finished)
+				n = std::min(size_t(len), size_t(data_buffer.size() - position));
 			if (n>0)
 				memcpy(buffer, &data_buffer[position], n);
 			position+=n;
@@ -105,6 +108,7 @@ class ServerDataSource : public IDataSource {
 		}
 
 		void stop() {
+			finished = true;
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
 			position = data_buffer.size();
 		}
@@ -121,6 +125,7 @@ class ServerDataSource : public IDataSource {
 		std::vector<uint8> data_buffer;
 		bool data_exhausted;
 		bool wait_for_data;
+		bool finished;
 		long position;
 };
 
@@ -203,7 +208,8 @@ class Server {
 						dcerr("requesting " << currenttrack.id.second << " from " << currenttrack.id.first);
 						add_datasource = false;
 					}
-					if(vote_min_list[currenttrack.id].size() >= (clients.size()/2)) {
+					std::set<ClientID> votes = vote_min_list[currenttrack.id];
+					if(server_datasource && votes.size() > 0 && (votes.size()*2) >= clients.size()) {
 						server_datasource->stop();
 					}
 					usleep(100*1000);
@@ -220,7 +226,7 @@ class Server {
 				total += i->zero_sum;
 			}
 			clients.erase(id);
-			if(currenttrack.id == cr->wish_list.get(0).id)
+			if(cr->wish_list.size() > 0 && currenttrack.id == cr->wish_list.get(0).id)
 				server_datasource->stop();
 			if (total == 0) return;
 			BOOST_FOREACH(Client_ref i, clients) {
