@@ -348,7 +348,8 @@ typedef boost::shared_ptr<message_request_file> message_request_file_ref;
 
 class message_request_file_result : public message {
 	public:
-		message_request_file_result(const std::vector<uint8>& data_) : message(MSG_REQUEST_FILE_RESULT), data(data_) {};
+		message_request_file_result(const std::vector<uint8>& data_, TrackID id_) : message(MSG_REQUEST_FILE_RESULT), data(data_), id(id_) {};
+		TrackID id;
 		std::vector<uint8> data;
 	private:
 		message_request_file_result() {};
@@ -358,6 +359,7 @@ class message_request_file_result : public message {
 		void serialize(Archive & ar, const unsigned int version) {
 			ar & boost::serialization::base_object<message>(*this);
 			ar & data;
+			ar & id;
 		}
 };
 typedef boost::shared_ptr<message_request_file_result> message_request_file_result_ref;

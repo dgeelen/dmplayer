@@ -277,6 +277,7 @@ class Server {
 				case message::MSG_REQUEST_FILE_RESULT: {
 					dcerr("Received a MSG_REQUEST_FILE_RESULT from " << id);
 					message_request_file_result_ref msg = boost::static_pointer_cast<message_request_file_result>(m);
+					if(currenttrack.id != msg->id) break;
 					if(msg->data.size()) {
 						server_datasource->appendData(msg->data);
 					}
