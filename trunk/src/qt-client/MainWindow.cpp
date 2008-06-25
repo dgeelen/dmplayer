@@ -308,10 +308,13 @@ void MainWindow::handleReceivedMessage(const messageref m)
 			QByteArray data = file.readAll();
 			uint64 done = 0;
 			err = file.error();
+			int max = 16*1024;
 			while (done < data.size()) {
 				uint64 todo = data.size()-done;
-				if (todo > 32*1024)
-					todo = 32*1024;
+				if (max < 1024*1024)
+					max *= 2;
+				if (todo > max)
+					todo = max;
 				std::vector<uint8> vdata;
 				vdata.resize(todo);
 				memcpy(&vdata[0], (uint8*)data.data() + done, todo);
