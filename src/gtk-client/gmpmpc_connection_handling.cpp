@@ -6,6 +6,11 @@
 gmpmpc_connection_handler::gmpmpc_connection_handler() {
 }
 
+void gmpmpc_connection_handler::send_message_update_playlist(Track& t) {
+	dcerr("TODO");
+// 	message_update_playlist_ref msg(new message_update_playlist(t));
+}
+
 void gmpmpc_connection_handler::handle_message(const messageref m) {
 	std::map<message::message_types, std::string> message_names;
 	message_names[message::MSG_CONNECT]              = "MSG_CONNECT";

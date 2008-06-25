@@ -32,6 +32,24 @@ gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(TrackDataBase* tdb, ClientID cid) {
 	treeview.set_rubber_banding(true);
 	update_treeview();
 	search_entry.signal_changed().connect(boost::bind(&gmpmpc_trackdb_widget::on_search_entry_changed, this));
+	add_to_wishlist_button.signal_clicked().connect(boost::bind(&gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked, this));
+}
+
+void gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked() {
+	Glib::RefPtr<Gtk::TreeModel> model = treeview.get_model();
+	Glib::RefPtr<Gtk::ListStore> store = Glib::RefPtr<Gtk::ListStore>::cast_dynamic(model);
+
+	status_message_signal("Voting...");
+	Glib::RefPtr<Gtk::TreeSelection> sel = treeview.get_selection();
+	std::vector<Gtk::TreeModel::Path> selected_rows = sel->get_selected_rows();
+	BOOST_FOREACH(Gtk::TreeModel::Path p, selected_rows) {
+		Gtk::TreeModel::iterator i = model->get_iter(p);
+		Track q;
+		q.id = (*i)[m_Columns.id];
+		std::vector<LocalTrack> r = trackdb->search(q);
+		Track t(q.id, r[0].metadata);
+		enqueue_track_signal(t);
+	}
 }
 
 bool gmpmpc_trackdb_widget::update_treeview() {

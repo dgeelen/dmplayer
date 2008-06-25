@@ -6,8 +6,11 @@
 	class gmpmpc_connection_handler {
 		public:
 			gmpmpc_connection_handler();
-			void handle_message(const messageref);
+
 			boost::signal<void()> connection_accepted_signal;
+
+			void handle_message(const messageref);
+			void send_message_update_playlist(Track& t);
 	};
 #endif //GMPMPC_CONNECTION_HANDLING_H
 

@@ -1,8 +1,5 @@
-#include "gmpmpc.h"
 #include "gmpmpc_select_server.h"
-#include "boost/bind.hpp"
-#include <gtkmm/liststore.h>
-#include <gtkmm/treemodel.h>
+#include <boost/bind.hpp>
 #include "../util/StrFormat.h"
 #include <gtkmm/treeselection.h>
 
@@ -25,6 +22,8 @@ gmpmpc_select_server_window::gmpmpc_select_server_window() {
 
 	cancel_button.signal_clicked().connect(boost::bind(&gmpmpc_select_server_window::on_cancel_button_click, this));
 	connect_button.signal_clicked().connect(boost::bind(&gmpmpc_select_server_window::on_connect_button_click, this));
+	serverlist.add_events(Gdk::BUTTON_PRESS_MASK);
+	serverlist.signal_button_press_event().connect(sigc::mem_fun(*this, &gmpmpc_select_server_window::on_serverlist_double_click), false);
 
 	Glib::RefPtr<Gtk::ListStore> refListStore = Gtk::ListStore::create(m_Columns);
 	serverlist.set_model(refListStore);
@@ -40,7 +39,6 @@ gmpmpc_select_server_window::~gmpmpc_select_server_window() {
 }
 
 void gmpmpc_select_server_window::update_serverlist(const std::vector<server_info>& si) {
-	dcerr("");
 	Glib::RefPtr<Gtk::TreeModel> model = serverlist.get_model();
 	Glib::RefPtr<Gtk::ListStore> store = Glib::RefPtr<Gtk::ListStore>::cast_dynamic(model);
 
@@ -58,14 +56,25 @@ void gmpmpc_select_server_window::update_serverlist(const std::vector<server_inf
 		sel->select(selected[0]);
 }
 
+bool gmpmpc_select_server_window::on_serverlist_double_click(GdkEventButton *event) {
+	if (event->type == GDK_2BUTTON_PRESS && event->button == 1) {
+		on_connect_button_click();
+	}
+	return false;
+}
+
 void gmpmpc_select_server_window::on_connect_button_click() {
 	Glib::RefPtr<Gtk::TreeModel> model = serverlist.get_model();
 	Glib::RefPtr<Gtk::ListStore> store = Glib::RefPtr<Gtk::ListStore>::cast_dynamic(model);
 
-	connect_button.set_sensitive(false);
-
 	Glib::RefPtr<Gtk::TreeSelection> sel = serverlist.get_selection();
 	if(sel->count_selected_rows() == 1) {
+		connect_button.set_sensitive(false);
+		serverlist.set_sensitive(false);
+
+		statusbar.pop();
+		statusbar.push("Connecting...");
+		status_message_signal("Connecting...");
 		connect_signal((*sel->get_selected())[m_Columns.addr]);
 	}
 }
@@ -76,11 +85,19 @@ void gmpmpc_select_server_window::on_cancel_button_click() {
 	}
 	else {
 		connect_button.set_sensitive(true);
+		serverlist.set_sensitive(true);
 	}
+	statusbar.pop();
 }
 
 void gmpmpc_select_server_window::connection_accepted() {
 	connect_button.set_sensitive(true);
+	serverlist.set_sensitive(true);
+	statusbar.pop();
+	Glib::RefPtr<Gtk::TreeSelection> sel = serverlist.get_selection();
+	if(sel->count_selected_rows() == 1) {
+		status_message_signal(STRFORMAT("Connected to '%s'.", (*sel->get_selected())[m_Columns.name]));
+	}
 }
 
 

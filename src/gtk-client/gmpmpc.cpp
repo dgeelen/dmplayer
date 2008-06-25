@@ -16,6 +16,9 @@ GtkMpmpClientWindow::GtkMpmpClientWindow(network_handler* nh, TrackDataBase* tdb
 	trackdb_widget = new gmpmpc_trackdb_widget(trackdb, ClientID(-1));
 	construct_gui();
 
+	connected_signals["enqueue_track_signal"] =
+		trackdb_widget->enqueue_track_signal.connect(
+			boost::bind(&gmpmpc_connection_handler::send_message_update_playlist, &connection_handler, _1));
 	connected_signals["connection_accepted_signal"] =
 		connection_handler.connection_accepted_signal.connect(
 			boost::bind(&GtkMpmpClientWindow::on_connection_accepted, this));
@@ -31,7 +34,12 @@ GtkMpmpClientWindow::GtkMpmpClientWindow(network_handler* nh, TrackDataBase* tdb
 	connected_signals["server_list_update_signal"] =
  		networkhandler->server_list_update_signal.connect(
  			boost::bind(&gmpmpc_select_server_window::update_serverlist, &select_server_window, _1));
-
+	connected_signals["trackdb_status_signal"] =
+		trackdb_widget->status_message_signal.connect(
+			boost::bind(&GtkMpmpClientWindow::set_status_message, this, _1));
+	connected_signals["select_server_status_signal"] =
+			select_server_window.status_message_signal.connect(
+				boost::bind(&GtkMpmpClientWindow::set_status_message, this, _1));
  set_status_message("Selecting server.");
 	select_server_window.show_all();
 }
@@ -48,7 +56,6 @@ void GtkMpmpClientWindow::on_connection_accepted() {
 	select_server_window.connection_accepted();
 	select_server_window.hide();
 	connected_signals["server_list_update_signal"].block();
-	set_status_message("Connected to server.");
 }
 
 void GtkMpmpClientWindow::on_select_server_connect( ipv4_socket_addr addr ) {
@@ -67,7 +74,7 @@ void GtkMpmpClientWindow::set_status_message(std::string msg) {
 	statusbar.push(msg);
 	clear_statusbar_connection.disconnect();
 	sigc::slot<bool> slot = sigc::mem_fun(*this, &GtkMpmpClientWindow::clear_status_messages);
-	clear_statusbar_connection = Glib::signal_timeout().connect(slot, 3000);
+	clear_statusbar_connection = Glib::signal_timeout().connect(slot, 5000);
 }
 
 bool GtkMpmpClientWindow::clear_status_messages() {
@@ -111,13 +118,7 @@ void GtkMpmpClientWindow::construct_gui() {
 	m_refUIManager->add_ui_from_string(ui_info);
 	menubar_ptr = (Gtk::Menu*)m_refUIManager->get_widget("/MenuBar");
 
-	playlist_scrolledwindow.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
-
-	playlist_scrolledwindow.add(playlist_treeview);
-
-	playlist_frame.add(playlist_scrolledwindow);
-
-	main_paned.add(playlist_frame);
+	main_paned.add(playlist_widget);
 	main_paned.add(*trackdb_widget);
 
 	main_vbox.pack_start(*menubar_ptr, Gtk::PACK_SHRINK);
@@ -126,7 +127,6 @@ void GtkMpmpClientWindow::construct_gui() {
 
 	add(main_vbox);
 
-	playlist_frame.set_label("Playlist:");
 	statusbar.push("Ready.", 0);
 
 	show_all();

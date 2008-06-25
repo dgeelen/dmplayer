@@ -4,7 +4,12 @@
 	#include <gtkmm/statusbar.h>
 	#include <gtkmm/scrolledwindow.h>
 	#include <boost/signal.hpp>
+	#include <gtkmm/window.h>
 	#include <vector>
+	#include <gtkmm/liststore.h>
+	#include <gtkmm/treeview.h>
+	#include <gtkmm/frame.h>
+	#include <gtkmm/button.h>
 	#include "../network-handler.h"
 
 	class gmpmpc_select_server_window : public Gtk::Window {
@@ -15,6 +20,7 @@
 			void connection_accepted();
 			boost::signal<void(ipv4_socket_addr)> connect_signal;
 			boost::signal<void(void)>             cancel_signal;
+			boost::signal<void(std::string)>      status_message_signal;
 
 		private:
 			class ModelColumns : public Gtk::TreeModelColumnRecord {
@@ -35,6 +41,7 @@
 
 			void on_cancel_button_click();
 			void on_connect_button_click();
+			bool on_serverlist_double_click(GdkEventButton *event);
 			Gtk::Frame          frame;
 			Gtk::VBox           framebox;
 			Gtk::VBox           vbox;

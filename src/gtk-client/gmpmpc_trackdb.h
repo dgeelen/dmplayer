@@ -3,6 +3,7 @@
 	#include "../error-handling.h"
 	#include "../network-handler.h"
 	#include "../playlist_management.h"
+	#include <boost/signal.hpp>
 	#include <gtkmm/box.h>
 	#include <gtkmm/frame.h>
 	#include <gtkmm/label.h>
@@ -17,6 +18,8 @@
 	class gmpmpc_trackdb_widget : public Gtk::Frame {
 		public:
 			gmpmpc_trackdb_widget(TrackDataBase* tdb, ClientID cid);
+			boost::signal<void(Track&)>      enqueue_track_signal;
+			boost::signal<void(std::string)> status_message_signal;
 		private:
 			class ModelColumns : public Gtk::TreeModelColumnRecord {
 				public:
@@ -32,10 +35,12 @@
 			};
 			ModelColumns m_Columns;
 			void on_search_entry_changed();
+			void on_add_to_wishlist_button_clicked();
 			sigc::connection update_treeview_connection;
 			bool update_treeview();
 			TrackDataBase*        trackdb;
 			ClientID              clientid;
+
 
 			Gtk::ScrolledWindow   scrolledwindow;
 			Gtk::HBox             search_hbox;
