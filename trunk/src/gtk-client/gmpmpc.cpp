@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <gtkmm/stock.h>
 #include "../network-handler.h"
+#include "../util/StrFormat.h"
 
 using namespace std;
 namespace po = boost::program_options;
@@ -14,25 +15,63 @@ GtkMpmpClientWindow::GtkMpmpClientWindow(network_handler* nh, TrackDataBase* tdb
 	trackdb->add_directory("/home/dafox/sharedfolder/music/");
 	trackdb_widget = new gmpmpc_trackdb_widget(trackdb, ClientID(-1));
 	construct_gui();
-	server_list_update_signal = networkhandler->server_list_update_signal.connect(boost::bind(&gmpmpc_select_server_window::update_serverlist, &select_server_window, _1));
-	select_server_window.connect_signal.connect(boost::bind(&GtkMpmpClientWindow::on_select_server_connect, this, _1));
-	select_server_window.cancel_signal.connect(boost::bind(&GtkMpmpClientWindow::on_select_server_cancel, this));
+
+	connected_signals["connection_accepted_signal"] =
+		connection_handler.connection_accepted_signal.connect(
+			boost::bind(&GtkMpmpClientWindow::on_connection_accepted, this));
+	connected_signals["connect_signal"] =
+		select_server_window.connect_signal.connect(
+			boost::bind(&GtkMpmpClientWindow::on_select_server_connect, this, _1));
+	connected_signals["cancel_signal"] =
+		select_server_window.cancel_signal.connect(
+			boost::bind(&GtkMpmpClientWindow::on_select_server_cancel, this));
+	connected_signals["client_message_receive_signal"] =
+		networkhandler->client_message_receive_signal.connect(
+			boost::bind(&gmpmpc_connection_handler::handle_message, &connection_handler, _1));
+	connected_signals["server_list_update_signal"] =
+ 		networkhandler->server_list_update_signal.connect(
+ 			boost::bind(&gmpmpc_select_server_window::update_serverlist, &select_server_window, _1));
+
+ set_status_message("Selecting server.");
 	select_server_window.show_all();
-	dcerr("'bla'");
 }
 
 GtkMpmpClientWindow::~GtkMpmpClientWindow() {
+	typedef pair<std::string, boost::signals::connection> vtype;
+	BOOST_FOREACH(vtype signal, connected_signals) {
+		signal.second.disconnect();
+	}
 	delete trackdb_widget;
+}
+
+void GtkMpmpClientWindow::on_connection_accepted() {
+	select_server_window.connection_accepted();
+	select_server_window.hide();
+	connected_signals["server_list_update_signal"].block();
+	set_status_message("Connected to server.");
 }
 
 void GtkMpmpClientWindow::on_select_server_connect( ipv4_socket_addr addr ) {
 	networkhandler->client_disconnect_from_server();
+	set_status_message(STRFORMAT("Connecting to %s.", addr.std_str()));
 	networkhandler->client_connect_to_server(addr);
-	server_list_update_signal.disconnect();
 }
 
 void GtkMpmpClientWindow::on_select_server_cancel() {
-	server_list_update_signal.disconnect();
+	connected_signals["server_list_update_signal"].block();
+	select_server_window.hide();
+}
+
+void GtkMpmpClientWindow::set_status_message(std::string msg) {
+	statusbar.pop();
+	statusbar.push(msg);
+	clear_statusbar_connection.disconnect();
+	sigc::slot<bool> slot = sigc::mem_fun(*this, &GtkMpmpClientWindow::clear_status_messages);
+	clear_statusbar_connection = Glib::signal_timeout().connect(slot, 3000);
+}
+
+bool GtkMpmpClientWindow::clear_status_messages() {
+	set_status_message("Ready.");
 }
 
 void GtkMpmpClientWindow::construct_gui() {
@@ -96,6 +135,7 @@ void GtkMpmpClientWindow::construct_gui() {
 
 void GtkMpmpClientWindow::on_menu_file_connect() {
 	select_server_window.show();
+	connected_signals["server_list_update_signal"].unblock();
 }
 
 void GtkMpmpClientWindow::on_menu_file_preferences() {

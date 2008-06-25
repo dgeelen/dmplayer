@@ -14,6 +14,7 @@
 	#define GMPMPC_H
 	#include "gmpmpc_trackdb.h"
 	#include "gmpmpc_select_server.h"
+	#include "gmpmpc_connection_handling.h"
 	#include "../error-handling.h"
 	#include "../network-handler.h"
 	#include "../playlist_management.h"
@@ -57,14 +58,19 @@
 			void on_menu_file_preferences();
 			void on_menu_file_quit();
 			void on_menu_file_connect();
+			void on_connection_accepted();
 			void construct_gui();
 			void on_select_server_connect(ipv4_socket_addr addr);
 			void on_select_server_cancel();
+			void set_status_message(std::string msg);
+			bool clear_status_messages();
 
 			/* Variables */
 			TrackDataBase* trackdb;
 			network_handler* networkhandler;
-			boost::signals::connection server_list_update_signal;
+			std::map<std::string, boost::signals::connection> connected_signals;
+			gmpmpc_connection_handler connection_handler;
+			sigc::connection clear_statusbar_connection;
 	};
 
 #endif
