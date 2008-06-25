@@ -15,6 +15,7 @@
 	#include "gmpmpc_trackdb.h"
 	#include "gmpmpc_select_server.h"
 	#include "gmpmpc_connection_handling.h"
+	#include "gmpmpc_playlist.h"
 	#include "../error-handling.h"
 	#include "../network-handler.h"
 	#include "../playlist_management.h"
@@ -49,9 +50,10 @@
 			Gtk::ScrolledWindow   playlist_scrolledwindow;
 			/* Widgets (referenced by code) */
 			Gtk::Menu*     menubar_ptr; // Menu is created dynamically using UIManager
-			Gtk::TreeView  playlist_treeview;
+// 			Gtk::TreeView  playlist_treeview;
 			Gtk::Statusbar statusbar;
 			gmpmpc_trackdb_widget* trackdb_widget;
+			gmpmpc_playlist_widget playlist_widget;
 			gmpmpc_select_server_window select_server_window;
 
 			/* Functions */
@@ -59,9 +61,9 @@
 			void on_menu_file_quit();
 			void on_menu_file_connect();
 			void on_connection_accepted();
-			void construct_gui();
 			void on_select_server_connect(ipv4_socket_addr addr);
 			void on_select_server_cancel();
+			void construct_gui();
 			void set_status_message(std::string msg);
 			bool clear_status_messages();
 
