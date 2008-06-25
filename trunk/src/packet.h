@@ -190,8 +190,8 @@ typedef boost::shared_ptr<message_accept> message_accept_ref;
 
 class message_vote : public message {
 	public:
-		message_vote(TrackID id_) : message(MSG_VOTE), id(id_) {};
-
+		message_vote(TrackID id_, bool is_min_vote_) : message(MSG_VOTE), id(id_), is_min_vote(is_min_vote_) {};
+		bool is_min_vote;
 		TrackID getID() { return id; };
 	private:
 		TrackID id;
@@ -203,6 +203,7 @@ class message_vote : public message {
 		void serialize(Archive & ar, const unsigned int version) {
 			ar & boost::serialization::base_object<message>(*this);
 			ar & id;
+			ar & is_min_vote;
 		}
 };
 typedef boost::shared_ptr<message_vote> message_vote_ref;

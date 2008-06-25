@@ -183,6 +183,7 @@ class Server {
 			}
 
 			recalculateplaylist();
+			vote_min_list.erase(currenttrack.id);
 			add_datasource = true;
 		}
 
@@ -201,6 +202,9 @@ class Server {
 						ac.set_data_source(server_datasource);
 						dcerr("requesting " << currenttrack.id.second << " from " << currenttrack.id.first);
 						add_datasource = false;
+					}
+					if(vote_min_list[currenttrack.id].size() >= (clients.size()/2)) {
+						server_datasource->stop();
 					}
 					usleep(100*1000);
 				}
@@ -282,6 +286,10 @@ class Server {
 				}; break;
 				case message::MSG_VOTE: {
 					dcerr("Received a MSG_VOTE from " << id);
+					message_vote_ref msg = boost::static_pointer_cast<message_vote>(m);
+					if(msg->is_min_vote) {
+						vote_min_list[msg->getID()].insert(id);
+					}
 				}; break;
 				default: {
 					dcerr("Ignoring unknown message of type " << m->get_type() << " from " << id);
@@ -302,7 +310,7 @@ class Server {
 			>
 		> ClientMap;
 		ClientMap clients;
-
+		std::map<TrackID, std::set<ClientID> > vote_min_list;
 
 		boost::thread message_loop_thread;
 		boost::shared_ptr<ServerDataSource> server_datasource;
