@@ -36,10 +36,6 @@
 		public:
 			GtkMpmpClientWindow(network_handler* nh, TrackDataBase* tdb);
 			~GtkMpmpClientWindow();
-			/* Functions */
-// 			void set_track_database(TrackDataBase* tdb);
-// 			TrackDataBase& get_track_database();
-// 			void set_network_handler(network_handler* nh);
 
 		private:
 			/* Helpers */
