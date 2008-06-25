@@ -223,6 +223,9 @@ class Server {
 		void remove_client(ClientID id) {
 			if (clients.find(id) == clients.end())
 				return;
+			if(currenttrack.id.first == id && server_datasource) { // Client which is serving current file disconnected!
+				server_datasource->set_wait_for_data(false);
+			}
 			Client_ref cr = *clients.find(id);
 			double total = -cr->zero_sum;
 			BOOST_FOREACH(Client_ref i, clients) {
@@ -249,12 +252,8 @@ class Server {
 				}; break;
 				case message::MSG_DISCONNECT: {
 					dcerr("Received a MSG_DISCONNECT from " << id);
-					Track t = playlist.get(0);
 					remove_client(id);
 					recalculateplaylist();
-					if(t.id.first == id) { // Client which is serving current file disconnected!
-						server_datasource->set_wait_for_data(false);
-					}
 				} break;
 				case message::MSG_PLAYLIST_UPDATE: {
 					dcerr("Received a MSG_PLAYLIST_UPDATE from " << id);
