@@ -37,6 +37,17 @@
 	};
 
 	extern WinSockClass winsockinstance;
+#else
+	#include <signal.h>
+	class SIGPipeClass { /* Used to hide SIGPIPE */
+		public:
+		SIGPipeClass() {
+			sigset_t sigset;
+			sigemptyset(&sigset);
+			sigaddset(&sigset, SIGPIPE);
+			sigprocmask(SIG_SETMASK, &sigset, NULL);
+		}
+	};
 #endif
 
 struct ipv4_addr {

@@ -22,6 +22,8 @@ using namespace std;
 #ifdef HAVE_WINSOCK
 	WinSockClass winsockinstance;
 	int WinSockClass::counter = 0;
+#else
+	SIGPipeClass sigpipeinstance;
 #endif
 
 tcp_socket::tcp_socket()
