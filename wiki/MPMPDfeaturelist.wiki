@@ -1,4 +1,4 @@
-#summary One-sentence summary of this page.
+#This page offers a list of features that will be implemented in a future version of MPMPD.
 
 = Future feature list=
 
