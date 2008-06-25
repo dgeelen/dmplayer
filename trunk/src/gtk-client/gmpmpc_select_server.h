@@ -10,6 +10,7 @@
 	class gmpmpc_select_server_window : public Gtk::Window {
 		public:
 			gmpmpc_select_server_window();
+			~gmpmpc_select_server_window();
 			void update_serverlist(const std::vector<server_info>& si);
 			boost::signal<void(ipv4_socket_addr)> connect_signal;
 			boost::signal<void(void)>             cancel_signal;

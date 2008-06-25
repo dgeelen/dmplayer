@@ -33,6 +33,10 @@ gmpmpc_select_server_window::gmpmpc_select_server_window() {
 	set_modal(true);
 }
 
+gmpmpc_select_server_window::~gmpmpc_select_server_window() {
+	cancel_signal();
+}
+
 void gmpmpc_select_server_window::update_serverlist(const std::vector<server_info>& si) {
 	Glib::RefPtr<Gtk::TreeModel> model = serverlist.get_model();
 	Glib::RefPtr<Gtk::ListStore> store = Glib::RefPtr<Gtk::ListStore>::cast_dynamic(model);
