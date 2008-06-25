@@ -63,7 +63,7 @@ MainWindow::MainWindow()
 			this->tabifyDockWidget(dockServerInfo , dockAudioPlayer);
 		}
 	}
-	
+
 	progressTimer.stop();
 
 	QObject::connect(&progressTimer, SIGNAL(timeout()), this, SLOT(updateProgressBar()));
@@ -96,6 +96,7 @@ MainWindow::MainWindow()
 	tdb.add_directory( "d:\\mp3");
 	tdb.add_directory( "d:\\audio");
 	tdb.add_directory( "d:\\My Documents\\My Music");
+	tdb.add_directory( "/home/dafox/sharedfolder/music/");
 
 	Track mdmt;
 	mdmt.id.second = LocalTrackID(0xffffffff);
@@ -105,7 +106,6 @@ MainWindow::MainWindow()
 		DataBaseWidget->add(tr.getTrack());
 		//dcerr( tr.filename );
 	}
-
 
 }
 
