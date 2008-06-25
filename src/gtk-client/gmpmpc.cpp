@@ -3,6 +3,7 @@
 #include <boost/bind.hpp>
 #include <signal.h>
 #include <gtkmm/stock.h>
+#include "../network-handler.h"
 
 using namespace std;
 namespace po = boost::program_options;
@@ -13,10 +14,25 @@ GtkMpmpClientWindow::GtkMpmpClientWindow(network_handler* nh, TrackDataBase* tdb
 	trackdb->add_directory("/home/dafox/sharedfolder/music/");
 	trackdb_widget = new gmpmpc_trackdb_widget(trackdb, ClientID(-1));
 	construct_gui();
+	server_list_update_signal = networkhandler->server_list_update_signal.connect(boost::bind(&gmpmpc_select_server_window::update_serverlist, &select_server_window, _1));
+	select_server_window.connect_signal.connect(boost::bind(&GtkMpmpClientWindow::on_select_server_connect, this, _1));
+	select_server_window.cancel_signal.connect(boost::bind(&GtkMpmpClientWindow::on_select_server_cancel, this));
+	select_server_window.show_all();
+	dcerr("'bla'");
 }
 
 GtkMpmpClientWindow::~GtkMpmpClientWindow() {
 	delete trackdb_widget;
+}
+
+void GtkMpmpClientWindow::on_select_server_connect( ipv4_socket_addr addr ) {
+	networkhandler->client_disconnect_from_server();
+	networkhandler->client_connect_to_server(addr);
+	server_list_update_signal.disconnect();
+}
+
+void GtkMpmpClientWindow::on_select_server_cancel() {
+	server_list_update_signal.disconnect();
 }
 
 void GtkMpmpClientWindow::construct_gui() {
@@ -28,6 +44,8 @@ void GtkMpmpClientWindow::construct_gui() {
 	m_refActionGroup = Gtk::ActionGroup::create();
 	/* File menu */
 	m_refActionGroup->add(Gtk::Action::create("FileMenu", "File"));
+	m_refActionGroup->add(Gtk::Action::create("FileSelectServer", Gtk::Stock::CONNECT),
+	                      sigc::mem_fun(*this, &GtkMpmpClientWindow::on_menu_file_connect));
 	m_refActionGroup->add(Gtk::Action::create("FilePreferences", Gtk::Stock::PREFERENCES),
 	                      sigc::mem_fun(*this, &GtkMpmpClientWindow::on_menu_file_preferences));
 	m_refActionGroup->add(Gtk::Action::create("FileQuit", Gtk::Stock::QUIT),
@@ -43,8 +61,9 @@ void GtkMpmpClientWindow::construct_gui() {
 				"<ui>"
 				"  <menubar name='MenuBar'>"
 				"    <menu action='FileMenu'>"
+				"    <menuitem action='FileSelectServer'/>"
 				"      <menuitem action='FilePreferences'/>"
-				"    <separator/>"
+				"      <separator/>"
 				"      <menuitem action='FileQuit'/>"
 				"    </menu>"
 				"  </menubar>"
@@ -73,6 +92,10 @@ void GtkMpmpClientWindow::construct_gui() {
 
 	show_all();
 	main_paned.set_position(main_paned.get_width()/2);
+}
+
+void GtkMpmpClientWindow::on_menu_file_connect() {
+	select_server_window.show();
 }
 
 void GtkMpmpClientWindow::on_menu_file_preferences() {
