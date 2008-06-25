@@ -1,37 +1,100 @@
-#define __INIT_VARS__
 #include "gmpmpc.h"
-#include "../types.h"
-#include "../network-handler.h"
-#include "../error-handling.h"
-#include "gmpmpc_select_server.h"
-#include "../audio/audio_controller.h"
 #include <boost/program_options.hpp>
-#include "gmpmpc_playlist.h"
-#include "gmpmpc_trackdb.h"
-#include <glib.h>
+#include <boost/bind.hpp>
+#include <signal.h>
+#include <gtkmm/stock.h>
 
 using namespace std;
 namespace po = boost::program_options;
-network_handler* gmpmpc_network_handler; //FIXME: Global variables == 3vil
-bool connected_to_server = false;
-TreeviewPlaylist* treeview_playlist;
 
-/* Signals */
-int gmpmpc_main_window_delete_event_signal_id      = 0;
-int imagemenuitem_select_server_activate_signal_id = 0;
-
-GladeXML* main_window = NULL;
-
-void gmpmpc_main_window_delete_event(GtkWidget *widget, gpointer user_data) {
-	/* Clean up */
-	select_server_uninitialise_window();
-	disconnect_signal(main_window, imagemenuitem_select_server, activate);
-	disconnect_signal(main_window, gmpmpc_main_window, delete_event);
-	gtk_main_quit();
+GtkMpmpClientWindow::GtkMpmpClientWindow(network_handler* nh, TrackDataBase* tdb) {
+	networkhandler = nh;
+	trackdb = tdb;
+	trackdb->add_directory("/home/dafox/sharedfolder/music/");
+	trackdb_widget = new gmpmpc_trackdb_widget(trackdb, ClientID(-1));
+	construct_gui();
 }
 
-int main ( int argc, char *argv[] )
-{
+GtkMpmpClientWindow::~GtkMpmpClientWindow() {
+	delete trackdb_widget;
+}
+
+void GtkMpmpClientWindow::construct_gui() {
+	set_title("gmpmpc");
+	set_default_size(1024, 640);
+	set_position(Gtk::WIN_POS_CENTER);
+
+	/* Create actions */
+	m_refActionGroup = Gtk::ActionGroup::create();
+	/* File menu */
+	m_refActionGroup->add(Gtk::Action::create("FileMenu", "File"));
+	m_refActionGroup->add(Gtk::Action::create("FilePreferences", Gtk::Stock::PREFERENCES),
+	                      sigc::mem_fun(*this, &GtkMpmpClientWindow::on_menu_file_preferences));
+	m_refActionGroup->add(Gtk::Action::create("FileQuit", Gtk::Stock::QUIT),
+	                      sigc::mem_fun(*this, &GtkMpmpClientWindow::on_menu_file_quit));
+
+	m_refUIManager = Gtk::UIManager::create();
+	m_refUIManager->insert_action_group(m_refActionGroup);
+
+	add_accel_group(m_refUIManager->get_accel_group());
+
+	/* Layout the actions */
+	Glib::ustring ui_info =
+				"<ui>"
+				"  <menubar name='MenuBar'>"
+				"    <menu action='FileMenu'>"
+				"      <menuitem action='FilePreferences'/>"
+				"    <separator/>"
+				"      <menuitem action='FileQuit'/>"
+				"    </menu>"
+				"  </menubar>"
+				"</ui>";
+
+	m_refUIManager->add_ui_from_string(ui_info);
+	menubar_ptr = (Gtk::Menu*)m_refUIManager->get_widget("/MenuBar");
+
+	playlist_scrolledwindow.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
+
+	playlist_scrolledwindow.add(playlist_treeview);
+
+	playlist_frame.add(playlist_scrolledwindow);
+
+	main_paned.add(playlist_frame);
+	main_paned.add(*trackdb_widget);
+
+	main_vbox.pack_start(*menubar_ptr, Gtk::PACK_SHRINK);
+	main_vbox.add(main_paned);
+	main_vbox.pack_start(statusbar, Gtk::PACK_SHRINK);
+
+	add(main_vbox);
+
+	playlist_frame.set_label("Playlist:");
+	statusbar.push("Ready.", 0);
+
+	show_all();
+	main_paned.set_position(main_paned.get_width()/2);
+}
+
+void GtkMpmpClientWindow::on_menu_file_preferences() {
+	dcerr("Prefs");
+}
+
+void GtkMpmpClientWindow::on_menu_file_quit() {
+	hide();
+}
+
+// TrackDataBase& GtkMpmpClientWindow::get_track_database() {
+// 	return *trackdb;
+// }
+// void GtkMpmpClientWindow::set_track_database(TrackDataBase* tdb) {
+// 	trackdb = tdb;
+// }
+// void GtkMpmpClientWindow::set_network_handler(network_handler* nh) {
+// 	networkhandler = nh;
+// }
+
+int main_impl(int argc, char **argv ) {
+	/* Parse commandline options */
 	int listen_port;
 	bool showhelp;
 	string filename;
@@ -48,46 +111,51 @@ int main ( int argc, char *argv[] )
 		cout << desc << "\n";
 		return 1;
 	}
+	/* Done parsing commandline options */
 
-	//we need to initialize all these functions so that gtk knows
-	//to be thread-aware
-	if (!g_thread_supported()) {
-		g_thread_init(NULL);
-		gdk_threads_init();
-	}
-	gdk_threads_enter();
-	gtk_init (&argc, &argv);
-	glade_init();
+	Gtk::Main kit(argc, argv);
 
+	TrackDataBase tdb;
 	network_handler nh(listen_port);
-	AudioController ac;
-	gmpmpc_network_handler = &nh;
+	GtkMpmpClientWindow gmpmpc(&nh, &tdb);
+
+// 	gmpmpc.set_track_database(&tdb);
+// 	gmpmpc.set_network_handler(&nh);
+// 	gmpmpc.get_track_database().add_directory("/home/dafox/sharedfolder/music/");
 
 
-	main_window = glade_xml_new_from_buffer(gmpmpc_main_window_glade_definition,
-	                                        gmpmpc_main_window_glade_definition_size,
-	                                        NULL,
-	                                        NULL
-	                                       );
-	if(!select_server_initialise_window()) {
-		cerr << "Error while loading server select window!\n";
-	}
-	if(!playlist_initialize()) {
-		cerr << "Error while initializing playlist!\n";
-	}
-	if(!trackdb_initialize()) {
-		cerr << "Error while initializing trackdb!\n";
-	}
-
-	/* connect the signals in the interface */
-	try_connect_signal(main_window, imagemenuitem_select_server, activate);
-	try_connect_signal(main_window, gmpmpc_main_window, delete_event);
-	if(!connected_to_server) imagemenuitem_select_server_activate(NULL, NULL);
-	try_with_widget(main_window, treeview_playlist, playlist) {
-		treeview_playlist = new TreeviewPlaylist((GtkTreeView*)playlist);
-	}
-
-	gtk_main();
-	gdk_threads_leave();
+	Gtk::Main::run(gmpmpc);
 	return 0;
 }
+
+int main(int argc, char* argv[]) {
+	return makeErrorHandler(boost::bind(&main_impl, argc, argv))();
+}
+
+// int main ( int argc, char *argv[] )
+// {
+// 	// Hide SIGPIPE
+// 	sigset_t sigset;
+// 	sigemptyset(&sigset);
+// 	sigaddset(&sigset, SIGPIPE);
+// 	sigprocmask(SIG_SETMASK, &sigset, NULL);
+//
+// 	int listen_port;
+// 	bool showhelp;
+// 	string filename;
+// 	po::options_description desc("Allowed options");
+// 	desc.add_options()
+// 			("help", po::bool_switch(&showhelp)                   , "produce help message")
+// 			("port", po::value(&listen_port)->default_value(12345), "TCP Port")
+// 			("file", po::value(&filename)->default_value("")      , "Filename to test with")
+// 	;
+// 	po::variables_map vm;
+//  	po::store(po::parse_command_line(argc, argv, desc), vm);
+// 	po::notify(vm);
+// 	if (showhelp) {
+// 		cout << desc << "\n";
+// 		return 1;
+// 	}
+//
+// 	return 0;
+// }

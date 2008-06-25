@@ -12,57 +12,56 @@
 
 #ifndef GMPMPC_H
 	#define GMPMPC_H
-	#include "gtk/gtk.h"
-	#include <glade/glade.h>
-	#include <iostream>
-	#include "gmpmpc_main_window.glade.h"
-	#include "gmpmpc_select_server_window.glade.h"
-	#include "../types.h"
-	#include "../network-handler.h"
+	#include "gmpmpc_trackdb.h"
 	#include "../error-handling.h"
+	#include "../network-handler.h"
+	#include "../playlist_management.h"
+	#include <iostream>
+	#include <boost/shared_ptr.hpp>
+	#include <gtkmm/box.h>
+	#include <gtkmm/main.h>
+	#include <gtkmm/menu.h>
+	#include <gtkmm/paned.h>
+	#include <gtkmm/frame.h>
+	#include <gtkmm/window.h>
+	#include <gtkmm/treeview.h>
+	#include <gtkmm/statusbar.h>
+	#include <gtkmm/uimanager.h>
+	#include <gtkmm/actiongroup.h>
+	#include <gtkmm/scrolledwindow.h>
 
-	extern network_handler* gmpmpc_network_handler; //FIXME: Global variables == 3vil
+	class GtkMpmpClientWindow : public Gtk::Window {
+		public:
+			GtkMpmpClientWindow(network_handler* nh, TrackDataBase* tdb);
+			~GtkMpmpClientWindow();
+			/* Functions */
+// 			void set_track_database(TrackDataBase* tdb);
+// 			TrackDataBase& get_track_database();
+// 			void set_network_handler(network_handler* nh);
 
-	#define try_connect_signal(xml_source, widget_name, signal_name, ... ) {\
-		GtkWidget* widget; \
-		widget = glade_xml_get_widget (xml_source, #widget_name); \
-		if(widget==NULL) { \
-			std::cerr << "Error: can not find widget `" #widget_name "'!\n"; \
-			false; \
-		} \
-		else { \
-			widget_name ## _ ## signal_name ## _signal_id = g_signal_connect (G_OBJECT (widget), __VA_ARGS__ #signal_name, G_CALLBACK (widget_name ## _ ## signal_name), NULL); \
-			true; \
-		}\
-	}
+		private:
+			/* Helpers */
+			Glib::RefPtr<Gtk::UIManager> m_refUIManager;
+  		Glib::RefPtr<Gtk::ActionGroup> m_refActionGroup;
+			/* Containers (widgets not referenced by code) */
+			Gtk::VBox             main_vbox;
+			Gtk::HPaned           main_paned;
+			Gtk::Frame            playlist_frame;
+			gmpmpc_trackdb_widget* trackdb_widget;
+			Gtk::ScrolledWindow   playlist_scrolledwindow;
+			/* Widgets (referenced by code) */
+			Gtk::Menu*     menubar_ptr; // Menu is created dynamically using UIManager
+			Gtk::TreeView  playlist_treeview;
+			Gtk::Statusbar statusbar;
 
-	#define disconnect_signal(xml_source, widget_name, signal_name) {\
-		GtkWidget* widget; \
-		widget = glade_xml_get_widget (xml_source, #widget_name); \
-		if(widget==NULL) { \
-			std::cerr << "Error: can not find widget `" #widget_name "'!\n"; \
-			false; \
-		} \
-		else { \
-			g_signal_handler_disconnect(G_OBJECT(widget), widget_name ## _ ## signal_name ## _signal_id);\
-			true; \
-		}\
-	}
+			/* Functions */
+			void on_menu_file_preferences();
+			void on_menu_file_quit();
+			void construct_gui();
 
-	#define DISPLAY_TREEVIEW_COLUMN(treeview, title, rendermode, column) { \
-		GtkTreeViewColumn   *col; \
-		GtkCellRenderer     *renderer; \
-		col = gtk_tree_view_column_new(); \
-		renderer = gtk_cell_renderer_text_new(); \
-		gtk_tree_view_column_set_title(col, title); \
-		gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), col); \
-		gtk_tree_view_column_pack_start(col, renderer, TRUE); \
-		gtk_tree_view_column_add_attribute(col, renderer, #rendermode, column);\
-	}
+			/* Variables */
+			TrackDataBase* trackdb;
+			network_handler* networkhandler;
+	};
 
-	#define try_with_widget(xml_source, widget_name, widget) \
-	for( GtkWidget* widget = glade_xml_get_widget (xml_source, #widget_name); \
-	     (widget==NULL)?(std::cerr << "Error: can not find widget `" #widget_name "'!\n", false):(widget!=(GtkWidget*)-1); widget=(GtkWidget*)-1)
-
-	uint32 show_gui();
 #endif
