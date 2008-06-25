@@ -25,13 +25,14 @@ IF(ENABLE_GTK_GUI)
 	                   )
 
 	ADD_EXECUTABLE(gmpmpc
-	               gmpmpc.cpp                 gmpmpc.h
-	               gmpmpc_trackdb.cpp         gmpmpc_trackdb.h
-	               gmpmpc_select_server.cpp   gmpmpc_select_server.h
-	               ../error-handling.cpp      ../error-handling.h
-	               ../network-handler.cpp     ../network-handler.h
-	               ../playlist_management.cpp ../playlist_management.h
-	               ../packet.cpp              ../packet.h
+	               gmpmpc.cpp                     gmpmpc.h
+	               gmpmpc_trackdb.cpp             gmpmpc_trackdb.h
+	               gmpmpc_select_server.cpp       gmpmpc_select_server.h
+	               gmpmpc_connection_handling.cpp gmpmpc_connection_handling.h
+	               ../error-handling.cpp          ../error-handling.h
+	               ../network-handler.cpp         ../network-handler.h
+	               ../playlist_management.cpp     ../playlist_management.h
+	               ../packet.cpp                  ../packet.h
 	)
 
 	TARGET_LINK_LIBRARIES(gmpmpc

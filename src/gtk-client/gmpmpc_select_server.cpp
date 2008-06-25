@@ -5,21 +5,23 @@
 #include <gtkmm/treemodel.h>
 #include "../util/StrFormat.h"
 #include <gtkmm/treeselection.h>
-// #include <gtkmm/treepath.h>
 
 gmpmpc_select_server_window::gmpmpc_select_server_window() {
 	set_title( "Select a server" );
 	set_default_size( 512, 320);
 	set_position( Gtk::WIN_POS_CENTER_ON_PARENT );
-	vbox.add(serverlist);
+	framebox.add(serverlist);
 	hbox.add(cancel_button);
 	hbox.add(connect_button);
-	vbox.pack_start(hbox, Gtk::PACK_SHRINK);
+	framebox.pack_start(hbox, Gtk::PACK_SHRINK);
+	frame.add(framebox);
+	vbox.add(frame);
 	vbox.pack_start(statusbar, Gtk::PACK_SHRINK);
 	add(vbox);
 
 	connect_button.set_label("Connect");
 	cancel_button.set_label("Cancel");
+	frame.set_label("Servers:");
 
 	cancel_button.signal_clicked().connect(boost::bind(&gmpmpc_select_server_window::on_cancel_button_click, this));
 	connect_button.signal_clicked().connect(boost::bind(&gmpmpc_select_server_window::on_connect_button_click, this));
@@ -38,6 +40,7 @@ gmpmpc_select_server_window::~gmpmpc_select_server_window() {
 }
 
 void gmpmpc_select_server_window::update_serverlist(const std::vector<server_info>& si) {
+	dcerr("");
 	Glib::RefPtr<Gtk::TreeModel> model = serverlist.get_model();
 	Glib::RefPtr<Gtk::ListStore> store = Glib::RefPtr<Gtk::ListStore>::cast_dynamic(model);
 
@@ -59,19 +62,26 @@ void gmpmpc_select_server_window::on_connect_button_click() {
 	Glib::RefPtr<Gtk::TreeModel> model = serverlist.get_model();
 	Glib::RefPtr<Gtk::ListStore> store = Glib::RefPtr<Gtk::ListStore>::cast_dynamic(model);
 
+	connect_button.set_sensitive(false);
+
 	Glib::RefPtr<Gtk::TreeSelection> sel = serverlist.get_selection();
 	if(sel->count_selected_rows() == 1) {
 		connect_signal((*sel->get_selected())[m_Columns.addr]);
 	}
-	hide();
 }
 
 void gmpmpc_select_server_window::on_cancel_button_click() {
-	cancel_signal();
-	hide();
+	if(connect_button.sensitive()) {
+		cancel_signal();
+	}
+	else {
+		connect_button.set_sensitive(true);
+	}
 }
 
-
+void gmpmpc_select_server_window::connection_accepted() {
+	connect_button.set_sensitive(true);
+}
 
 
 

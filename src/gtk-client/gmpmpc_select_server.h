@@ -12,6 +12,7 @@
 			gmpmpc_select_server_window();
 			~gmpmpc_select_server_window();
 			void update_serverlist(const std::vector<server_info>& si);
+			void connection_accepted();
 			boost::signal<void(ipv4_socket_addr)> connect_signal;
 			boost::signal<void(void)>             cancel_signal;
 
@@ -35,6 +36,7 @@
 			void on_cancel_button_click();
 			void on_connect_button_click();
 			Gtk::Frame          frame;
+			Gtk::VBox           framebox;
 			Gtk::VBox           vbox;
 			Gtk::HBox           hbox;
 			Gtk::ScrolledWindow scroll;
