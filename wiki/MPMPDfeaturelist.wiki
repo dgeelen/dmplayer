@@ -1,0 +1,8 @@
+#summary One-sentence summary of this page.
+
+= Future feature list=
+
+These features are likely to be implemented in a future version of MPMPD:
+
+  # The possibility to download songs selected in the server playlist.
+  # Fix it until it works.
