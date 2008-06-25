@@ -82,10 +82,13 @@ class ServerDataSource : public IDataSource {
 			data_exhausted = false;
 		}
 
+
+
 		virtual uint32 getData(uint8* buffer, uint32 len) {
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
 			size_t n = std::min(size_t(len), size_t(data_buffer.size() - position));
-			memcpy(buffer, &data_buffer[position], n);
+			if (n>0)
+				memcpy(buffer, &data_buffer[position], n);
 			position+=n;
 			if(n==0) {
 				data_exhausted = true;
@@ -99,6 +102,11 @@ class ServerDataSource : public IDataSource {
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
 			size_t n = data_buffer.size();
 			data_buffer.insert(data_buffer.end(), data.begin(), data.end());
+		}
+
+		void stop() {
+			boost::mutex::scoped_lock lock(data_buffer_mutex);
+			position = data_buffer.size();
 		}
 
 		void set_wait_for_data(bool b) {
@@ -121,12 +129,14 @@ class Server {
 		Server(int listen_port, string server_name)
 			: networkhandler(listen_port, server_name)
 		{
+
 			dcerr("Started network_handler");
 			message_loop_running = true;
 			boost::thread tt(makeErrorHandler(boost::bind(&Server::message_loop, this)));
 			message_loop_thread.swap(tt);
 			networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
 			ac.playback_finished.connect(boost::bind(&Server::next_song, this, _1));
+			ac.StartPlayback();
 			add_datasource = true;
 		}
 
@@ -141,7 +151,7 @@ class Server {
 			vector<ClientID> has_song;
 			vector<ClientID> does_not_have_song;
 
-			Track t = playlist.get(0);
+			Track t = currenttrack;
 			BOOST_FOREACH(Client_ref c, clients) {
 				int pos = 0;
 				for (;pos < c->wish_list.size(); ++pos)
@@ -181,31 +191,37 @@ class Server {
 				messageref m = playlist.pop_msg();
 				if(m) {
 					networkhandler.send_message_allclients(m);
-					if(add_datasource && (playlist.size()!=0)) {
-						message_request_file_ref msg(new message_request_file(playlist.get(0).id));
-						server_datasource = boost::shared_ptr<ServerDataSource>(new ServerDataSource(*this));
-						networkhandler.send_message(playlist.get(0).id.first, msg);
-						ac.set_data_source(server_datasource);
-						dcerr("requesting " << playlist.get(0).id.second << " from " << playlist.get(0).id.first);
-						add_datasource = false;
-					}
 				}
 				else { // meh
+					if(add_datasource && (playlist.size()!=0)) {
+						currenttrack = playlist.get(0);
+						message_request_file_ref msg(new message_request_file(currenttrack.id));
+						server_datasource = boost::shared_ptr<ServerDataSource>(new ServerDataSource(*this));
+						networkhandler.send_message(currenttrack.id.first, msg);
+						ac.set_data_source(server_datasource);
+						dcerr("requesting " << currenttrack.id.second << " from " << currenttrack.id.first);
+						add_datasource = false;
+					}
 					usleep(100*1000);
 				}
 			}
 		}
 
 		void remove_client(ClientID id) {
+			if (clients.find(id) == clients.end())
+				return;
 			Client_ref cr = *clients.find(id);
 			double total = -cr->zero_sum;
 			BOOST_FOREACH(Client_ref i, clients) {
 				total += i->zero_sum;
 			}
+			clients.erase(id);
+			if(currenttrack.id == cr->wish_list.get(0).id)
+				server_datasource->stop();
+			if (total == 0) return;
 			BOOST_FOREACH(Client_ref i, clients) {
 				i->zero_sum += (i->zero_sum/total)*cr->zero_sum;
 			}
-			clients.erase(id);
 		}
 
 		void handle_received_message(const messageref m, ClientID id) {
@@ -274,6 +290,7 @@ class Server {
 		}
 	private:
 		SyncedPlaylist playlist;
+		Track currenttrack;
 		network_handler networkhandler;
 		AudioController ac;
 		bool message_loop_running;
