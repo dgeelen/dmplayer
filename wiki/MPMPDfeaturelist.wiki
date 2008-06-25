@@ -6,4 +6,5 @@ These features are likely to be implemented in a future version of MPMPD:
 
   # The possibility to download songs selected in the server playlist.
   # Move icon to system tray on minimize.
+  # Download tracks in a separate thread.
   # Fix it until it works.
