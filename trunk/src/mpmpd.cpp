@@ -309,20 +309,6 @@ class Server {
 
 		bool add_datasource;
 
-		class listitem {
-			public:
-			map<ClientID, double>* zsm;
-			ClientID id;
-			IPlaylist* pl;
-			int i;
-			listitem(ClientID id_,IPlaylist* pl_, int i_, map<ClientID, double>* zsm_)
-			: id(id_), pl(pl_), i(i_), zsm(zsm_) {};
-			bool operator<(const listitem& o) const
-			{
-				return (*zsm)[id] > (*zsm)[o.id];
-			};
-		};
-
 		struct sorthelper {
 			bool operator()(const std::pair<Client_ref, uint32>& l, const std::pair<Client_ref, uint32>& r) const {
 				return l.first->zero_sum > r.first->zero_sum;
