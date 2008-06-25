@@ -318,13 +318,13 @@ void MainWindow::handleReceivedMessage(const messageref m)
 				std::vector<uint8> vdata;
 				vdata.resize(todo);
 				memcpy(&vdata[0], (uint8*)data.data() + done, todo);
-				message_request_file_result_ref result(new message_request_file_result(vdata));
+				message_request_file_result_ref result(new message_request_file_result(vdata, msg->id));
 				nh->send_server_message(result);
 				done += todo;
 			}
 			{
 				std::vector<uint8> vdata;
-				message_request_file_result_ref result(new message_request_file_result(vdata));
+				message_request_file_result_ref result(new message_request_file_result(vdata, msg->id));
 				nh->send_server_message(result);
 			}
 		}; break;
@@ -394,3 +394,15 @@ void MainWindow::on_buttonPlaylistAdd_clicked()
 		on_DataBaseWidget_doubleClicked(mi);
 	}
 }
+
+void MainWindow::on_buttonVoteMin_clicked()
+{
+	QList<QModelIndex> selected = PlayListWidget->selectedIndexes();
+	if (selected.size() == 0) return;
+	Track tr = PlayListWidget->get(selected[0].row());
+
+	message_vote_ref msg(new message_vote(tr.id, true));
+
+	nh->send_server_message(msg);
+}
+

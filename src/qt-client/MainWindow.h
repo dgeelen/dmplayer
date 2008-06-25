@@ -47,6 +47,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		void on_editTrackSearch_textEdited(QString);
 		void on_buttonMusicAdd_clicked();
 		void on_buttonPlaylistAdd_clicked();
+		void on_buttonVoteMin_clicked();
 		void updateProgressBar();
 		void handleReceivedMessage(const messageref m);
 
