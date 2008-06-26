@@ -65,11 +65,11 @@ uint16 network_handler::get_port_number() {
 
 
 void network_handler::server_tcp_connection_listener() { // Listens for incoming connections (Server)
-	dcerr("");
 	ipv4_addr addr;
 	addr.full = INADDR_ANY;
 	tcp_listen_socket lsock(addr, tcp_port_number);
 	tcp_port_number = lsock.getPortNumber();
+	dcerr("Listening on tcp port " << tcp_port_number);
 	while(!are_we_done) {
 		if (doselect(lsock, 1000, SELECT_READ)) {
 			tcp_socket_ref sock(lsock.accept());
