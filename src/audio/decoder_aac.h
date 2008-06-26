@@ -12,6 +12,9 @@
 	// and the define for faacDecGetCapabilities is missing in faad 2.6
 	#ifndef faacDecGetCapabilities
 		#define faacDecGetCapabilities NeAACDecGetCapabilities
+		#define FAAD_UINT32TYPE uint32
+	#else
+		#define FAAD_UINT32TYPE uint32_t
 	#endif
 #endif
 
