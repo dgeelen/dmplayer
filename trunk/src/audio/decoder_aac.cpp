@@ -51,7 +51,7 @@ AACDecoder::AACDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 	if (pos<0)
 		throw Exception("This does not appear to be an AAC stream");
 
-	uint32 sample_rate = 0;
+	FAAD_UINT32TYPE sample_rate = 0;
 	uint8 channels = 0;
 	fill_buffer();
 	long bytes_used = faacDecInit(decoder_handle, buffer, buffer_fill, &sample_rate, &channels);
