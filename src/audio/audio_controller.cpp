@@ -11,7 +11,7 @@
 #ifdef SDL_MIXER_BACKEND
 	#include "backend_sdlmixer.h"
 #endif
-#ifdef SDL_MIXER_BACKEND
+#ifdef LIBAO_BACKEND
 	#include "backend_libao.h"
 #endif
 
