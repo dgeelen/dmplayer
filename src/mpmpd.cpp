@@ -209,7 +209,7 @@ class Server {
 						add_datasource = false;
 					}
 					std::set<ClientID> votes = vote_min_list[currenttrack.id];
-					if(server_datasource && votes.size() > 0 && (votes.size()*2) >= clients.size()) {
+					if(server_datasource && votes.size() > 0 && (votes.size()*2) > clients.size()) {
 						server_datasource->stop();
 						vector<uint8> empty;
 						message_request_file_result_ref msg(new message_request_file_result(empty, currenttrack.id));
