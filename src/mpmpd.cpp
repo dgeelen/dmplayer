@@ -205,7 +205,7 @@ class Server {
 						server_datasource = boost::shared_ptr<ServerDataSource>(new ServerDataSource(*this));
 						networkhandler.send_message(currenttrack.id.first, msg);
 						ac.set_data_source(server_datasource);
-						dcerr("requesting " << currenttrack.id.second << " from " << currenttrack.id.first);
+						dcerr("requesting " << STRFORMAT("%08x:%08x", currenttrack.id.first, currenttrack.id.second));
 						add_datasource = false;
 					}
 					std::set<ClientID> votes = vote_min_list[currenttrack.id];
