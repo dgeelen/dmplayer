@@ -5,6 +5,9 @@
 #include <gtkmm/stock.h>
 #include "../network-handler.h"
 #include "../util/StrFormat.h"
+#include <glib/gthread.h>
+#include <ios>
+#include <boost/filesystem/fstream.hpp>
 
 using namespace std;
 namespace po = boost::program_options;
@@ -16,12 +19,25 @@ GtkMpmpClientWindow::GtkMpmpClientWindow(network_handler* nh, TrackDataBase* tdb
 	trackdb_widget = new gmpmpc_trackdb_widget(trackdb, ClientID(-1));
 	construct_gui();
 
+	_on_connection_accepted_dispatcher_connection =
+		_on_connection_accepted_dispatcher.connect(
+			boost::bind(&GtkMpmpClientWindow::_on_connection_accepted, this));
+
 	connected_signals["enqueue_track_signal"] =
 		trackdb_widget->enqueue_track_signal.connect(
-			boost::bind(&gmpmpc_connection_handler::send_message_update_playlist, &connection_handler, _1));
+			boost::bind(&gmpmpc_playlist_widget::add_to_wishlist, &playlist_widget, _1));
+	connected_signals["playlist_send_message_signal"] =
+		playlist_widget.send_message_signal.connect(
+			boost::bind(&GtkMpmpClientWindow::send_message, this, _1));
 	connected_signals["connection_accepted_signal"] =
 		connection_handler.connection_accepted_signal.connect(
-			boost::bind(&GtkMpmpClientWindow::on_connection_accepted, this));
+			boost::bind(&GtkMpmpClientWindow::on_connection_accepted, this, _1));
+	connected_signals["update_playlist_signal"] =
+		connection_handler.update_playlist_signal.connect(
+			boost::bind(&gmpmpc_playlist_widget::update, &playlist_widget, _1));
+	connected_signals["request_file_signal"] =
+		connection_handler.request_file_signal.connect(
+			boost::bind(&GtkMpmpClientWindow::on_request_file, this, _1));
 	connected_signals["connect_signal"] =
 		select_server_window.connect_signal.connect(
 			boost::bind(&GtkMpmpClientWindow::on_select_server_connect, this, _1));
@@ -40,7 +56,8 @@ GtkMpmpClientWindow::GtkMpmpClientWindow(network_handler* nh, TrackDataBase* tdb
 	connected_signals["select_server_status_signal"] =
 			select_server_window.status_message_signal.connect(
 				boost::bind(&GtkMpmpClientWindow::set_status_message, this, _1));
- set_status_message("Selecting server.");
+
+	set_status_message("Selecting server.");
 	select_server_window.show_all();
 }
 
@@ -49,13 +66,81 @@ GtkMpmpClientWindow::~GtkMpmpClientWindow() {
 	BOOST_FOREACH(vtype signal, connected_signals) {
 		signal.second.disconnect();
 	}
+	_on_connection_accepted_dispatcher_connection.disconnect();
 	delete trackdb_widget;
 }
 
-void GtkMpmpClientWindow::on_connection_accepted() {
+
+void GtkMpmpClientWindow::_on_request_file(message_request_file_ref m, boost::shared_ptr<bool> done) {
+	MetaDataMap md;
+	Track q(m->id, md);
+	vector<LocalTrack> s = trackdb->search(q);
+	if(s.size() == 1) {
+		if(boost::filesystem::exists(s[0].filename)) {
+			boost::filesystem::ifstream f( s[0].filename, std::ios_base::in | std::ios_base::binary );
+			uint32 n = 1024 * 32;
+			std::vector<uint8> data;
+			data.resize(1024*1024);
+			while(!(*done)) {
+				f.read((char*)&data[0], n);
+				uint32 read = f.gcount();
+				if(read) {
+					std::vector<uint8> vdata;
+					std::vector<uint8>::iterator from = data.begin();
+					std::vector<uint8>::iterator to = from + read;
+					vdata.insert(vdata.begin(), from, to);
+					message_request_file_result_ref msg(new message_request_file_result(vdata, m->id));
+					networkhandler->send_server_message(msg);
+					if(n<1024*1024) {
+						n<<1;
+					}
+				}
+				else { //EOF or Error reading file
+					*done = true;
+				}
+			}
+		}
+		else { // Error opening file
+			dcerr("Warning: could not open " << s[0].filename);
+		}
+	}
+	// Send final empty message
+	std::vector<uint8> vdata;
+	message_request_file_result_ref msg(new message_request_file_result(vdata, m->id));
+	networkhandler->send_server_message(msg);
+
+	boost::mutex::scoped_lock lock(_on_request_file_threads_mutex);
+	_on_request_file_threads.erase(_on_request_file_threads.find(m->id));
+}
+
+void GtkMpmpClientWindow::on_request_file(message_request_file_ref m) {
+	// We transfer the file in a separate thread so that we can still send/receive messages.
+	// FIXME: We can only send a (the same) file one at a time
+	if(_on_request_file_threads.find(m->id) == _on_request_file_threads.end()) {
+		boost::mutex::scoped_lock lock(_on_request_file_threads_mutex);
+		boost::shared_ptr<bool> b = boost::shared_ptr<bool>(new bool(false));
+		boost::thread* t = new boost::thread(makeErrorHandler(
+			boost::bind(&GtkMpmpClientWindow::_on_request_file, this, m, b)));
+
+		_on_request_file_threads[m->id] = pair<boost::thread*, boost::shared_ptr<bool> >(t, b);
+	}
+}
+
+void GtkMpmpClientWindow::_on_connection_accepted() { // actually executes callback in GUI thread
+	boost::mutex::scoped_lock lock(clientid_mutex);
+
 	select_server_window.connection_accepted();
 	select_server_window.hide();
+	trackdb_widget->set_clientid(clientid);
 	connected_signals["server_list_update_signal"].block();
+}
+
+void GtkMpmpClientWindow::on_connection_accepted(ClientID id) {
+	// This is called from the network thread so we first need
+	// to get back into the GUI thread
+	boost::mutex::scoped_lock lock(clientid_mutex);
+	clientid = id;
+	_on_connection_accepted_dispatcher();
 }
 
 void GtkMpmpClientWindow::on_select_server_connect( ipv4_socket_addr addr ) {
@@ -77,6 +162,10 @@ void GtkMpmpClientWindow::set_status_message(std::string msg) {
 	clear_statusbar_connection = Glib::signal_timeout().connect(slot, 5000);
 }
 
+void GtkMpmpClientWindow::send_message(messageref m) {
+	networkhandler->send_server_message(m);
+}
+
 bool GtkMpmpClientWindow::clear_status_messages() {
 	set_status_message("Ready.");
 }
@@ -89,7 +178,7 @@ void GtkMpmpClientWindow::construct_gui() {
 	/* Create actions */
 	m_refActionGroup = Gtk::ActionGroup::create();
 	/* File menu */
-	m_refActionGroup->add(Gtk::Action::create("FileMenu", "File"));
+	m_refActionGroup->add(Gtk::Action::create("FileMenu", "_File"));
 	m_refActionGroup->add(Gtk::Action::create("FileSelectServer", Gtk::Stock::CONNECT),
 	                      sigc::mem_fun(*this, &GtkMpmpClientWindow::on_menu_file_connect));
 	m_refActionGroup->add(Gtk::Action::create("FilePreferences", Gtk::Stock::PREFERENCES),
@@ -146,16 +235,6 @@ void GtkMpmpClientWindow::on_menu_file_quit() {
 	hide();
 }
 
-// TrackDataBase& GtkMpmpClientWindow::get_track_database() {
-// 	return *trackdb;
-// }
-// void GtkMpmpClientWindow::set_track_database(TrackDataBase* tdb) {
-// 	trackdb = tdb;
-// }
-// void GtkMpmpClientWindow::set_network_handler(network_handler* nh) {
-// 	networkhandler = nh;
-// }
-
 int main_impl(int argc, char **argv ) {
 	/* Parse commandline options */
 	int listen_port;
@@ -181,10 +260,6 @@ int main_impl(int argc, char **argv ) {
 	TrackDataBase tdb;
 	network_handler nh(listen_port);
 	GtkMpmpClientWindow gmpmpc(&nh, &tdb);
-
-// 	gmpmpc.set_track_database(&tdb);
-// 	gmpmpc.set_network_handler(&nh);
-// 	gmpmpc.get_track_database().add_directory("/home/dafox/sharedfolder/music/");
 
 
 	Gtk::Main::run(gmpmpc);

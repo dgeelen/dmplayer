@@ -1,14 +1,25 @@
 #include "gmpmpc_connection_handling.h"
 #include "../error-handling.h"
+#include <boost/bind.hpp>
+#include <gtkmm/main.h>
 #include <string>
 #include <map>
 
-gmpmpc_connection_handler::gmpmpc_connection_handler() {
-}
+template<typename T1, typename T2>
+class sigcbooster {
+	public:
+	sigcbooster(boost::function<T1(T2)> t1) {
+		f = t1;
+	}
+	void operator()(T2 x) {
+		return f(x);
+	}
+	private:
+		boost::function<T1(T2)> f;
+		T2 arg_1;
+};
 
-void gmpmpc_connection_handler::send_message_update_playlist(Track& t) {
-	dcerr("TODO");
-// 	message_update_playlist_ref msg(new message_update_playlist(t));
+gmpmpc_connection_handler::gmpmpc_connection_handler() {
 }
 
 void gmpmpc_connection_handler::handle_message(const messageref m) {
@@ -29,17 +40,13 @@ void gmpmpc_connection_handler::handle_message(const messageref m) {
 	switch(message_type) {
 		case message::MSG_CONNECT: { } break;
 		case message::MSG_ACCEPT: {
-			connection_accepted_signal();
-// 			select_server_accepted();
-// 			gmpmpc_client_id = boost::static_pointer_cast<message_accept>(m)->cid;
-// 			g_idle_add(treeview_trackdb_update, NULL);
+			connection_accepted_signal(boost::static_pointer_cast<message_accept>(m)->cid);
 		}; break;
 		case message::MSG_DISCONNECT: {
 // 			gmpmpc_network_handler->client_message_receive_signal.disconnect(handle_received_message);
 		} break;
 		case message::MSG_PLAYLIST_UPDATE: {
-// 			message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
-// 			msg->apply(treeview_playlist);
+			update_playlist_signal(boost::static_pointer_cast<message_playlist_update>(m));
 		}; break;
 		case message::MSG_QUERY_TRACKDB: {
 /*			message_query_trackdb_ref qr = boost::static_pointer_cast<message_query_trackdb>(m);
@@ -52,7 +59,9 @@ void gmpmpc_connection_handler::handle_message(const messageref m) {
 			gmpmpc_network_handler->send_server_message(result);*/
 		}; break;
 		case message::MSG_QUERY_TRACKDB_RESULT: { }; break;
-		case message::MSG_REQUEST_FILE: { }; break;
+		case message::MSG_REQUEST_FILE: {
+			request_file_signal(boost::static_pointer_cast<message_request_file>(m));
+		}; break;
 		case message::MSG_REQUEST_FILE_RESULT: { }; break;
 		default: {
 			dcerr("Ignoring unknown message of type " << m->get_type());

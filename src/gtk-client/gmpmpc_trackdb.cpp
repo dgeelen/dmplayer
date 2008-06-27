@@ -24,15 +24,14 @@ gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(TrackDataBase* tdb, ClientID cid) {
 	search_label.set_label("Search:");
 	add_to_wishlist_button.set_label("Enqueue selected");
 
-	Glib::RefPtr<Gtk::ListStore> refListStore = Gtk::ListStore::create(m_Columns);
-	treeview.set_model(refListStore);
-	treeview.append_column("TrackID", m_Columns.trackid);
-	treeview.append_column("Filename", m_Columns.filename);
-	treeview.get_selection()->set_mode(Gtk::SELECTION_MULTIPLE);
-	treeview.set_rubber_banding(true);
-	update_treeview();
+ 	update_treeview();
 	search_entry.signal_changed().connect(boost::bind(&gmpmpc_trackdb_widget::on_search_entry_changed, this));
 	add_to_wishlist_button.signal_clicked().connect(boost::bind(&gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked, this));
+}
+
+void gmpmpc_trackdb_widget::set_clientid(ClientID id) {
+ clientid = id;
+ update_treeview();
 }
 
 void gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked() {
@@ -45,7 +44,7 @@ void gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked() {
 	BOOST_FOREACH(Gtk::TreeModel::Path p, selected_rows) {
 		Gtk::TreeModel::iterator i = model->get_iter(p);
 		Track q;
-		q.id = (*i)[m_Columns.id];
+		q = (*i)[treeview.m_Columns.track];
 		std::vector<LocalTrack> r = trackdb->search(q);
 		Track t(q.id, r[0].metadata);
 		enqueue_track_signal(t);
@@ -53,19 +52,14 @@ void gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked() {
 }
 
 bool gmpmpc_trackdb_widget::update_treeview() {
-	Glib::RefPtr<Gtk::TreeModel> model = treeview.get_model();
-	Glib::RefPtr<Gtk::ListStore> store = Glib::RefPtr<Gtk::ListStore>::cast_dynamic(model);
-
-	store->clear();
+	treeview.clear();
 	MetaDataMap m;
 	m["FILENAME"] = search_entry.get_text();
 	Track query(TrackID(ClientID(0xffffffff), LocalTrackID(0xffffffff)), m);
 	vector<LocalTrack> s = trackdb->search(query);
-	BOOST_FOREACH(LocalTrack t, s) {
-		Gtk::TreeModel::iterator i = store->append();
-		(*i)[m_Columns.trackid]  = STRFORMAT("%08x:%08x", clientid, t.id);
-		(*i)[m_Columns.filename] = t.metadata["FILENAME"];
-		(*i)[m_Columns.id]       = TrackID(clientid, t.id);
+	BOOST_FOREACH(LocalTrack lt, s) {
+		Track t(TrackID(clientid, lt.id), lt.metadata);
+		treeview.add(t);
 	}
 	return false;
 }
