@@ -151,6 +151,7 @@ class Server {
 		}
 
 		void next_song(uint32 playtime_secs) {
+			// FIXME: MAD DECODER ABORTS IF DATA DOES NOT COME IN FAST ENOUGH!
 			dcerr("Next!!! " << playtime_secs);
 
 			vector<ClientID> has_song;
