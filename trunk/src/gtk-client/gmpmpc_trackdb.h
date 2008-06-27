@@ -39,6 +39,8 @@
 			Gtk::VBox             search_vbox;
 			gmpmpc_track_treeview treeview;
 			Gtk::Button           add_to_wishlist_button;
+
+			boost::mutex          treeview_update_mutex;
 	};
 #endif // GMPMPC_TRACKDB_H
 

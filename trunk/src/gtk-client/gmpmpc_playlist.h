@@ -4,10 +4,13 @@
 	#include "../packet.h"
 	#include "../synced_playlist.h"
 	#include "track_treeview.h"
+	#include <gtkmm/box.h>
 	#include <gtkmm/frame.h>
-	#include <gtkmm/scrolledwindow.h>
+	#include <gtkmm/button.h>
 	#include <gtkmm/treeview.h>
+	#include <gtkmm/scrolledwindow.h>
 	#include <boost/signal.hpp>
+
 
 	class gmpmpc_playlist_widget : public Gtk::Frame {
 		public:
@@ -16,9 +19,14 @@
 			void add_to_wishlist(Track& track);
 
 			boost::signal<void(messageref)> send_message_signal;
+			boost::signal<void(TrackID, int)> vote_signal;
 
 		private:
+			void on_vote_min_button_clicked();
+
 			Gtk::ScrolledWindow scrolledwindow;
+			Gtk::VBox           vbox;
+			Gtk::Button         vote_min_button;
 			gmpmpc_track_treeview   treeview;
 			SyncedPlaylist wish_list;
 	};

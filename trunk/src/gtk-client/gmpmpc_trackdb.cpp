@@ -24,14 +24,15 @@ gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(TrackDataBase* tdb, ClientID cid) {
 	search_label.set_label("Search:");
 	add_to_wishlist_button.set_label("Enqueue selected");
 
- 	update_treeview();
+	update_treeview();
+
 	search_entry.signal_changed().connect(boost::bind(&gmpmpc_trackdb_widget::on_search_entry_changed, this));
 	add_to_wishlist_button.signal_clicked().connect(boost::bind(&gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked, this));
 }
 
 void gmpmpc_trackdb_widget::set_clientid(ClientID id) {
- clientid = id;
- update_treeview();
+	clientid = id;
+	update_treeview();
 }
 
 void gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked() {
@@ -52,6 +53,9 @@ void gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked() {
 }
 
 bool gmpmpc_trackdb_widget::update_treeview() {
+	// TODO: is this reallly neccessary? Shouldn't Glib::signal_timeout ensure this?
+	boost::mutex::scoped_lock lock(treeview_update_mutex);
+
 	treeview.clear();
 	MetaDataMap m;
 	m["FILENAME"] = search_entry.get_text();

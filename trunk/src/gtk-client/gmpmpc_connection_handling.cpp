@@ -46,7 +46,7 @@ void gmpmpc_connection_handler::handle_message(const messageref m) {
 // 			gmpmpc_network_handler->client_message_receive_signal.disconnect(handle_received_message);
 		} break;
 		case message::MSG_PLAYLIST_UPDATE: {
-			update_playlist_signal(boost::static_pointer_cast<message_playlist_update>(m));
+			playlist_update_signal(boost::static_pointer_cast<message_playlist_update>(m));
 		}; break;
 		case message::MSG_QUERY_TRACKDB: {
 /*			message_query_trackdb_ref qr = boost::static_pointer_cast<message_query_trackdb>(m);
@@ -58,11 +58,13 @@ void gmpmpc_connection_handler::handle_message(const messageref m) {
 			message_query_trackdb_result_ref result(new message_query_trackdb_result(qr->qid, res));
 			gmpmpc_network_handler->send_server_message(result);*/
 		}; break;
-		case message::MSG_QUERY_TRACKDB_RESULT: { }; break;
+		case message::MSG_QUERY_TRACKDB_RESULT: {}; break;
 		case message::MSG_REQUEST_FILE: {
 			request_file_signal(boost::static_pointer_cast<message_request_file>(m));
 		}; break;
-		case message::MSG_REQUEST_FILE_RESULT: { }; break;
+		case message::MSG_REQUEST_FILE_RESULT: {
+			request_file_result_signal(boost::static_pointer_cast<message_request_file_result>(m));
+		}; break;
 		default: {
 			dcerr("Ignoring unknown message of type " << m->get_type());
 		} break;
