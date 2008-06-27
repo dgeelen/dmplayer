@@ -8,6 +8,7 @@ gmpmpc_playlist_widget::gmpmpc_playlist_widget() {
 	vbox.pack_start(vote_min_button, Gtk::PACK_SHRINK);
 	Gtk::Frame::add(vbox);
 	set_label("Playlist:");
+	vote_min_button.set_border_width(3);
 	vote_min_button.set_label("Vote MIN");
 	vote_min_button.signal_clicked().connect(boost::bind(&gmpmpc_playlist_widget::on_vote_min_button_clicked, this));
 }
