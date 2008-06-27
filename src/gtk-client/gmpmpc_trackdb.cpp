@@ -22,6 +22,7 @@ gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(TrackDataBase* tdb, ClientID cid) {
 
 	set_label("TrackDB:");
 	search_label.set_label("Search:");
+	add_to_wishlist_button.set_border_width(3);
 	add_to_wishlist_button.set_label("Enqueue selected");
 
 	update_treeview();
