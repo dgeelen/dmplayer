@@ -108,7 +108,7 @@ uint32 MadDecoder::getData(uint8* buf, uint32 len)
 		//Decode the frame here
 		if(mad_frame_decode(&Frame, &Stream)) {
 			if (!MAD_RECOVERABLE(Stream.error)) {
-				dcerr("Unrecoverable error");
+				dcerr("Unrecoverable error"); // FIXME: THIS IS ALSO THROWN WHEN THERE IS SIMPLY NOT ENOUGH DATA AVAILABLE AT THE MOMENT!!
 				BytesInInput = 0;
 				eos = true;
 				return BytesOut;
