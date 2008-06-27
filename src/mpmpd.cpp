@@ -204,10 +204,10 @@ class Server {
 						currenttrack = playlist.get(0);
 						message_request_file_ref msg(new message_request_file(currenttrack.id));
 						server_datasource = boost::shared_ptr<ServerDataSource>(new ServerDataSource(*this));
-						networkhandler.send_message(currenttrack.id.first, msg);
-						ac.set_data_source(server_datasource);
 						dcerr("requesting " << STRFORMAT("%08x:%08x", currenttrack.id.first, currenttrack.id.second));
 						add_datasource = false;
+						networkhandler.send_message(currenttrack.id.first, msg);
+						ac.set_data_source(server_datasource);
 					}
 					std::set<ClientID> votes = vote_min_list[currenttrack.id];
 					if(server_datasource && votes.size() > 0 && (votes.size()*2) > clients.size()) {

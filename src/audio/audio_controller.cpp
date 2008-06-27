@@ -103,6 +103,7 @@ void AudioController::set_data_source(IDataSourceRef ds) {
 	IAudioSourceRef newdecoder = IDecoder::findDecoder(ds);
 	if (!newdecoder) {
 		dcerr("Cannot find decoder!");
+		playback_finished(0); //FIXME: Low resolution!
 		return;
 	}
 
