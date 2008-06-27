@@ -7,9 +7,19 @@ gmpmpc_playlist_widget::gmpmpc_playlist_widget() {
 	set_label("Playlist:");
 }
 
+void gmpmpc_playlist_widget::update(message_playlist_update_ref m) {
+	m->apply(&treeview);
+}
+
+void gmpmpc_playlist_widget::add_to_wishlist(Track& track) {
+	wish_list.add(track);
+	messageref msg;
 
 
-
+	while (msg = wish_list.pop_msg()) {
+		send_message_signal(msg);
+	}
+}
 
 
 

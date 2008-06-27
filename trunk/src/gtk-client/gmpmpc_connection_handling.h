@@ -7,10 +7,12 @@
 		public:
 			gmpmpc_connection_handler();
 
-			boost::signal<void()> connection_accepted_signal;
+			boost::signal<void(ClientID)> connection_accepted_signal;
+			boost::signal<void(message_playlist_update_ref)> update_playlist_signal;
+			boost::signal<void(message_request_file_ref)> request_file_signal;
 
 			void handle_message(const messageref);
-			void send_message_update_playlist(Track& t);
+		private:
 	};
 #endif //GMPMPC_CONNECTION_HANDLING_H
 
