@@ -36,6 +36,7 @@ IF(ENABLE_GTK_GUI)
 	               gmpmpc_connection_handling.cpp gmpmpc_connection_handling.h
 	               track_treeview.cpp             track_treeview.h
 	               gmpmpc_playlist.cpp            gmpmpc_playlist.h
+	               gmpmpc_icon.h
 	               ../error-handling.cpp          ../error-handling.h
 	               ../network-handler.cpp         ../network-handler.h
 	               ../playlist_management.cpp     ../playlist_management.h

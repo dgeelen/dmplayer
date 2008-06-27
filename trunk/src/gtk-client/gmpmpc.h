@@ -33,6 +33,7 @@
 	#include <gtkmm/treeview.h>
 	#include <gtkmm/statusbar.h>
 	#include <gtkmm/uimanager.h>
+	#include <gtkmm/statusicon.h>
 	#include <gtkmm/actiongroup.h>
 	#include <gtkmm/scrolledwindow.h>
 
@@ -51,11 +52,13 @@
 			Gtk::Frame            playlist_frame;
 			Gtk::ScrolledWindow   playlist_scrolledwindow;
 			/* Widgets (referenced by code) */
-			Gtk::Menu*     menubar_ptr; // Menu is created dynamically using UIManager
-			Gtk::Statusbar statusbar;
-			gmpmpc_trackdb_widget* trackdb_widget;
-			gmpmpc_playlist_widget playlist_widget;
-			gmpmpc_select_server_window select_server_window;
+			Gtk::Menu*      menubar_ptr; // Menu is created dynamically using UIManager
+			Gtk::Statusbar  statusbar;
+			Glib::RefPtr<Gdk::Pixbuf>     statusicon_pixbuf;
+			Glib::RefPtr<Gtk::StatusIcon> statusicon;
+			gmpmpc_trackdb_widget*        trackdb_widget;
+			gmpmpc_playlist_widget        playlist_widget;
+			gmpmpc_select_server_window   select_server_window;
 
 			/* Functions */
 			void on_menu_file_preferences();
@@ -68,6 +71,9 @@
 			void on_request_file(message_request_file_ref m);
 			void on_request_file_result(message_request_file_result_ref m);
 			void on_vote_signal(TrackID id, int type);
+			void on_statusicon_activate();
+			bool on_delete_event(GdkEventAny* event);
+			bool on_window_state_signal(GdkEventWindowState* event);
 			void construct_gui();
 			void set_status_message(std::string msg);
 			void send_message(messageref m);
@@ -80,6 +86,7 @@
 			std::map<std::string, boost::signals::connection> connected_signals;
 			gmpmpc_connection_handler connection_handler;
 			sigc::connection clear_statusbar_connection;
+			bool is_iconified;
 
 			/* Threading crap */
 			//on_connection_accepted
