@@ -19,6 +19,7 @@
 	#include "../error-handling.h"
 	#include "../network-handler.h"
 	#include "../playlist_management.h"
+	#include "../packet.h"
 	#include <iostream>
 	#include <boost/shared_ptr.hpp>
 	#include <boost/signals.hpp>
@@ -63,7 +64,10 @@
 			void on_connection_accepted(ClientID id);  // callback from network connection handler
 			void on_select_server_connect(ipv4_socket_addr addr);
 			void on_select_server_cancel();
+			void on_playlist_update(message_playlist_update_ref m);
 			void on_request_file(message_request_file_ref m);
+			void on_request_file_result(message_request_file_result_ref m);
+			void on_vote_signal(TrackID id, int type);
 			void construct_gui();
 			void set_status_message(std::string msg);
 			void send_message(messageref m);
@@ -87,8 +91,15 @@
 
 			//on_request_file
 			boost::mutex _on_request_file_threads_mutex;
-			std::map<TrackID, std::pair<boost::thread*, boost::shared_ptr<bool> > > _on_request_file_threads;
+			std::map<TrackID, std::pair<boost::shared_ptr<boost::thread>, boost::shared_ptr<bool> > > _on_request_file_threads;
 			void _on_request_file(message_request_file_ref m, boost::shared_ptr<bool> done);
+
+			//on_playlist_update
+			sigc::connection _on_playlist_update_dispatcher_connection;
+			Glib::Dispatcher _on_playlist_update_dispatcher;
+			void _on_playlist_update();            // actually executes callback in GUI thread
+			std::list<message_playlist_update_ref> _on_playlist_update_messages;
+			boost::mutex _on_playlist_update_mutex;
 	};
 
 #endif

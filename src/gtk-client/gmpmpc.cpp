@@ -23,21 +23,31 @@ GtkMpmpClientWindow::GtkMpmpClientWindow(network_handler* nh, TrackDataBase* tdb
 		_on_connection_accepted_dispatcher.connect(
 			boost::bind(&GtkMpmpClientWindow::_on_connection_accepted, this));
 
+	_on_playlist_update_dispatcher_connection =
+		_on_playlist_update_dispatcher.connect(
+			boost::bind(&GtkMpmpClientWindow::_on_playlist_update, this));
+
 	connected_signals["enqueue_track_signal"] =
 		trackdb_widget->enqueue_track_signal.connect(
 			boost::bind(&gmpmpc_playlist_widget::add_to_wishlist, &playlist_widget, _1));
 	connected_signals["playlist_send_message_signal"] =
 		playlist_widget.send_message_signal.connect(
 			boost::bind(&GtkMpmpClientWindow::send_message, this, _1));
+	connected_signals["vote_signal"] =
+		playlist_widget.vote_signal.connect(
+			boost::bind(&GtkMpmpClientWindow::on_vote_signal, this, _1, _2));
 	connected_signals["connection_accepted_signal"] =
 		connection_handler.connection_accepted_signal.connect(
 			boost::bind(&GtkMpmpClientWindow::on_connection_accepted, this, _1));
-	connected_signals["update_playlist_signal"] =
-		connection_handler.update_playlist_signal.connect(
-			boost::bind(&gmpmpc_playlist_widget::update, &playlist_widget, _1));
+	connected_signals["playlist_update_signal"] =
+		connection_handler.playlist_update_signal.connect(
+			boost::bind(&GtkMpmpClientWindow::on_playlist_update, this, _1));
 	connected_signals["request_file_signal"] =
 		connection_handler.request_file_signal.connect(
 			boost::bind(&GtkMpmpClientWindow::on_request_file, this, _1));
+	connected_signals["request_file_result_signal"] =
+			connection_handler.request_file_result_signal.connect(
+				boost::bind(&GtkMpmpClientWindow::on_request_file_result, this, _1));
 	connected_signals["connect_signal"] =
 		select_server_window.connect_signal.connect(
 			boost::bind(&GtkMpmpClientWindow::on_select_server_connect, this, _1));
@@ -67,9 +77,9 @@ GtkMpmpClientWindow::~GtkMpmpClientWindow() {
 		signal.second.disconnect();
 	}
 	_on_connection_accepted_dispatcher_connection.disconnect();
+	_on_playlist_update_dispatcher_connection.disconnect();
 	delete trackdb_widget;
 }
-
 
 void GtkMpmpClientWindow::_on_request_file(message_request_file_ref m, boost::shared_ptr<bool> done) {
 	MetaDataMap md;
@@ -78,7 +88,7 @@ void GtkMpmpClientWindow::_on_request_file(message_request_file_ref m, boost::sh
 	if(s.size() == 1) {
 		if(boost::filesystem::exists(s[0].filename)) {
 			boost::filesystem::ifstream f( s[0].filename, std::ios_base::in | std::ios_base::binary );
-			uint32 n = 1024 * 32;
+			uint32 n = 1024 * 32; // Well over 5sec of 44100KHz 2Channel 16Bit WAV
 			std::vector<uint8> data;
 			data.resize(1024*1024);
 			while(!(*done)) {
@@ -94,6 +104,7 @@ void GtkMpmpClientWindow::_on_request_file(message_request_file_ref m, boost::sh
 					if(n<1024*1024) {
 						n<<1;
 					}
+					usleep(n*10); // Ease up on CPU usage, starts with ~0.3 sec sleep and doubles every loop
 				}
 				else { //EOF or Error reading file
 					*done = true;
@@ -113,16 +124,30 @@ void GtkMpmpClientWindow::_on_request_file(message_request_file_ref m, boost::sh
 	_on_request_file_threads.erase(_on_request_file_threads.find(m->id));
 }
 
+void GtkMpmpClientWindow::on_request_file_result(message_request_file_result_ref m) {
+	boost::shared_ptr<boost::thread> t(new  boost::thread());
+
+	{
+		boost::mutex::scoped_lock lock(_on_request_file_threads_mutex);
+		if(_on_request_file_threads.find(m->id) != _on_request_file_threads.end()) {
+			(*_on_request_file_threads[m->id].second) = true;
+			t = _on_request_file_threads[m->id].first;
+		}
+	}
+
+	t->join();
+}
+
 void GtkMpmpClientWindow::on_request_file(message_request_file_ref m) {
 	// We transfer the file in a separate thread so that we can still send/receive messages.
 	// FIXME: We can only send a (the same) file one at a time
 	if(_on_request_file_threads.find(m->id) == _on_request_file_threads.end()) {
 		boost::mutex::scoped_lock lock(_on_request_file_threads_mutex);
 		boost::shared_ptr<bool> b = boost::shared_ptr<bool>(new bool(false));
-		boost::thread* t = new boost::thread(makeErrorHandler(
-			boost::bind(&GtkMpmpClientWindow::_on_request_file, this, m, b)));
+		boost::shared_ptr<boost::thread> t = boost::shared_ptr<boost::thread>(new boost::thread(makeErrorHandler(
+			boost::bind(&GtkMpmpClientWindow::_on_request_file, this, m, b))));
 
-		_on_request_file_threads[m->id] = pair<boost::thread*, boost::shared_ptr<bool> >(t, b);
+		_on_request_file_threads[m->id] = pair<boost::shared_ptr<boost::thread>, boost::shared_ptr<bool> >(t, b);
 	}
 }
 
@@ -141,6 +166,28 @@ void GtkMpmpClientWindow::on_connection_accepted(ClientID id) {
 	boost::mutex::scoped_lock lock(clientid_mutex);
 	clientid = id;
 	_on_connection_accepted_dispatcher();
+}
+
+void GtkMpmpClientWindow::_on_playlist_update() {
+	boost::mutex::scoped_lock lock(_on_playlist_update_mutex);
+	while(!_on_playlist_update_messages.empty()) {
+		message_playlist_update_ref m = _on_playlist_update_messages.front();
+		playlist_widget.update(m);
+		_on_playlist_update_messages.pop_front();
+	}
+}
+
+void GtkMpmpClientWindow::on_playlist_update(message_playlist_update_ref m) {
+	boost::mutex::scoped_lock lock(_on_playlist_update_mutex);
+	_on_playlist_update_messages.push_back(m);
+	_on_playlist_update_dispatcher();
+}
+
+void GtkMpmpClientWindow::on_vote_signal(TrackID id, int type) {
+	if(type < 0) {
+		message_vote_ref m = message_vote_ref(new message_vote(id, true));
+		networkhandler->send_server_message(m);
+	}
 }
 
 void GtkMpmpClientWindow::on_select_server_connect( ipv4_socket_addr addr ) {
