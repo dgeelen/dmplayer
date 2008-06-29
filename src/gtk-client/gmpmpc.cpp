@@ -153,7 +153,13 @@ void GtkMpmpClientWindow::_on_request_file(message_request_file_ref m, boost::sh
 			}
 		}
 		else { // Error opening file
-			dcerr("Warning: could not open " << s[0].filename);
+			dcerr("Warning: could not open " << s[0].filename << ", Sending as-is...");
+			std::vector<uint8> vdata;
+			BOOST_FOREACH(char c, s[0].filename.string()) {
+				vdata.push_back((uint8)c);
+			}
+			message_request_file_result_ref msg(new message_request_file_result(vdata, m->id));
+			networkhandler->send_server_message(msg);
 		}
 	}
 	// Send final empty message
