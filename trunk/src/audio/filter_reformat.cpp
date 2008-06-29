@@ -6,6 +6,9 @@
 
 #include "filter_sampledoubler.h"
 #include "filter_monotostereo.h"
+#ifdef LIBSAMPLERATE_FILTER
+	#include "filter_libsamplerate.h"
+#endif
 
 using namespace std;
 
@@ -25,13 +28,18 @@ ReformatFilter::ReformatFilter(IAudioSourceRef as, AudioFormat target)
 		src = IAudioSourceRef(new MonoToStereoFilter(src));
 	}
 
-	// partially fix sample rate (only multiply by powers of 2)
-	int count = 0;
-	while ((src->getAudioFormat().SampleRate < target.SampleRate) && (count++<3)) {
+	#ifdef LIBSAMPLERATE_FILTER
+		dcerr("Using libsamplerate filter");
+		src = IAudioSourceRef(new LibSamplerateFilter(src, target));
+	#else
+		// partially fix sample rate (only multiply by powers of 2)
+		int count = 0;
+		while ((src->getAudioFormat().SampleRate < target.SampleRate) && (count++<3)) {
+			dcerr(src->getAudioFormat().SampleRate << " < " << target.SampleRate);
+			src = IAudioSourceRef(new SampleDoublerFilter(src));
+		}
 		dcerr(src->getAudioFormat().SampleRate << " < " << target.SampleRate);
-		src = IAudioSourceRef(new SampleDoublerFilter(src));
-	}
-
+	#endif
 
 	audioformat = src->getAudioFormat();
 }
