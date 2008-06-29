@@ -71,10 +71,18 @@ LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec), fill_buffer_ba
  */
 
 void LibAOBackend::decoder_read_thread() {
+	long todo;
 	while(read_back) {
-		if(decoder) decoder->getData(audio_buffer[0], BUF_SIZE);
+		todo = BUF_SIZE;
+		while(todo>0)
+			if(decoder)
+				todo -= decoder->getData(audio_buffer[0] + (BUF_SIZE - todo), todo);
 		fill_buffer_barrier.wait();
-		if(decoder) decoder->getData(audio_buffer[1], BUF_SIZE);
+
+		todo = BUF_SIZE;
+		while(todo>0)
+			if(decoder)
+				todo -= decoder->getData(audio_buffer[1] + (BUF_SIZE - todo), todo);
 		fill_buffer_barrier.wait();
 	}
 }
