@@ -72,6 +72,7 @@
 			void on_request_file_result(message_request_file_result_ref m);
 			void on_vote_signal(TrackID id, int type);
 			void on_statusicon_activate();
+			void on_statusicon_popup_menu(guint button, guint32 activate_time);
 			bool on_delete_event(GdkEventAny* event);
 			bool on_window_state_signal(GdkEventWindowState* event);
 			void construct_gui();

@@ -38,11 +38,15 @@ GtkMpmpClientWindow::GtkMpmpClientWindow(network_handler* nh, TrackDataBase* tdb
 	                                                  256*4
 	                                                  );
 	statusicon = Gtk::StatusIcon::create(statusicon_pixbuf);
+	statusicon->set_tooltip("gmpmpc\nA GTK+ Client for MPMP");
 	statusicon->set_visible(true);
 
 	is_iconified = false;
 	statusicon->signal_activate().connect(
 		boost::bind(&GtkMpmpClientWindow::on_statusicon_activate, this));
+	statusicon->signal_popup_menu().connect(
+		sigc::mem_fun(*this, &GtkMpmpClientWindow::on_statusicon_popup_menu));
+
 	this->signal_window_state_event().connect(
 		sigc::mem_fun(*this, &GtkMpmpClientWindow::on_window_state_signal));
 	this->signal_delete_event().connect(
@@ -111,6 +115,11 @@ GtkMpmpClientWindow::~GtkMpmpClientWindow() {
 	_on_connection_accepted_dispatcher_connection.disconnect();
 	_on_playlist_update_dispatcher_connection.disconnect();
 	delete trackdb_widget;
+}
+
+void GtkMpmpClientWindow::on_statusicon_popup_menu(guint button, guint32 activate_time) {
+	Gtk::Menu* m = (Gtk::Menu*)(m_refUIManager->get_widget("/Popup"));
+	statusicon->popup_menu_at_position(*m, button, activate_time);
 }
 
 void GtkMpmpClientWindow::_on_request_file(message_request_file_ref m, boost::shared_ptr<bool> done) {
@@ -275,12 +284,18 @@ void GtkMpmpClientWindow::construct_gui() {
 				"<ui>"
 				"  <menubar name='MenuBar'>"
 				"    <menu action='FileMenu'>"
-				"    <menuitem action='FileSelectServer'/>"
+				"      <menuitem action='FileSelectServer'/>"
 				"      <menuitem action='FilePreferences'/>"
 				"      <separator/>"
 				"      <menuitem action='FileQuit'/>"
 				"    </menu>"
 				"  </menubar>"
+				"  <popup name='Popup'>"
+				"    <menuitem action='FileSelectServer'/>"
+				"    <menuitem action='FilePreferences'/>"
+				"    <separator/>"
+				"    <menuitem action='FileQuit'/>"
+				"  </popup>"
 				"</ui>";
 
 	m_refUIManager->add_ui_from_string(ui_info);
