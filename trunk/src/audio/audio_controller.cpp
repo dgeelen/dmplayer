@@ -87,7 +87,7 @@ uint32 AudioController::getData(uint8* buf, uint32 len)
 		read = curdecoder->getData(buf, len);
 		bytes_played += read;
 	}
-	if (read < len) {
+	if (read < len) { //FIXME: Really only if curdecoder->exhausted()
 		memset(buf+read, 0, len-read);
 		read = len;
 		if(curdecoder && curdecoder->exhausted()) {
@@ -99,12 +99,32 @@ uint32 AudioController::getData(uint8* buf, uint32 len)
 	return read;
 }
 
-void AudioController::set_data_source(IDataSourceRef ds) {
+void AudioController::set_data_source(const IDataSourceRef ds) {
 	IAudioSourceRef newdecoder = IDecoder::findDecoder(ds);
 	if (!newdecoder) {
-		dcerr("Cannot find decoder!");
-		playback_finished(0); //FIXME: Low resolution!
-		return;
+		try {
+			ds->reset();
+			vector<uint8> svec;
+			svec.resize(4096);
+			int read = ds->getData(&svec[0], 4096);
+			string s;
+			s.resize(read);
+			for(int i = 0; i<read; ++i) {
+				s[i] = svec[i];
+			}
+			IDataSourceRef httpdatasource = IDataSourceRef(new HTTPStreamDataSource(s));
+			newdecoder = IDecoder::findDecoder(httpdatasource);
+		}
+		catch (Exception& e) {
+			VAR_UNUSED(e); // in debug mode
+			dcerr("Error message: " << e.what());
+			ds->reset();
+		}
+		if(!newdecoder) {
+			dcerr("Cannot find decoder!");
+			playback_finished(0); //FIXME: Low resolution!
+			return;
+		}
 	}
 
 	if(newdecoder->getAudioFormat() != backend->getAudioFormat())
