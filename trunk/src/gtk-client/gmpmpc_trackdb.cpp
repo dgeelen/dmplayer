@@ -25,10 +25,18 @@ gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(TrackDataBase* tdb, ClientID cid) {
 	add_to_wishlist_button.set_border_width(3);
 	add_to_wishlist_button.set_label("Enqueue selected");
 
-	update_treeview();
+	std::list<Gtk::TargetEntry> listTargets;
+	listTargets.push_back( Gtk::TargetEntry("text/uri-list", Gtk::TARGET_OTHER_APP, 0) ); // Last parameter is 'Info', used to distinguish
+	listTargets.push_back( Gtk::TargetEntry("text/plain"   , Gtk::TARGET_OTHER_APP, 1) ); // different types if TargetEntry in the drop handler
+	listTargets.push_back( Gtk::TargetEntry("STRING"       , Gtk::TARGET_OTHER_APP, 1) );
+
+	treeview.drag_dest_set(listTargets); // Should use defaults, DEST_DEFAULT_ALL, Gdk::ACTION_COPY);
 
 	search_entry.signal_changed().connect(boost::bind(&gmpmpc_trackdb_widget::on_search_entry_changed, this));
 	add_to_wishlist_button.signal_clicked().connect(boost::bind(&gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked, this));
+	treeview.signal_drag_data_received().connect(sigc::mem_fun(*this, &gmpmpc_trackdb_widget::on_drag_data_received_signal));
+
+	update_treeview();
 }
 
 void gmpmpc_trackdb_widget::set_clientid(ClientID id) {
@@ -77,6 +85,63 @@ void gmpmpc_trackdb_widget::on_search_entry_changed() {
 // 	sigc::connection conn = Glib::signal_timeout().connect(boost::bind<bool>(&gmpmpc_trackdb_widget::update_treeview, this), 250);
 }
 
+string urldecode(std::string s) { //http://www.koders.com/cpp/fid6315325A03C89DEB1E28732308D70D1312AB17DD.aspx
+	std::string buffer = "";
+	int len = s.length();
+
+	for (int i = 0; i < len; i++) {
+		int j = i ;
+		char ch = s.at(j);
+		if (ch == '%'){
+			char tmpstr[] = "0x0__";
+			int chnum;
+			tmpstr[3] = s.at(j+1);
+			tmpstr[4] = s.at(j+2);
+			chnum = strtol(tmpstr, NULL, 16);
+			buffer += chnum;
+			i += 2;
+		} else {
+			buffer += ch;
+		}
+	}
+	return buffer;
+}
+
+vector<std::string> urilist_convert(const std::string urilist) {
+	vector<std::string> files;
+	int begin = urilist.find("file://", 0);
+	int end = urilist.find("\r\n", begin);
+	while( end != string::npos) {
+		files.push_back(urldecode(urilist.substr(begin + 7, end-begin-7)));
+		begin = urilist.find("file://", end);
+		if(begin == string::npos) break;
+		end = urilist.find("\r\n", begin);
+	}
+	return files;
+}
+
+void gmpmpc_trackdb_widget::on_drag_data_received_signal(const Glib::RefPtr<Gdk::DragContext>& context,
+                                                         int x, int y,
+                                                         const Gtk::SelectionData& selection_data,
+                                                         guint info, guint time) {
+	dcerr("DROP!");
+
+	// Note: We know we only receive strings (of type STRING, text/uri-list and text/plain)
+	switch(info) {
+		case 0: {
+			BOOST_FOREACH(std::string file, urilist_convert(selection_data.get_data_as_string())) {
+				trackdb->add_directory(file);
+			}
+		}; break;
+		case 1: {
+			trackdb->add(boost::filesystem::path(selection_data.get_data_as_string()));
+		}; break;
+		default:
+			dcerr("Unhandled drop? info="<<info);
+	}
+	update_treeview();
+	context->drop_finish(true, time);
+}
 
 
 

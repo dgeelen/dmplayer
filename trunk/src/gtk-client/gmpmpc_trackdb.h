@@ -15,7 +15,6 @@
 	#include <gtkmm/scrolledwindow.h>
 	#include <boost/thread/mutex.hpp>
 
-
 	class gmpmpc_trackdb_widget : public Gtk::Frame {
 		public:
 			gmpmpc_trackdb_widget(TrackDataBase* tdb, ClientID cid);
@@ -25,6 +24,7 @@
 		private:
 			void on_search_entry_changed();
 			void on_add_to_wishlist_button_clicked();
+			void on_drag_data_received_signal(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, const Gtk::SelectionData& selection_data, guint info, guint time);
 			sigc::connection update_treeview_connection;
 			bool update_treeview();
 			TrackDataBase*        trackdb;
