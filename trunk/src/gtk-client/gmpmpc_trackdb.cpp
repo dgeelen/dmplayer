@@ -16,12 +16,12 @@ gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(TrackDataBase* tdb, ClientID cid) {
 	search_vbox.add(search_hbox);
 	search_vbox.add(search_entry);
 	vbox.add(scrolledwindow);
-	vbox.pack_start(add_to_wishlist_button, Gtk::PACK_SHRINK);
 	vbox.pack_start(search_vbox, Gtk::PACK_SHRINK);
+	vbox.pack_start(add_to_wishlist_button, Gtk::PACK_SHRINK);
 	add(vbox);
 
 	set_label("TrackDB:");
-	search_label.set_label("Search:");
+	search_label.set_label("Filter:");
 	add_to_wishlist_button.set_border_width(3);
 	add_to_wishlist_button.set_label("Enqueue selected");
 

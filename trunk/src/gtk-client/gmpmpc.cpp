@@ -143,7 +143,7 @@ void GtkMpmpClientWindow::_on_request_file(message_request_file_ref m, boost::sh
 					message_request_file_result_ref msg(new message_request_file_result(vdata, m->id));
 					networkhandler->send_server_message(msg);
 					if(n<1024*1024) {
-						n<<1;
+						n<<=1;
 					}
 					usleep(n*10); // Ease up on CPU usage, starts with ~0.3 sec sleep and doubles every loop
 				}
