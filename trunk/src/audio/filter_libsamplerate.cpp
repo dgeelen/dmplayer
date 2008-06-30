@@ -100,7 +100,7 @@ uint32 LibSamplerateFilter::getData(uint8* buf, uint32 len)
 		switch(audioformat.BitsPerSample) {
 			case  8: {
 				if(audioformat.SignedSample) {
-					*(( int8*)ptr) =  int8(data_out[i]*255.0f*0.7f);
+					*(( int8*)ptr) =  int8(data_out[i]*255.0f);
 				}
 				else {
 					//TODO
@@ -118,7 +118,7 @@ uint32 LibSamplerateFilter::getData(uint8* buf, uint32 len)
 			}; break;
 			case 32: {
 				if(audioformat.SignedSample) {
-					*(( int32*)ptr) =  int32(data_out[i]*4294967295.0f*0.7f);
+					*(( int32*)ptr) =  int32(data_out[i]*4294967295.0f);
 				}
 				else {
 					//TODO
