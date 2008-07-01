@@ -1,5 +1,5 @@
-#ifndef FILTER_LIBSAMPLERATE_h
-#define FILTER_LIBSAMPLERATE_h
+#ifndef FILTER_LIBSAMPLERATE_H
+#define FILTER_LIBSAMPLERATE_H
 
 #include "audiosource_interface.h"
 #include <samplerate.h>
@@ -16,4 +16,4 @@ class LibSamplerateFilter : public IAudioSource {
 		uint32 getData(uint8* buf, uint32 len);
 };
 
-#endif //FILTER_LIBSAMPLERATE_h
+#endif //FILTER_LIBSAMPLERATE_H
