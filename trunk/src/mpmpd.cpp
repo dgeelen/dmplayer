@@ -134,15 +134,15 @@ class Server {
 		Server(int listen_port, string server_name)
 			: networkhandler(listen_port, server_name)
 		{
-
 			dcerr("Started network_handler");
+			server_datasource = boost::shared_ptr<ServerDataSource>((ServerDataSource*)NULL);
+			add_datasource = true;
 			message_loop_running = true;
 			boost::thread tt(makeErrorHandler(boost::bind(&Server::message_loop, this)));
 			message_loop_thread.swap(tt);
 			networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
 			ac.playback_finished.connect(boost::bind(&Server::next_song, this, _1));
 			ac.StartPlayback();
-			add_datasource = true;
 		}
 
 		~Server() {
@@ -157,6 +157,7 @@ class Server {
 			vector<ClientID> has_song;
 			vector<ClientID> does_not_have_song;
 
+			boost::mutex::scoped_lock lock(clients_mutex);
 			Track t = currenttrack;
 			BOOST_FOREACH(Client_ref c, clients) {
 				int pos = 0;
@@ -188,33 +189,47 @@ class Server {
 				dcerr("(plus) for " << STRFORMAT("%08x", id) << ": " << old << " -> " << (*clients.find(id))->zero_sum);
 			}
 
+			lock.unlock();
 			recalculateplaylist();
+			lock.lock();
 			vote_min_list.erase(currenttrack.id);
 			add_datasource = true;
 		}
 
 		void message_loop() {
 			while(message_loop_running) {
-				messageref m = playlist.pop_msg();
+				messageref m;
+				{
+					boost::mutex::scoped_lock lock(playlist_mutex);
+					m = playlist.pop_msg();
+				}
 				if(m) {
 					networkhandler.send_message_allclients(m);
 				}
 				else { // meh
-					if(add_datasource && (playlist.size()!=0)) {
-						currenttrack = playlist.get(0);
-						message_request_file_ref msg(new message_request_file(currenttrack.id));
-						server_datasource = boost::shared_ptr<ServerDataSource>(new ServerDataSource(*this));
-						dcerr("requesting " << STRFORMAT("%08x:%08x", currenttrack.id.first, currenttrack.id.second));
-						add_datasource = false;
-						networkhandler.send_message(currenttrack.id.first, msg);
-						ac.set_data_source(server_datasource);
+					{
+						boost::mutex::scoped_lock lock(playlist_mutex);
+						if(add_datasource && (playlist.size()!=0)) {
+							currenttrack = playlist.get(0);
+							lock.unlock();
+							message_request_file_ref msg(new message_request_file(currenttrack.id));
+							server_datasource = boost::shared_ptr<ServerDataSource>(new ServerDataSource(*this));
+							dcerr("requesting " << STRFORMAT("%08x:%08x", currenttrack.id.first, currenttrack.id.second));
+							add_datasource = false;
+							networkhandler.send_message(currenttrack.id.first, msg);
+							ac.set_data_source(server_datasource);
+						}
 					}
-					std::set<ClientID> votes = vote_min_list[currenttrack.id];
-					if(server_datasource && votes.size() > 0 && (votes.size()*2) > clients.size()) {
-						server_datasource->stop();
-						vector<uint8> empty;
-						message_request_file_result_ref msg(new message_request_file_result(empty, currenttrack.id));
-						networkhandler.send_message(currenttrack.id.first, msg);
+					{
+						boost::mutex::scoped_lock lock(clients_mutex);
+						std::set<ClientID> votes = vote_min_list[currenttrack.id];
+						if(server_datasource && votes.size() > 0 && (votes.size()*2) > clients.size()) {
+							lock.unlock();
+							server_datasource->stop();
+							vector<uint8> empty;
+							message_request_file_result_ref msg(new message_request_file_result(empty, currenttrack.id));
+							networkhandler.send_message(currenttrack.id.first, msg);
+						}
 					}
 					usleep(100*1000);
 				}
@@ -222,6 +237,8 @@ class Server {
 		}
 
 		void remove_client(ClientID id) {
+			boost::mutex::scoped_lock lock(clients_mutex);
+			dcerr("Removing client " << id);
 			if (clients.find(id) == clients.end())
 				return;
 			if(currenttrack.id.first == id && server_datasource) { // Client which is serving current file disconnected!
@@ -245,14 +262,23 @@ class Server {
 				i->zero_sum += total/clients.size();
 				dcerr("(dc)  for " << STRFORMAT("%08x", i->id) << ": " << old << " -> " << i->zero_sum << '\n');
 			}
+
+			/* Clear memory used by client */
+			clients.erase(clients.find(id));
 		}
 
 		void handle_received_message(const messageref m, ClientID id) {
 			switch(m->get_type()) {
 				case message::MSG_CONNECT: {
 					dcerr("Received a MSG_CONNECT from " << id);
-					clients.insert(Client_ref(new Client(id)));
-					networkhandler.send_message(id, messageref(new message_playlist_update(playlist)));
+					{
+						boost::mutex::scoped_lock lock(clients_mutex);
+						clients.insert(Client_ref(new Client(id)));
+					}
+					{
+						boost::mutex::scoped_lock lock(playlist_mutex);
+						networkhandler.send_message(id, messageref(new message_playlist_update(playlist)));
+					}
 				} break;
 				case message::MSG_ACCEPT: {
 					dcerr("Received a MSG_ACCEPT from " << id);
@@ -265,7 +291,10 @@ class Server {
 				case message::MSG_PLAYLIST_UPDATE: {
 					dcerr("Received a MSG_PLAYLIST_UPDATE from " << id);
 					message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
-					msg->apply(&(*clients.find(id))->wish_list);
+					{
+						boost::mutex::scoped_lock lock(clients_mutex);
+						msg->apply(&(*clients.find(id))->wish_list);
+					}
 					recalculateplaylist();
 				}; break;
 				case message::MSG_QUERY_TRACKDB: {
@@ -279,6 +308,7 @@ class Server {
 					std::map<uint32, std::pair<ClientID, TrackID> >::iterator finder = query_queue.find(qid);
 					if (finder != query_queue.end()) {
 						if(msg->result.size()==1) {
+							boost::mutex::scoped_lock lock(playlist_mutex);
 							playlist.add(msg->result.front());
 						}
 						query_queue.erase(finder);
@@ -314,6 +344,7 @@ class Server {
 		}
 	private:
 		SyncedPlaylist playlist;
+		boost::mutex playlist_mutex;
 		Track currenttrack;
 		network_handler networkhandler;
 		AudioController ac;
@@ -327,6 +358,7 @@ class Server {
 		> ClientMap;
 		ClientMap clients;
 		std::map<TrackID, std::set<ClientID> > vote_min_list;
+		boost::mutex clients_mutex;
 
 		boost::thread message_loop_thread;
 		boost::shared_ptr<ServerDataSource> server_datasource;
@@ -340,6 +372,8 @@ class Server {
 		};
 
 		void recalculateplaylist() {
+			boost::mutex::scoped_lock locka(clients_mutex);
+			boost::mutex::scoped_lock lockb(playlist_mutex);
 			playlist.clear();
 			std::vector<std::pair<Client_ref, uint32> > client_list;
 			uint32 maxsize = 0;
