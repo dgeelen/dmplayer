@@ -138,6 +138,7 @@ class Server {
 			server_datasource = boost::shared_ptr<ServerDataSource>((ServerDataSource*)NULL);
 			add_datasource = true;
 			message_loop_running = true;
+			vote_min_penalty = 0;
 			boost::thread tt(makeErrorHandler(boost::bind(&Server::message_loop, this)));
 			message_loop_thread.swap(tt);
 			networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
@@ -152,7 +153,8 @@ class Server {
 
 		void next_song(uint32 playtime_secs) {
 			// FIXME: MAD DECODER ABORTS IF DATA DOES NOT COME IN FAST ENOUGH!
-			dcerr("Next!!! " << playtime_secs);
+			dcerr("Next song, playtime=" << playtime_secs << " seconds, penalty=" << vote_min_penalty << " seconds");
+			playtime_secs += vote_min_penalty;
 
 			vector<ClientID> has_song;
 			vector<ClientID> does_not_have_song;
@@ -224,11 +226,19 @@ class Server {
 						boost::mutex::scoped_lock lock(clients_mutex);
 						std::set<ClientID> votes = vote_min_list[currenttrack.id];
 						if(server_datasource && votes.size() > 0 && (votes.size()*2) > clients.size()) {
-							lock.unlock();
-							server_datasource->stop();
+							/* Notify sender to stop sending */
 							vector<uint8> empty;
 							message_request_file_result_ref msg(new message_request_file_result(empty, currenttrack.id));
 							networkhandler.send_message(currenttrack.id.first, msg);
+
+							/* Current song will incur a penalty of 2 minutes */
+							vote_min_penalty = 2 * 60;
+
+							/* Cue next song */
+							server_datasource->stop();
+
+							/* Don't spam sender */
+							vote_min_list.erase(currenttrack.id);
 						}
 					}
 					usleep(100*1000);
@@ -335,6 +345,13 @@ class Server {
 					message_vote_ref msg = boost::static_pointer_cast<message_vote>(m);
 					if(msg->is_min_vote) {
 						vote_min_list[msg->getID()].insert(id);
+// 						* TODO *
+// 						bool is_in_playlist = false;
+// 						BOOST_FOREACH( , playlist) {
+// 						}
+// 						if(is_in_playlist) {
+// 							vote_min_list[msg->getID()].insert(id);
+// 						}
 					}
 				}; break;
 				default: {
@@ -358,6 +375,7 @@ class Server {
 		> ClientMap;
 		ClientMap clients;
 		std::map<TrackID, std::set<ClientID> > vote_min_list;
+		uint32 vote_min_penalty;
 		boost::mutex clients_mutex;
 
 		boost::thread message_loop_thread;
