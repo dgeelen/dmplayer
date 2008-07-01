@@ -73,6 +73,7 @@
 			void on_vote_signal(TrackID id, int type);
 			void on_statusicon_activate();
 			void on_statusicon_popup_menu(guint button, guint32 activate_time);
+			void on_enqueue_track_signal(Track& track);
 			bool on_delete_event(GdkEventAny* event);
 			bool on_window_state_signal(GdkEventWindowState* event);
 			void construct_gui();

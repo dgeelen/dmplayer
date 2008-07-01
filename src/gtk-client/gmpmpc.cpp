@@ -65,7 +65,7 @@ GtkMpmpClientWindow::GtkMpmpClientWindow(network_handler* nh, TrackDataBase* tdb
 
 	connected_signals["enqueue_track_signal"] =
 		trackdb_widget->enqueue_track_signal.connect(
-			boost::bind(&gmpmpc_playlist_widget::add_to_wishlist, &playlist_widget, _1));
+			boost::bind(&GtkMpmpClientWindow::on_enqueue_track_signal, this, _1));
 	connected_signals["playlist_send_message_signal"] =
 		playlist_widget.send_message_signal.connect(
 			boost::bind(&GtkMpmpClientWindow::send_message, this, _1));
@@ -213,6 +213,12 @@ void GtkMpmpClientWindow::on_connection_accepted(ClientID id) {
 	boost::mutex::scoped_lock lock(clientid_mutex);
 	clientid = id;
 	_on_connection_accepted_dispatcher();
+}
+
+void GtkMpmpClientWindow::on_enqueue_track_signal(Track& track) {
+	// Might happen synchronis with a playlist_update so we need to lock
+	boost::mutex::scoped_lock lock(_on_playlist_update_mutex);
+	playlist_widget.add_to_wishlist(track);
 }
 
 void GtkMpmpClientWindow::_on_playlist_update() {
