@@ -42,6 +42,7 @@
 			void on_cancel_button_click();
 			void on_connect_button_click();
 			bool on_serverlist_double_click(GdkEventButton *event);
+			bool focus_connect_button(GdkEventWindowState* event); // A tad hacky, but it saves us an extra function doing the same...
 			Gtk::Frame          frame;
 			Gtk::VBox           framebox;
 			Gtk::VBox           vbox;
