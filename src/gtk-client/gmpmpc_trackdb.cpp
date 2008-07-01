@@ -24,6 +24,8 @@ gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(TrackDataBase* tdb, ClientID cid) {
 	search_label.set_label("Filter:");
 	add_to_wishlist_button.set_border_width(3);
 	add_to_wishlist_button.set_label("Enqueue selected");
+// 	focus_add_to_wishlist_button();
+	add_to_wishlist_button.grab_focus();
 
 	std::list<Gtk::TargetEntry> listTargets;
 	listTargets.push_back( Gtk::TargetEntry("text/uri-list", Gtk::TARGET_OTHER_APP, 0) ); // Last parameter is 'Info', used to distinguish
@@ -35,6 +37,8 @@ gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(TrackDataBase* tdb, ClientID cid) {
 	search_entry.signal_changed().connect(boost::bind(&gmpmpc_trackdb_widget::on_search_entry_changed, this));
 	add_to_wishlist_button.signal_clicked().connect(boost::bind(&gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked, this));
 	treeview.signal_drag_data_received().connect(sigc::mem_fun(*this, &gmpmpc_trackdb_widget::on_drag_data_received_signal));
+// 	treeview.add_events(Gdk::BUTTON_PRESS_MASK);
+// 	treeview.signal_button_press_event().connect(sigc::mem_fun(*this, &gmpmpc_trackdb_widget::on_treeview_clicked), false);
 
 	update_treeview();
 }
@@ -43,6 +47,16 @@ void gmpmpc_trackdb_widget::set_clientid(ClientID id) {
 	clientid = id;
 	update_treeview();
 }
+
+// bool gmpmpc_trackdb_widget::focus_add_to_wishlist_button() {
+// 	add_to_wishlist_button.grab_focus();
+// 	return false;
+// }
+
+// bool gmpmpc_trackdb_widget::on_treeview_clicked(GdkEventButton *event) {
+// 	Glib::signal_idle().connect(sigc::mem_fun(*this, &gmpmpc_trackdb_widget::focus_add_to_wishlist_button));
+// 	return false;
+// }
 
 void gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked() {
 	Glib::RefPtr<Gtk::TreeModel> model = treeview.get_model();
