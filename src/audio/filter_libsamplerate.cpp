@@ -40,8 +40,16 @@ uint32 LibSamplerateFilter::getData(uint8* buf, uint32 len)
 	uint8* data             = new uint8[nsamples_in_len];
 
 	uint32 todo = nsamples_in_len;
-	while(todo)
-		todo-=src->getData(data + nsamples_in_len - todo, todo);
+	while(todo) {
+		int read = src->getData(data + nsamples_in_len - todo, todo);
+		todo -= read;
+		if(read == 0) {
+			if(src->exhausted()) {
+				nsamples_in = (nsamples_in_len - todo) / bytes_per_sample;
+				break;
+			}
+		}
+	}
 
 	uint8* ptr;
 	ptr = data;

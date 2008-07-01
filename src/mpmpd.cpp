@@ -228,16 +228,22 @@ class Server {
 				server_datasource->set_wait_for_data(false);
 			}
 			Client_ref cr = *clients.find(id);
-			double total = -cr->zero_sum;
-			BOOST_FOREACH(Client_ref i, clients) {
-				total += i->zero_sum;
-			}
+			double total = cr->zero_sum;
+			dcerr("total zero sum:" << total << '\n');
 			clients.erase(id);
 			if(cr->wish_list.size() > 0 && currenttrack.id == cr->wish_list.get(0).id)
 				server_datasource->stop();
+
+			typedef std::pair<TrackID, std::set<ClientID> > vtype;
+			BOOST_FOREACH(vtype i, vote_min_list) {
+				if(i.second.find(cr->id) != i.second.end())
+					vote_min_list.erase(vote_min_list.find( i.first ));
+			}
 			if (total == 0) return;
 			BOOST_FOREACH(Client_ref i, clients) {
-				i->zero_sum += (i->zero_sum/total)*cr->zero_sum;
+				double old = i->zero_sum;
+				i->zero_sum += total/clients.size();
+				dcerr("(dc)  for " << STRFORMAT("%08x", i->id) << ": " << old << " -> " << i->zero_sum << '\n');
 			}
 		}
 
