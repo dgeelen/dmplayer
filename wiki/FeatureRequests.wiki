@@ -1,4 +1,4 @@
-#summary One-sentence summary of this page.
+#summary Describes all features to be added.
 #labels Features,Requests
 
 = About this page =
@@ -9,5 +9,5 @@ New feature requests and fixes can be added here.
 = Details =
   * Connect to server over WLAN.
   * Client: Index files with extension _.mp3_ (not .mp3 in filename)
-  * DSP manager
+  * *DSP* manager
   * Normalize track before playback.
