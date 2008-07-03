@@ -7,139 +7,63 @@
 
 using namespace std;
 
+long int read_callback(void* _cb_data, float **data) {
+	LibSamplerateFilter::CALLBACK_DATA* cb_data = (LibSamplerateFilter::CALLBACK_DATA*)_cb_data;
+
+	uint32 bytes_per_frame = cb_data->channels * sizeof(float);
+	uint32 nframes = cb_data->input_buffer.size() / bytes_per_frame;
+	uint32 nbytes = nframes * bytes_per_frame;
+	int read = cb_data->src->getData((uint8*)&(cb_data->input_buffer[0]), nbytes);
+
+	(*data) = &(cb_data->input_buffer[cb_data->buffer_begin]);
+
+	return (read) / bytes_per_frame;
+}
+
 LibSamplerateFilter::LibSamplerateFilter(IAudioSourceRef as, AudioFormat target)
 	: IAudioSource(as->getAudioFormat()), src(as)
 {
+	if(!src->getAudioFormat().Float) {
+		throw Exception("Need float input");
+	}
+	audioformat.Float = true;
 	audioformat.SampleRate = target.SampleRate;
 	int error = 0;
-	samplerate_converter = src_new(/**/ SRC_SINC_BEST_QUALITY /*/ SRC_LINEAR /**/, src->getAudioFormat().Channels, &error);
-	if(!samplerate_converter) {
+	callback_data.input_buffer.resize(1024*32);
+	callback_data.buffer_begin = 0;
+	callback_data.buffer_end = 0;
+	callback_data.src_state = src_callback_new(&read_callback,
+	                                           SRC_SINC_BEST_QUALITY,
+	                                           src->getAudioFormat().Channels,
+	                                           &error,
+	                                           &callback_data
+	                                          );
+	if(!callback_data.src_state) {
 		throw Exception(STRFORMAT("Could not initialize libsamplerate (error %i)", error));
 	}
-	samplerate_converter_state.end_of_input  = 0;
-	samplerate_converter_state.src_ratio     = double(audioformat.SampleRate) / double(as->getAudioFormat().SampleRate);
+	callback_data.channels = src->getAudioFormat().Channels;
+	callback_data.src = src;
 }
 
 LibSamplerateFilter::~LibSamplerateFilter() {
-	src_delete(samplerate_converter);
+	src_delete(callback_data.src_state);
 }
+
 
 /**
  * NOTE:
  *   Will not return less than one, or partial samples!
  */
-uint32 LibSamplerateFilter::getData(uint8* buf, uint32 len)
-{
-	uint32 bytes_per_sample = audioformat.Channels * (audioformat.BitsPerSample / 8);
-	uint32 nsamples_in      = uint32((double(len) / double(bytes_per_sample)) / samplerate_converter_state.src_ratio);
-	uint32 nsamples_out     = len / bytes_per_sample;
-	uint32 nsamples_in_len  = nsamples_in * bytes_per_sample;
-	uint32 nsamples_out_len = nsamples_out * bytes_per_sample;
-	float* data_in          = new float[nsamples_in*audioformat.Channels];
-	float* data_out         = new float[nsamples_out*audioformat.Channels];
-	uint8* data             = new uint8[nsamples_in_len];
-
-	uint32 todo = nsamples_in_len;
-	while(todo) {
-		int read = src->getData(data + nsamples_in_len - todo, todo);
-		todo -= read;
-		if(read == 0) {
-			if(src->exhausted()) {
-				nsamples_in = (nsamples_in_len - todo) / bytes_per_sample;
-				break;
-			}
-		}
+uint32 LibSamplerateFilter::getData(uint8* buf, uint32 len) {
+	uint32 bytes_per_frame = callback_data.channels * sizeof(float);
+	uint32 nframes         = len / bytes_per_frame;
+	long read = src_callback_read(callback_data.src_state, double(audioformat.SampleRate) / double(src->getAudioFormat().SampleRate), nframes, (float*)buf) ;
+	if(read==0) {
+		int error = src_error(callback_data.src_state);
+		if(error)
+			throw Exception(STRFORMAT("Error while converting samplerate: %s", src_strerror(error)));
 	}
-
-	uint8* ptr;
-	ptr = data;
-	for(uint32 i=0; i<(nsamples_in*audioformat.Channels); ++i) {
-		switch(audioformat.BitsPerSample) {
-			case 8: {
-				if(audioformat.SignedSample) {
-					data_in[i] = float(*((int8*)ptr))/255.0f;
-				}
-				else {
-					throw Exception("TODO: Unsigned 8bit not supported"); //TODO
-				}
-				ptr += sizeof(uint8);
-			}; break;
-			case 16: {
-				if(audioformat.SignedSample) {
-					data_in[i] = float(*((int16*)ptr))/65535.0f;
-				}
-				else {
-					throw Exception("TODO: Unsigned 16bit not supported"); //TODO
-				}
-				ptr += sizeof(uint16);
-			}; break;
-			case 32: {
-				if(audioformat.SignedSample) {
-					data_in[i] = float(*((int32*)ptr))/4294967295.0f;
-				}
-				else {
-					throw Exception("TODO: Unsigned 32bit not supported"); //TODO
-				}
-				ptr += sizeof(uint32);
-			}; break;
-			default:
-				throw Exception(STRFORMAT("Unsupported BitsPerSample for audioformat: %i", audioformat.BitsPerSample));
-		}
-	}
-
-	samplerate_converter_state.data_in       = data_in;
-	samplerate_converter_state.data_out      = data_out;
-	samplerate_converter_state.input_frames  = nsamples_in;
-	samplerate_converter_state.output_frames = nsamples_out;
-
-	int error = src_process(samplerate_converter, &samplerate_converter_state);
-
-	if(error) {
-		throw Exception(STRFORMAT("Error while converting samplerate: %s", src_strerror(error)));
-	}
-	if((samplerate_converter_state.input_frames_used != nsamples_in) || (samplerate_converter_state.output_frames_gen != nsamples_out))
-		dcerr("input_frames_used=" << samplerate_converter_state.input_frames_used << ", " <<
-		      "nsamples_in=" << nsamples_in << ", " <<
-		      "output_frames_gen=" << samplerate_converter_state.output_frames_gen << ", " <<
-		      "nsamples_out="<<nsamples_out);
-
-	ptr = buf;
-	for(uint32 i=0; i<(nsamples_out*audioformat.Channels); ++i) {
-		switch(audioformat.BitsPerSample) {
-			case  8: {
-				if(audioformat.SignedSample) {
-					*(( int8*)ptr) =  int8(data_out[i]*255.0f);
-				}
-				else {
-					//TODO
-				}
-				ptr += sizeof(uint8);
-			}; break;
-			case 16: {
-				if(audioformat.SignedSample) {
-					*(( int16*)ptr) =  int16(data_out[i]*65535.0f);
-				}
-				else {
-					//TODO
-				}
-				ptr += sizeof(uint16);
-			}; break;
-			case 32: {
-				if(audioformat.SignedSample) {
-					*(( int32*)ptr) =  int32(data_out[i]*4294967295.0f);
-				}
-				else {
-					//TODO
-				}
-				ptr += sizeof(uint32);
-			}; break;
-		}
-	}
-
-	delete data;
-	delete data_in;
-	delete data_out;
-	return samplerate_converter_state.output_frames_gen * bytes_per_sample;
+	return read * bytes_per_frame;
 }
 
 bool LibSamplerateFilter::exhausted() {
