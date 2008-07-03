@@ -19,6 +19,7 @@
 #include "datasource_filereader.h"
 #include "datasource_httpstream.h"
 #include "filter_reformat.h"
+#include "backend_wavwriter.h"
 
 // TODO, also poll for data...
 class NullBackend: public IBackend {
@@ -56,6 +57,13 @@ AudioController::AudioController()
 		LibAOBackend* be = new LibAOBackend(this);
 		backend = be;
 		dcerr("AudioController: LibAOBackend is available");
+	} catch(...) {}
+	#endif
+	#if 0
+	try {
+		WAVWriterBackend* be = new WAVWriterBackend(this);
+		backend = be;
+		dcerr("AudioController: WAVWriterBackend is available");
 	} catch(...) {}
 	#endif
 	if(backend == NULL) {
