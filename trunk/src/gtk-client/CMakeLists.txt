@@ -50,7 +50,7 @@ IF(ENABLE_GTK_GUI)
 	                      ${BOOST_SERIALIZATION_LIBRARY}
 	                      ${BOOST_FILESYSTEM_LIBRARY}
 	                      lib_network
-	                      mpmp_audio
+#	                      mpmp_audio
 	                      mpmp_util
 	)
 
