@@ -452,26 +452,15 @@ int main_impl(int argc, char* argv[])
 		return 1;
 	}
 
+	if(filename != "") {
+		AudioController ac;
+		ac.test_functie(filename);
+		cout << "Press any key to quit\n";
+		getchar();
+		return 0;
+	}
+
 	Server svr(listen_port, server_name);
-
-// 	if(filename!= "") {
-// 		ac.test_functie(filename);
-// 	}
-
-// 	if (musix != "") {
-// 		TrackDataBase tdb;
-// 		tdb.add_directory( musix );
-// 		MetaDataMap m;
-// 		m["FILENAME"] = findtext;
-// 		Track query(TrackID(ClientID(0xffffffff), LocalTrackID(0xffffffff)), m);
-// 		vector<LocalTrack> s = tdb.search(query);
-// 		BOOST_FOREACH(LocalTrack& tr, s) {
-// 			Track t(TrackID(ClientID(0),tr.id), tr.metadata );
-// 			svr.playlist.add(t);
-// 			svr.playlist.pop_msg();
-// 			dcerr( tr.filename );
-// 		}
-// 	}
 
 	cout << "Press any key to quit\n";
 	getchar();
