@@ -156,6 +156,7 @@ ADD_LIBRARY(mpmp_audio
 	datasource_resetbuffer.h      datasource_resetbuffer.cpp
 
 	filter_sampledoubler.h        filter_sampledoubler.cpp
+	filter_sampleconverter.h      filter_sampleconverter.cpp
 	filter_reformat.h             filter_reformat.cpp
 	filter_monotostereo.h         filter_monotostereo.cpp
 
