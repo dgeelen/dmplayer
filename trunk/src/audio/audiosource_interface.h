@@ -2,7 +2,7 @@
 #define AUDIOSOURCE_INTERFACE_H
 
 #include "../types.h"
-
+#include <iostream>
 #include <boost/shared_ptr.hpp>
 
 struct AudioFormat {
@@ -11,6 +11,7 @@ struct AudioFormat {
 	int BitsPerSample;
 	bool SignedSample;
 	bool LittleEndian;
+	bool Float;
 
 	uint32 getBytesPerSecond() {
 		return (SampleRate * Channels * BitsPerSample) / 8;
@@ -22,6 +23,7 @@ struct AudioFormat {
 		BitsPerSample = 16;
 		SignedSample = true;
 		LittleEndian = true;
+		Float = false;
 	}
 
 	bool operator==(const AudioFormat& af) const {
@@ -30,8 +32,10 @@ struct AudioFormat {
 		if (BitsPerSample != af.BitsPerSample) return false;
 		if (SignedSample  != af.SignedSample ) return false;
 		if (LittleEndian  != af.LittleEndian ) return false;
+		if (Float         != af.Float        ) return false;
 		return true;
 	}
+
 	bool operator!=(const AudioFormat& af) const  {
 		return !(*this == af);
 	}
