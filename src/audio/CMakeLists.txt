@@ -151,6 +151,8 @@ ADD_LIBRARY(mpmp_audio
 
 	audio_controller.h            audio_controller.cpp
 
+	backend_wavwriter.h           backend_wavwriter.cpp
+
 	datasource_filereader.h       datasource_filereader.cpp
 	datasource_httpstream.h       datasource_httpstream.cpp
 	datasource_resetbuffer.h      datasource_resetbuffer.cpp
