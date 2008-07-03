@@ -6,6 +6,7 @@
 
 #include "filter_sampledoubler.h"
 #include "filter_monotostereo.h"
+#include "filter_sampleconverter.h"
 #ifdef LIBSAMPLERATE_FILTER
 	#include "filter_libsamplerate.h"
 #endif
@@ -28,9 +29,15 @@ ReformatFilter::ReformatFilter(IAudioSourceRef as, AudioFormat target)
 		src = IAudioSourceRef(new MonoToStereoFilter(src));
 	}
 
+	if(src->getAudioFormat().SampleRate != target.SampleRate) {
 	#ifdef LIBSAMPLERATE_FILTER
-		dcerr("Using libsamplerate filter");
-		src = IAudioSourceRef(new LibSamplerateFilter(src, target));
+		dcerr("Using libsamplerate filter: " << src->getAudioFormat().SampleRate << "->" << target.SampleRate);
+		AudioFormat float_target(target);
+		float_target.Float = true;
+		IAudioSourceRef to_float_format(new SampleConverterFilter(src,    float_target));
+		IAudioSourceRef resample(new LibSamplerateFilter(to_float_format, float_target));
+		IAudioSourceRef to_target_format(new SampleConverterFilter(resample,    target));
+		src = to_target_format;
 	#else
 		// partially fix sample rate (only multiply by powers of 2)
 		int count = 0;
@@ -40,6 +47,7 @@ ReformatFilter::ReformatFilter(IAudioSourceRef as, AudioFormat target)
 		}
 		dcerr(src->getAudioFormat().SampleRate << " < " << target.SampleRate);
 	#endif
+	}
 
 	audioformat = src->getAudioFormat();
 }
