@@ -21,6 +21,7 @@
 	#include <map>
 	#include <ctime>
 	#include <iostream>
+	#include <boost/thread/mutex.hpp>
 	#define UDP_PORT_NUMBER 55555
 	#define TCP_PORT_NUMBER 4444
 	#define MPMP_CLIENT false
@@ -57,7 +58,7 @@
 			void client_connect_to_server( ipv4_socket_addr dest );
 			void client_disconnect_from_server();
 			void send_message(ClientID id, messageref msg);
-			void send_message_allclients(messageref m);
+			void send_message_allclients(messageref msg);
 			void send_server_message(messageref msg);
 
 		private:
@@ -94,6 +95,7 @@
 			void server_tcp_connection_listener();
 			ClientID next_client_id;
 			std::map<ClientID, boost::shared_ptr<tcp_socket> > clients;
+			boost::mutex clients_mutex;
 		};
 
 
