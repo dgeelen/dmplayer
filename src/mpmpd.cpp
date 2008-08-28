@@ -138,7 +138,8 @@ class Server {
 			server_datasource = boost::shared_ptr<ServerDataSource>((ServerDataSource*)NULL);
 			add_datasource = true;
 			message_loop_running = true;
-			vote_min_penalty = 0;
+			vote_min_penalty = false;
+			average_song_duration = 231; // Obtained by scanning personal music library (xxx files)
 			boost::thread tt(makeErrorHandler(boost::bind(&Server::message_loop, this)));
 			message_loop_thread.swap(tt);
 			networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
@@ -153,8 +154,16 @@ class Server {
 
 		void next_song(uint32 playtime_secs) {
 			// FIXME: MAD DECODER ABORTS IF DATA DOES NOT COME IN FAST ENOUGH!
-			dcerr("Next song, playtime=" << playtime_secs << " seconds, penalty=" << vote_min_penalty << " seconds");
-			playtime_secs += vote_min_penalty;
+			dcerr("Next song, playtime was " << playtime_secs << " seconds");
+			if((vote_min_penalty && playtime_secs < average_song_duration * 0.2) || (playtime_secs < 15)) {
+				dcerr("issueing a penalty of " << uint32(average_song_duration) << " seconds");
+				playtime_secs += uint32(average_song_duration);
+			}
+			if(!vote_min_penalty) { // Update rolling average of last 16 songs
+				average_song_duration = (average_song_duration * 15.0 + double(playtime_secs)) / 16.0;
+				dcerr("average song duration now at " << uint32(average_song_duration) << " seconds");
+			}
+			vote_min_penalty = false;
 
 			vector<ClientID> has_song;
 			vector<ClientID> does_not_have_song;
@@ -235,8 +244,8 @@ class Server {
 							message_request_file_result_ref msg(new message_request_file_result(empty, currenttrack.id));
 							networkhandler.send_message(currenttrack.id.first, msg);
 
-							/* Current song will incur a penalty of 2 minutes */
-							vote_min_penalty = 2 * 60;
+							/* Current song will incur a penalty */
+							vote_min_penalty = true;
 
 							/* Cue next song */
 							server_datasource->stop();
@@ -379,14 +388,17 @@ class Server {
 		> ClientMap;
 		ClientMap clients;
 		std::map<TrackID, std::set<ClientID> > vote_min_list;
-		uint32 vote_min_penalty;
+		bool vote_min_penalty;
 		boost::mutex clients_mutex;
 
 		boost::thread message_loop_thread;
 		boost::shared_ptr<ServerDataSource> server_datasource;
 
+		/* Some playback related varialbles*/
 		bool add_datasource;
+		double average_song_duration;
 
+		/* note: struct sorthelper is (only) used in recalculateplaylist() */
 		struct sorthelper {
 			bool operator()(const std::pair<Client_ref, uint32>& l, const std::pair<Client_ref, uint32>& r) const {
 				return l.first->zero_sum > r.first->zero_sum;
