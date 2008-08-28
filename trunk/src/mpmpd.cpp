@@ -278,7 +278,7 @@ class Server {
 			}
 
 			/* Clear memory used by client */
-			clients.erase(clients.find(id));
+// 			clients.erase(clients.find(id)); //boom segfault? Are we erasing something twice? (see a couple of lines up)
 		}
 
 		void handle_received_message(const messageref m, ClientID id) {
