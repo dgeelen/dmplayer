@@ -22,6 +22,13 @@ using namespace std;
 /** Begin class network_handler **/
 bool singleton = true;
 
+/*NOTE: Enabling the next line will make is possible to run
+ *			more than one client per machine, making it trivially
+ *			possible to spam the playlist, so be sure too leave
+ *			this _OFF_ in any build not exclusively used by a dev!
+ */
+//#define ALLOW_MULTIPLE_CLIENTS
+
 network_handler::network_handler(uint16 tcp_port_number, string server_name) {
 	this->server_name = server_name;
 	server_mode = true;
@@ -198,7 +205,11 @@ void network_handler::send_packet_handler() {
 		request_servers_packet.serialize<uint8>(PT_QUERY_SERVERS);
 		request_servers_packet.serialize<uint32>(ping_cookie);
 		last_ping_time = get_time_us();
+#ifdef ALLOW_MULTIPLE_CLIENTS
+		udp_rsock.send(broadcast_addr, UDP_PORT_NUMBER, request_servers_packet);
+#else
 		udp_qsock.send(broadcast_addr, UDP_PORT_NUMBER, request_servers_packet);
+#endif
 		usleep(1000000); //TODO: Make this depend on the number of actual clients? (prevents network spam)
 
 		vector<server_info> vsi;
@@ -228,7 +239,11 @@ void network_handler::send_packet_handler() {
 }
 
 void network_handler::receive_packet_handler() {
+#ifdef ALLOW_MULTIPLE_CLIENTS
+	uint16 rsock_port = server_mode?UDP_PORT_NUMBER:0;
+#else
 	uint16 rsock_port = UDP_PORT_NUMBER + (server_mode?0:1);
+#endif
 	uint16 ssock_port = 0;
 	dcerr("Network receive thread: Opening sockets: receive socket=" << rsock_port << ", ssock_port="<<ssock_port<<" (0==random)");
 	ipv4_addr listen_addr;
@@ -261,7 +276,11 @@ void network_handler::receive_packet_handler() {
 					uint32 cookie; received_packet.deserialize(cookie);
 					reply_packet.serialize<uint32>(cookie);
 					reply_packet.serialize( (string)server_name );
+#ifdef ALLOW_MULTIPLE_CLIENTS
+					udp_ssock.send( listen_addr, port_number, reply_packet );
+#else
 					udp_ssock.send( listen_addr, UDP_PORT_NUMBER+1, reply_packet );
+#endif
 					break;
 				}
 				case PT_REPLY_SERVERS: {
