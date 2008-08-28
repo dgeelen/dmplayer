@@ -219,6 +219,10 @@ class Server {
 							dcerr("requesting " << STRFORMAT("%08x:%08x", currenttrack.id.first, currenttrack.id.second));
 							add_datasource = false;
 							networkhandler.send_message(currenttrack.id.first, msg);
+							/* FIXME: Possible DOS exploit:
+							 * enqueue a file, then when asked for data never provide it.
+							 * Will halt communication with server indefinitely
+							 */
 							ac.set_data_source(server_datasource);
 						}
 					}
