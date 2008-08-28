@@ -252,7 +252,7 @@ class Server {
 
 		void remove_client(ClientID id) {
 			boost::mutex::scoped_lock lock(clients_mutex);
-			dcerr("Removing client " << id);
+			dcerr("Removing client " << STRFORMAT("%08x", id));
 			if (clients.find(id) == clients.end())
 				return;
 			if(currenttrack.id.first == id && server_datasource) { // Client which is serving current file disconnected!
@@ -284,7 +284,7 @@ class Server {
 		void handle_received_message(const messageref m, ClientID id) {
 			switch(m->get_type()) {
 				case message::MSG_CONNECT: {
-					dcerr("Received a MSG_CONNECT from " << id);
+					dcerr("Received a MSG_CONNECT from " << STRFORMAT("%08x", id));
 					{
 						boost::mutex::scoped_lock lock(clients_mutex);
 						clients.insert(Client_ref(new Client(id)));
@@ -295,15 +295,15 @@ class Server {
 					}
 				} break;
 				case message::MSG_ACCEPT: {
-					dcerr("Received a MSG_ACCEPT from " << id);
+					dcerr("Received a MSG_ACCEPT from " << STRFORMAT("%08x", id));
 				}; break;
 				case message::MSG_DISCONNECT: {
-					dcerr("Received a MSG_DISCONNECT from " << id);
+					dcerr("Received a MSG_DISCONNECT from " << STRFORMAT("%08x", id));
 					remove_client(id);
 					recalculateplaylist();
 				} break;
 				case message::MSG_PLAYLIST_UPDATE: {
-					dcerr("Received a MSG_PLAYLIST_UPDATE from " << id);
+					dcerr("Received a MSG_PLAYLIST_UPDATE from " << STRFORMAT("%08x", id));
 					message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
 					{
 						boost::mutex::scoped_lock lock(clients_mutex);
@@ -312,10 +312,10 @@ class Server {
 					recalculateplaylist();
 				}; break;
 				case message::MSG_QUERY_TRACKDB: {
-					dcerr("Received a MSG_QUERY_TRACKDB from " << id);
+					dcerr("Received a MSG_QUERY_TRACKDB from " << STRFORMAT("%08x", id));
 				}; break;
 				case message::MSG_QUERY_TRACKDB_RESULT: {
-					dcerr("Received a MSG_QUERY_TRACKDB_RESULT from " << id);
+					dcerr("Received a MSG_QUERY_TRACKDB_RESULT from " << STRFORMAT("%08x", id));
 					message_query_trackdb_result_ref msg = boost::static_pointer_cast<message_query_trackdb_result>(m);
 					uint32 qid = msg->qid;
 					std::pair<ClientID, TrackID> vote;
@@ -331,10 +331,10 @@ class Server {
 					}
 				}; break;
 				case message::MSG_REQUEST_FILE: {
-					dcerr("Received a MSG_REQUEST_FILE from " << id);
+					dcerr("Received a MSG_REQUEST_FILE from " << STRFORMAT("%08x", id));
 				}; break;
 				case message::MSG_REQUEST_FILE_RESULT: {
-					dcerr("Received a MSG_REQUEST_FILE_RESULT from " << id);
+					dcerr("Received a MSG_REQUEST_FILE_RESULT from " << STRFORMAT("%08x", id));
 					message_request_file_result_ref msg = boost::static_pointer_cast<message_request_file_result>(m);
 					if(currenttrack.id != msg->id) break;
 					if(msg->data.size()) {
@@ -345,7 +345,7 @@ class Server {
 					}
 				}; break;
 				case message::MSG_VOTE: {
-					dcerr("Received a MSG_VOTE from " << id);
+					dcerr("Received a MSG_VOTE from " << STRFORMAT("%08x", id));
 					message_vote_ref msg = boost::static_pointer_cast<message_vote>(m);
 					if(msg->is_min_vote) {
 						vote_min_list[msg->getID()].insert(id);
@@ -359,7 +359,7 @@ class Server {
 					}
 				}; break;
 				default: {
-					dcerr("Ignoring unknown message of type " << m->get_type() << " from " << id);
+					dcerr("Ignoring unknown message of type " << m->get_type() << " from " << STRFORMAT("%08x", id));
 				} break;
 			}
 		}
