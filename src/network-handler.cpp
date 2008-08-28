@@ -130,7 +130,10 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 					message_connect_ref msg = boost::static_pointer_cast<message_connect>(m);
 					if (msg->get_version() == NETWERK_PROTOCOL_VERSION) {
 						dcerr("Accepted a client connection from " << sock->get_ipv4_socket_addr() << " ClientID="<<cid);
+						{
+						boost::mutex::scoped_lock lock(clients_mutex);
 						clients[cid] = sock;
+						}
 						(*sock) << messageref(new message_accept(cid));
 						server_message_receive_signal(m, cid);
 					} else {
@@ -148,16 +151,25 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 			}
 		}
 	}
+	boost::mutex::scoped_lock lock(clients_mutex);
 	clients.erase(cid);
 }
 
-void network_handler::send_message_allclients(messageref m) {
+void network_handler::send_message_allclients(messageref msg) {
+	boost::mutex::scoped_lock lock(clients_mutex);
 	typedef std::pair<ClientID, tcp_socket_ref> vtype;
 	BOOST_FOREACH(vtype cr, clients) {
-		send_message(cr.first, m);
+		// NOTE: send_message() is copy&pasted here because of the lock() on 'clients_mutex'.
+		//       Using a recursive mutex would be more difficult because server_tcp_connection_handler()
+		//       may change the 'clients' vector.
+		map<ClientID, boost::shared_ptr<tcp_socket> >::iterator sock = clients.find(cr.first);
+		if(sock != clients.end()) {
+			(*(sock->second)) << msg;
+		}
 	}
 }
 void network_handler::send_message(ClientID id, messageref msg) {
+	boost::mutex::scoped_lock lock(clients_mutex);
 	map<ClientID, boost::shared_ptr<tcp_socket> >::iterator sock = clients.find(id);
 	if(sock != clients.end()) {
 		(*(sock->second)) << msg;
