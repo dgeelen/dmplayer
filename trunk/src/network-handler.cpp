@@ -24,7 +24,7 @@ bool singleton = true;
 
 /*NOTE: Enabling the next line will make is possible to run
  *			more than one client per machine, making it trivially
- *			possible to spam the playlist, so be sure too leave
+ *			possible to spam the playlist, so be sure to leave
  *			this _OFF_ in any build not exclusively used by a dev!
  */
 //#define ALLOW_MULTIPLE_CLIENTS
