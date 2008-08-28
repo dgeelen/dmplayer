@@ -145,6 +145,7 @@ void GtkMpmpClientWindow::_on_request_file(message_request_file_ref m, boost::sh
 					if(n<1024*1024) {
 						n<<=1;
 					}
+					//FIXME: this does not take network latency into account (LAN APP!)
 					usleep(n*10); // Ease up on CPU usage, starts with ~0.3 sec sleep and doubles every loop
 				}
 				else { //EOF or Error reading file
