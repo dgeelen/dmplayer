@@ -43,12 +43,12 @@ LibSamplerateFilter::LibSamplerateFilter(IAudioSourceRef as, AudioFormat target)
 	}
 	callback_data.channels = src->getAudioFormat().Channels;
 	callback_data.src = src;
+	is_exhausted = false;
 }
 
 LibSamplerateFilter::~LibSamplerateFilter() {
 	src_delete(callback_data.src_state);
 }
-
 
 /**
  * NOTE:
@@ -62,10 +62,11 @@ uint32 LibSamplerateFilter::getData(uint8* buf, uint32 len) {
 		int error = src_error(callback_data.src_state);
 		if(error)
 			throw Exception(STRFORMAT("Error while converting samplerate: %s", src_strerror(error)));
+		is_exhausted = src->exhausted();
 	}
 	return read * bytes_per_frame;
 }
 
 bool LibSamplerateFilter::exhausted() {
-	return src->exhausted();
+	return is_exhausted;
 }
