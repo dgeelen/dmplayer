@@ -24,6 +24,7 @@ class LibSamplerateFilter : public IAudioSource {
 		bool exhausted();
 		uint32 getData(uint8* buf, uint32 len);
 	private:
+		bool is_exhausted;
 		IAudioSourceRef src;
 		CALLBACK_DATA callback_data;
 };
