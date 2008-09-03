@@ -153,7 +153,6 @@ class Server {
 		}
 
 		void next_song(uint32 playtime_secs) {
-			// FIXME: MAD DECODER ABORTS IF DATA DOES NOT COME IN FAST ENOUGH!
 			dcerr("Next song, playtime was " << playtime_secs << " seconds");
 			if((vote_min_penalty && playtime_secs < average_song_duration * 0.2) || (playtime_secs < 15)) {
 				dcerr("issueing a penalty of " << uint32(average_song_duration) << " seconds");
