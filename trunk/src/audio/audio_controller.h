@@ -15,8 +15,8 @@ class AudioController {
 		void test_functie(std::string file);
 		uint32 getData(uint8* buf, uint32 len);
 
-		void StartPlayback();
-		void StopPlayback();
+		void start_playback();
+		void stop_playback();
 		void set_data_source(IDataSourceRef ds);
 		boost::signal<void(uint32)> playback_finished;
 	private:

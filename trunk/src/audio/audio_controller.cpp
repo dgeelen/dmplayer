@@ -179,12 +179,12 @@ void AudioController::test_functie(std::string file) {
 	set_data_source(ds);
 }
 
-void AudioController::StopPlayback()
+void AudioController::stop_playback()
 {
 	backend->StopStream();
 }
 
-void AudioController::StartPlayback()
+void AudioController::start_playback()
 {
 	backend->StartStream();
 }
