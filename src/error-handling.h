@@ -87,16 +87,36 @@ ErrorHandler<typename T::result_type> makeErrorHandler(T f) {
 /* DEBUG #define's */
 #ifdef DEBUG
 	#include <string>
+#ifndef STATIC_INITIALIZATION_FIASCO_BUG //FIXME: See http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.12
+	#include <iomanip>
+	namespace DCERR {
+		static std::string file_basename(std::string s) {
+			int i = s.find_last_of("/\\", s.size());
+			s = s.substr( i + 1, s.size() - i - 1);
+			return s;
+		}
+	}
+	#define dcerr(x) std::cerr << std::setiosflags(std::ios::right) \
+	                           << std::setw(28) << DCERR::file_basename(__FILE__) \
+	                           << std::setw(5) << __LINE__ << ' ' \
+	                           << std::setw(28) << __FUNCTION__ << "(): " \
+	                           << std::setiosflags(std::ios::left) \
+	                           << x \
+	                           << '\n'
+#else
 	#include <sstream>
 
 	namespace lognamespace {
 		extern boost::signal<void(const std::string&, const std::string&, const std::string&, int)> logsignal;
 	}
+
+
 	#define dcerr(x) do { \
 		std::stringstream ss; \
 		ss << x; \
 		lognamespace::logsignal(ss.str(), __FILE__, __FUNCTION__, __LINE__); \
 	} while (false)
+#endif
 #else
 	#define dcerr(x) do {} while (false)
 #endif
