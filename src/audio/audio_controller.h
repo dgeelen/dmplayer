@@ -1,12 +1,14 @@
 #ifndef AUDIO_CONTROLLER_H
 #define AUDIO_CONTROLLER_H
 #include "decoder_interface.h"
+#include "backend_interface.h"
 #include "datasource_interface.h"
 #include <string>
 #include <boost/thread/mutex.hpp>
 #include <boost/signal.hpp>
 
 class IBackend;
+typedef boost::shared_ptr<IBackend> IBackendRef;
 
 class AudioController {
 	public:
@@ -20,7 +22,7 @@ class AudioController {
 		void set_data_source(IDataSourceRef ds);
 		boost::signal<void(uint32)> playback_finished;
 	private:
-		IBackend* backend;
+		IBackendRef backend;
 		IAudioSourceRef curdecoder;
 
 		uint64 bytes_played;

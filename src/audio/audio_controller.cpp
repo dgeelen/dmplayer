@@ -37,11 +37,10 @@ AudioController::AudioController()
 	: update_decoder_flag(false)
 {
 	bytes_played = 0;
-	backend = NULL;
+	backend.reset();
 	#ifdef PORTAUDIO_BACKEND
 	try {
-		PortAudioBackend* be = new PortAudioBackend(this);
-		backend = be;
+		backend = IBackendRef(new PortAudioBackend(this));
 		dcerr("AudioController: PortAudioBackend is available");
 	} catch(...) {}
 	#endif
@@ -54,8 +53,7 @@ AudioController::AudioController()
 	#endif
 	#ifdef LIBAO_BACKEND
 	try {
-		LibAOBackend* be = new LibAOBackend(this);
-		backend = be;
+		backend = IBackendRef(new LibAOBackend(this));
 		dcerr("AudioController: LibAOBackend is available");
 	} catch(...) {}
 	#endif
@@ -67,7 +65,7 @@ AudioController::AudioController()
 	} catch(...) {}
 	#endif
 	if(backend == NULL) {
-		backend = new NullBackend(this);
+		backend = IBackendRef(new NullBackend(this));
 		//throw SoundException("AudioController(): Could not find a suitable backend!");
 		dcerr("AudioController(): Could not find a suitable backend!");
 	}

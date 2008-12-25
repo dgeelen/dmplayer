@@ -3,6 +3,9 @@
 
 #include "audio_controller.h"
 
+class AudioController;
+
+typedef boost::shared_ptr<class IBackend> IBackendRef;
 class IBackend {
 	private:
 		AudioController* source;
