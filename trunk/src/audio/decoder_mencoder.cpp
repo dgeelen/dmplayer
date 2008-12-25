@@ -279,6 +279,10 @@ MencoderDecoder::MencoderDecoder(IDataSourceRef ds)
 {
 }
 
+MencoderDecoder::~MencoderDecoder() {
+	dcerr("Shut down");
+}
+
 uint32 MencoderDecoder::getData(uint8* buf, uint32 max) {
 	return impl->getData(buf,max);
 }

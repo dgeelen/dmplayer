@@ -52,6 +52,13 @@ class Client {
 			zero_sum = 0.0;
 		}
 
+		~Client() {
+			dcerr("shutting down");
+			id = -1;
+			zero_sum = -1.0;
+			dcerr("shut down");
+		}
+
 		ClientID id;
 		double zero_sum;
 		ServerPlaylistReceiver wish_list;
@@ -146,8 +153,11 @@ class Server {
 		}
 
 		~Server() {
+			dcerr("shutting down");
 			message_loop_running = false;
+			dcerr("Joining message_loop_thread");
 			message_loop_thread.join();
+			dcerr("shut down");
 		}
 
 		void next_song(uint32 playtime_secs) {

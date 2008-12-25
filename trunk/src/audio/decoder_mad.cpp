@@ -12,6 +12,7 @@ MadDecoder::~MadDecoder()
 
 MadDecoder::MadDecoder() : IDecoder(AudioFormat())
 {
+	dcerr("New MadDecoder");
 	mad_stream_init(&Stream);
 	mad_frame_init(&Frame);
 	mad_synth_init(&Synth);

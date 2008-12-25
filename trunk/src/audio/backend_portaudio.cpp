@@ -80,9 +80,11 @@ PortAudioBackend::PortAudioBackend(AudioController* dec)
 
 PortAudioBackend::~PortAudioBackend()
 {
+	dcerr("shutting down");
 	Pa_StopStream(stream);
 	Pa_CloseStream(stream);
 	Pa_Terminate();
+	dcerr("shut down");
 }
 
 void PortAudioBackend::stop_output()

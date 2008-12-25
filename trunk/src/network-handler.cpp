@@ -388,7 +388,9 @@ void network_handler::stop()
 
 network_handler::~network_handler()
 {
+	dcerr("shutting down");
 	stop();
+	dcerr("shut down");
 }
 
 /** Begin ostream operators **/

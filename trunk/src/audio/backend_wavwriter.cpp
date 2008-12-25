@@ -46,10 +46,12 @@ void WAVWriterBackend::outputter() {
 }
 
 WAVWriterBackend::~WAVWriterBackend() {
+	dcerr("Shutting down");
 	done = true;
 	if(outputter_thread) {
 		outputter_thread->join();
 		outputter_thread = NULL;
 	}
 	delete outputter_thread;
+	dcerr("Shut down");
 }

@@ -27,8 +27,10 @@ OGGVorbisFileDecoder::OGGVorbisFileDecoder(AudioFormat af, IDataSourceRef ds, Og
 
 OGGVorbisFileDecoder::~OGGVorbisFileDecoder()
 {
+	dcerr("Shutting down");
 	ov_clear(oggFile);
 	delete oggFile;
+	dcerr("Shut down");
 }
 
 IDecoderRef OGGVorbisFileDecoder::tryDecode(IDataSourceRef datasource)

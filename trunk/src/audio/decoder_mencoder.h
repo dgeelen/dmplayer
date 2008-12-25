@@ -14,6 +14,7 @@ class MencoderDecoder : public IDecoder {
 		static IDecoderRef tryDecode(IDataSourceRef ds);
 
 		MencoderDecoder(IDataSourceRef ds);
+		~MencoderDecoder();
 
 		virtual uint32 getData(uint8* buf, uint32 max);
 };
