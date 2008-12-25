@@ -139,15 +139,16 @@ class Server {
 		Server(int listen_port, string server_name)
 			: networkhandler(listen_port, server_name)
 		{
+			networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
 			dcerr("Started network_handler");
 			server_datasource = boost::shared_ptr<ServerDataSource>((ServerDataSource*)NULL);
 			add_datasource = true;
 			message_loop_running = true;
 			vote_min_penalty = false;
 			average_song_duration = 231; // Obtained by scanning personal music library (xxx files)
+			dcerr("Starting message_loop_thread");
 			boost::thread tt(makeErrorHandler(boost::bind(&Server::message_loop, this)));
 			message_loop_thread.swap(tt);
-			networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
 			ac.playback_finished.connect(boost::bind(&Server::next_song, this, _1));
 			ac.start_playback();
 		}
