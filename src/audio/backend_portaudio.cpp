@@ -84,13 +84,13 @@ PortAudioBackend::~PortAudioBackend()
 	Pa_Terminate();
 }
 
-void PortAudioBackend::StopStream()
+void PortAudioBackend::stop_output()
 {
 	PaError err = Pa_StopStream( stream );
 	if (err != paNoError) throw SoundException("failed to stop portaudio stream");
 }
 
-void PortAudioBackend::StartStream()
+void PortAudioBackend::start_output()
 {
 	PaError err = Pa_StartStream( stream );
 	if (err != paNoError) throw SoundException("failed to start portaudio stream");

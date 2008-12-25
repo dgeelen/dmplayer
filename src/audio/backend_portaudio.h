@@ -24,8 +24,8 @@ class PortAudioBackend : public IBackend{
 	public:
 		PortAudioBackend(AudioController* dec);
 		virtual ~PortAudioBackend();
-		void StartStream();
-		void StopStream();
+		void start_output();
+		void stop_output();
 };
 
 #endif//BACKEND_PORTAUDIO_H

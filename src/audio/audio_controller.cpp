@@ -27,8 +27,8 @@ class NullBackend: public IBackend {
 		NullBackend(AudioController* i) : IBackend(i) {};
 		AudioFormat getAudioFormat() { return af;} ;
 		virtual ~NullBackend() {};
-		virtual void StartStream() {};
-		virtual void StopStream()  {};
+		virtual void start_output() {};
+		virtual void stop_output()  {};
 };
 
 using namespace std;
@@ -181,10 +181,10 @@ void AudioController::test_functie(std::string file) {
 
 void AudioController::stop_playback()
 {
-	backend->StopStream();
+	backend->stop_output();
 }
 
 void AudioController::start_playback()
 {
-	backend->StartStream();
+	backend->start_output();
 }
