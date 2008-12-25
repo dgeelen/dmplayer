@@ -18,37 +18,87 @@ MadDecoder::MadDecoder() : IDecoder(AudioFormat())
 	mad_timer_reset(&Timer);
 	BytesInOutput = 0;
 	BytesInInput = 0;
+	start_of_mp3_data = 0;
 	eos = false;
+	datasource.reset();
 }
 
 bool MadDecoder::exhausted() {
 	return eos;
 }
 
-MadDecoder::MadDecoder(AudioFormat af, IDataSourceRef ds) : IDecoder(af)
+MadDecoder::MadDecoder(AudioFormat af, IDataSourceRef ds, size_t start_of_mp3_data_) : IDecoder(af)
 {
+	dcerr("New MadDecoder");
 	mad_stream_init(&Stream);
 	mad_frame_init(&Frame);
 	mad_synth_init(&Synth);
 	mad_timer_reset(&Timer);
 	BytesInOutput = 0;
 	BytesInInput = 0;
+	start_of_mp3_data = start_of_mp3_data_;
 	eos = false;
 	datasource = ds;
 	datasource->reset();
+
+	// Fix slow seeking to start of mp3 data due to ID3 tags [HAX]
+	while (BytesInInput < start_of_mp3_data && !datasource->exhausted())
+		BytesInInput += datasource->getData(input_buffer+BytesInInput, start_of_mp3_data-BytesInInput);
+	BytesInInput = 0;
 }
 
-IDecoderRef MadDecoder::tryDecode(IDataSourceRef datasource)
+void MadDecoder::fill_buffer() {
+	while (BytesInInput < INPUT_BUFFER_SIZE && !datasource->exhausted())
+		BytesInInput += datasource->getData(input_buffer+BytesInInput, INPUT_BUFFER_SIZE-BytesInInput);
+}
+
+IDecoderRef MadDecoder::tryDecode(IDataSourceRef ds)
 {
+	datasource = ds;
 	datasource->reset();
 	IDecoderRef result;
 	BytesInInput = 0;
-	while (BytesInInput < INPUT_BUFFER_SIZE && !datasource->exhausted())
-		BytesInInput += datasource->getData(input_buffer+BytesInInput, INPUT_BUFFER_SIZE-BytesInInput);
+
+	fill_buffer();
 
 	Stream.next_frame = input_buffer; // make sure while loop is entered at least once
 
 	//return new MadDecoder(datasource);
+
+	// FIXME: Very simple ID3 tag skip
+	// see http://www.gigamonkeys.com/book/practical-an-id3-parser.html
+	// and http://www.id3.org/id3v2.4.0-structure
+	for(int i=0; i<9; ++i)
+		dcerr("input_buffer[" << i << "]" << " = " << (int)(input_buffer[i]));
+	if((input_buffer[0] == 'I') && (input_buffer[1] == 'D') && (input_buffer[2] == '3')) {
+		dcerr("id3");
+		// input_buffer[3,4]     == version
+		if((input_buffer[3]!=0xff) && (input_buffer[4]!=0xff)) {
+			dcerr("version");
+		// input_buffer[5]       == flags
+			if((input_buffer[5]&0x0f)==0) {
+				dcerr("flags");
+			// input_buffer[6,7,8,9] == size
+				if(((input_buffer[6]&0x80)|(input_buffer[7]&0x80)|(input_buffer[8]&0x80)|(input_buffer[9]&0x80))==0) {
+					dcerr("size");
+					int length = (input_buffer[6] << (24-3)) | (input_buffer[7] << (16-2)) | (input_buffer[8] << (8-1)) | (input_buffer[9] << (0-0));
+					while(length>0 && !datasource->exhausted()) {
+						if(length>BytesInInput) {
+							int read = datasource->getData(input_buffer, INPUT_BUFFER_SIZE);
+							length -= BytesInInput;
+							BytesInInput = read;
+						}
+						else {
+							memmove(input_buffer, input_buffer + length, BytesInInput - length);
+							BytesInInput-=length;
+							length = 0;
+							fill_buffer();
+						}
+					}
+				}
+			}
+		}
+  }
 
 	while (!result && Stream.next_frame < input_buffer+BytesInInput) {
 		uint32 BytesLeft = input_buffer+BytesInInput-Stream.next_frame;
@@ -66,7 +116,7 @@ IDecoderRef MadDecoder::tryDecode(IDataSourceRef datasource)
 				af.BitsPerSample = 16;
 				af.LittleEndian = true;
 				af.SignedSample = true;
-				result = IDecoderRef(new MadDecoder(af, datasource));
+				result = IDecoderRef(new MadDecoder(af, datasource, BytesInInput-BytesLeft));
 			}
 		}
 		if (Stream.error == MAD_ERROR_BUFLEN)
@@ -131,7 +181,7 @@ uint32 MadDecoder::getData(uint8* buf, uint32 len)
 		mad_timer_add(&Timer, Frame.header.duration);
 		if (Stream.error == MAD_ERROR_NONE)
 			mad_synth_frame(&Synth, &Frame);
-		else
+ 		else
 			Synth.pcm.length = 0;
 
 		// [hackmode] Because Mads output is 24 bit PCM, we need to convert everything to 16 bit
