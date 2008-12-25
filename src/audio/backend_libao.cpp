@@ -26,13 +26,17 @@ LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec), fill_buffer_ba
 
 	/* Initialize playback buffers, we use double buffering */
 	playing_buffer = 0;
+	audio_buffer.resize(2);
 	for(int i=0; i<2; ++i) {
-		audio_buffer[i] = new uint8[BUF_SIZE];
+		audio_buffer[i].resize(BUF_SIZE);
 		for(int j=0; j<BUF_SIZE; ++j) {
 			audio_buffer[i][j] = 0;
 		}
 	}
 	decoder = dec;
+
+	boost::mutex::scoped_lock lock(playback_lock_mutex);
+	play_back=false;
 }
 
 /*
@@ -60,51 +64,63 @@ void LibAOBackend::decoder_read_thread() {
 		todo = BUF_SIZE;
 		while(todo>0)
 			if(decoder)
-				todo -= decoder->getData(audio_buffer[0] + (BUF_SIZE - todo), todo);
+				todo -= decoder->getData(&(audio_buffer[0])[0] + (BUF_SIZE - todo), todo);
 		fill_buffer_barrier.wait();
 
 		todo = BUF_SIZE;
 		while(todo>0)
 			if(decoder)
-				todo -= decoder->getData(audio_buffer[1] + (BUF_SIZE - todo), todo);
+				todo -= decoder->getData(&(audio_buffer[1])[0] + (BUF_SIZE - todo), todo);
 		fill_buffer_barrier.wait();
 	}
 }
 
 void LibAOBackend::ao_play_thread() {
+	dcerr("Begin ao_play_thread");
 	while(play_back) {
 		fill_buffer_barrier.wait();
-		ao_play( device, (char*)audio_buffer[0], BUF_SIZE);
+		ao_play( device, (char*)&audio_buffer[0][0], BUF_SIZE);
 		fill_buffer_barrier.wait();
-		ao_play( device, (char*)audio_buffer[1], BUF_SIZE);
+		ao_play( device, (char*)&audio_buffer[1][0], BUF_SIZE);
 	}
 	fill_buffer_barrier.wait();
+	dcerr("End ao_play_thread");
 }
 
 void LibAOBackend::start_output() {
-	/* Start output thread */
-	play_back = read_back = true;
-	try {
-		thread_decoder_read_thread = NULL;
-		thread_ao_play_thread = NULL;
-		thread_decoder_read_thread = new boost::thread(makeErrorHandler(boost::bind(&LibAOBackend::decoder_read_thread, this)));
-		thread_ao_play_thread = new boost::thread(makeErrorHandler(boost::bind(&LibAOBackend::ao_play_thread, this)));
-	}
-	catch(...) {
-		throw ThreadException("LibAOBackend: Could not start output thread!");
+	dcerr("");
+	boost::mutex::scoped_lock lock(playback_lock_mutex);
+	if(!play_back) { /* Start output thread */
+		dcerr("!play_back");
+		play_back = read_back = true;
+		try {
+			thread_decoder_read_thread.reset();
+			thread_ao_play_thread.reset();
+			thread_decoder_read_thread = boost::shared_ptr<boost::thread>(new boost::thread(makeErrorHandler(boost::bind(&LibAOBackend::decoder_read_thread, this))));
+			thread_ao_play_thread = boost::shared_ptr<boost::thread>(new boost::thread(makeErrorHandler(boost::bind(&LibAOBackend::ao_play_thread, this))));
+		}
+		catch(...) {
+			throw ThreadException("LibAOBackend: Could not start output thread!");
+		}
 	}
 }
 
 void LibAOBackend::stop_output() {
+	boost::mutex::scoped_lock lock(playback_lock_mutex);
 	play_back = false;
 }
 
 LibAOBackend::~LibAOBackend() {
+	dcerr("Shutting down");
+	boost::mutex::scoped_lock lock(playback_lock_mutex);
 	play_back = false;
-	if (thread_ao_play_thread) thread_ao_play_thread->join();
+	if (thread_ao_play_thread) {
+		thread_ao_play_thread->join();
+	}
 	read_back = false;
 	fill_buffer_barrier.wait();
 	if (thread_decoder_read_thread) thread_decoder_read_thread->join();
 	ao_close(device);
 	ao_shutdown();
+	dcerr("Shut down");
 }
