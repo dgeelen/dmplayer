@@ -6,7 +6,8 @@
 #include "mad.h"
 
 
-#define INPUT_BUFFER_SIZE   (5*8192)
+// NOTE: INPUT_BUFFER_SIZE should be relatively large, some mp3's have really big ID3 tags due to embedding of album-covers etc.
+#define INPUT_BUFFER_SIZE   (1024*16)
 #define OUTPUT_BUFFER_SIZE  8192
 
 class MadDecoder : public IDecoder {
@@ -29,7 +30,10 @@ class MadDecoder : public IDecoder {
 
 		IDataSourceRef datasource;
 
-		MadDecoder(AudioFormat af, IDataSourceRef ds);
+		void fill_buffer();
+		MadDecoder(AudioFormat af, IDataSourceRef ds, size_t start_of_mp3_data_);
+
+		size_t start_of_mp3_data;
 	public:
 		MadDecoder();
 		~MadDecoder();
