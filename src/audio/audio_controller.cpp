@@ -97,7 +97,7 @@ uint32 AudioController::getData(uint8* buf, uint32 len)
 	}
 	if (read < len) { //FIXME: Really only if curdecoder->exhausted()
 		memset(buf+read, 0, len-read);
-		read = len;
+		read = len; // Disable this when using the WAVWriterBackend
 		if(curdecoder && curdecoder->exhausted()) {
 			playback_finished(bytes_played / backend->getAudioFormat().getBytesPerSecond()); //FIXME: Low resolution!
 			bytes_played = 0;
