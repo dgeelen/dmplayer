@@ -16,7 +16,7 @@ MainWindow::MainWindow()
 {
 	setupUi(this);
 
-#ifdef DEBUG
+#ifdef DEBUG0 //FIXME: see error-handling.h
 	lognamespace::logsignal.connect(
 		QTBOOSTER(this, MainWindow::DebugLogger)
 	);
