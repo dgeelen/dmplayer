@@ -17,7 +17,9 @@
 
 FileReaderDataSource::~FileReaderDataSource()
 {
+	dcerr("shutting down");
 	fclose(FileHandle);
+	dcerr("shut down");
 }
 
 long FileReaderDataSource::getpos() {

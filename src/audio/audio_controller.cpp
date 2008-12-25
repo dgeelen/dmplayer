@@ -182,10 +182,12 @@ void AudioController::test_functie(std::string file) {
 
 void AudioController::stop_playback()
 {
+	dcerr("Stopping backend");
 	backend->stop_output();
 }
 
 void AudioController::start_playback()
 {
+	dcerr("Starting backend");
 	backend->start_output();
 }

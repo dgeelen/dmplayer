@@ -75,6 +75,10 @@ uint32 FlacDecoder::getData(uint8* buf, uint32 len)
 	return bufdone;
 }
 
+FlacDecoder::~FlacDecoder() {
+	dcerr("Shut down");
+}
+
 /* FLAC::Decoder::Stream Interface (callbacks) */
 FLAC__StreamDecoderReadStatus FlacDecoder::read_callback(FLAC__byte buf[],size_t * len)
 {

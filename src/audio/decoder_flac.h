@@ -21,6 +21,7 @@ class FlacDecoder: public IDecoder, public FLAC::Decoder::Stream {
 		static IDecoderRef tryDecode(IDataSourceRef ds_);
 
 		FlacDecoder(IDataSourceRef ds);
+		~FlacDecoder();
 		bool exhausted();
 
 		/* IDecoder Interface */

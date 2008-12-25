@@ -1,4 +1,5 @@
 #include "decoder_wave.h"
+#include "../error-handling.h"
 #include <string>
 
 WaveDecoder::WaveDecoder(AudioFormat af, IDataSourceRef ds)
@@ -9,6 +10,7 @@ WaveDecoder::WaveDecoder(AudioFormat af, IDataSourceRef ds)
 
 WaveDecoder::~WaveDecoder()
 {
+	dcerr("Shut down");
 }
 
 bool WaveDecoder::exhausted() {

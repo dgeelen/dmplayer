@@ -37,7 +37,9 @@ bool OGGDecoder::exhausted() {
 }
 
 OGGDecoder::~OGGDecoder() {
+	dcerr("Shutting down");
 	uninitialize();
+	dcerr("Shut down");
 }
 
 void OGGDecoder::clear_streams() {

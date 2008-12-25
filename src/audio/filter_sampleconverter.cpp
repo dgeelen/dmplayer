@@ -26,6 +26,7 @@ SampleConverterFilter::SampleConverterFilter(IAudioSourceRef as, AudioFormat tar
 }
 
 SampleConverterFilter::~SampleConverterFilter() {
+	dcerr("shutting down");
 }
 
 uint32 SampleConverterFilter::fill_buffer(uint8* buffer, uint32 count, uint32 size_of) {

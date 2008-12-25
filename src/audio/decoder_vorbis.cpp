@@ -37,6 +37,7 @@ VorbisDecoder::VorbisDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 }
 
 VorbisDecoder::~VorbisDecoder() {
+	dcerr("Shut down");
 }
 
 bool VorbisDecoder::exhausted() {

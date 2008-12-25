@@ -47,7 +47,9 @@ LibSamplerateFilter::LibSamplerateFilter(IAudioSourceRef as, AudioFormat target)
 }
 
 LibSamplerateFilter::~LibSamplerateFilter() {
+	dcerr("shutting down");
 	src_delete(callback_data.src_state);
+	dcerr("shut down");
 }
 
 /**

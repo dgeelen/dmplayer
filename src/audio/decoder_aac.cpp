@@ -39,6 +39,7 @@ bool AACDecoder::exhausted() {
 }
 
 AACDecoder::AACDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
+	dcerr("new AACDecoder");
 	this->datasource = ds;
 	initialize();
 	datasource->reset();
@@ -103,6 +104,7 @@ void AACDecoder::initialize() {
 }
 
 AACDecoder::~AACDecoder() {
+	dcerr("Shut down");
 }
 
 IDecoderRef AACDecoder::tryDecode(IDataSourceRef ds) {
