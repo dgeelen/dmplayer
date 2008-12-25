@@ -1,5 +1,6 @@
 #include "backend_portaudio.h"
 #include "../error-handling.h"
+#include "../util/StrFormat.h"
 
 #define SAMPLE_RATE    (44100)
 #define FRAMES_PER_BUFFER (64)  /* number of frames(=samples) per buffer */
@@ -87,12 +88,14 @@ PortAudioBackend::~PortAudioBackend()
 void PortAudioBackend::stop_output()
 {
 	PaError err = Pa_StopStream( stream );
-	if (err != paNoError) throw SoundException("failed to stop portaudio stream");
+	if((err != paNoError) && (err != paStreamIsStopped))
+		throw SoundException(STRFORMAT("failed to stop portaudio stream: %s", Pa_GetErrorText(err)));
 }
 
 void PortAudioBackend::start_output()
 {
 	PaError err = Pa_StartStream( stream );
-	if (err != paNoError) throw SoundException("failed to start portaudio stream");
+	if ((err != paNoError) && (err != paStreamIsNotStopped))
+		throw SoundException(STRFORMAT("failed to start portaudio stream: %s", Pa_GetErrorText(err)));
 }
 
