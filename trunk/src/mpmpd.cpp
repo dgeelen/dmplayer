@@ -80,10 +80,8 @@ class ServerDataSource : public IDataSource {
 		virtual void reset() {
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
 			position = 0;
-			data_exhausted = false;
+			data_exhausted = data_buffer.size()==0;
 		}
-
-
 
 		virtual uint32 getData(uint8* buffer, uint32 len) {
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
@@ -105,6 +103,7 @@ class ServerDataSource : public IDataSource {
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
 			size_t n = data_buffer.size();
 			data_buffer.insert(data_buffer.end(), data.begin(), data.end());
+			data_exhausted = false;
 		}
 
 		void stop() {
@@ -115,7 +114,6 @@ class ServerDataSource : public IDataSource {
 
 		void set_wait_for_data(bool b) {
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
-			data_exhausted = false;
 			wait_for_data = b;
 		}
 
