@@ -26,28 +26,13 @@ LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec), fill_buffer_ba
 
 	/* Initialize playback buffers, we use double buffering */
 	playing_buffer = 0;
-	char x;
 	for(int i=0; i<2; ++i) {
 		audio_buffer[i] = new uint8[BUF_SIZE];
 		for(int j=0; j<BUF_SIZE; ++j) {
-			audio_buffer[i][j]= ++x;
+			audio_buffer[i][j] = 0;
 		}
-		x+=i;
 	}
-
 	decoder = dec;
-
-	/* Start output thread */
-	play_back = read_back = true;
-	try {
-		thread_decoder_read_thread = NULL;
-		thread_ao_play_thread = NULL;
-		thread_decoder_read_thread = new boost::thread(makeErrorHandler(boost::bind(&LibAOBackend::decoder_read_thread, this)));
-		thread_ao_play_thread = new boost::thread(makeErrorHandler(boost::bind(&LibAOBackend::ao_play_thread, this)));
-	}
-	catch(...) {
-		throw ThreadException("LibAOBackend: Could not start output thread!");
-	}
 }
 
 /*
@@ -67,7 +52,6 @@ LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec), fill_buffer_ba
  *       Before playing A, the playback thread waits                (N=1, A filling/full,   B empty         )
  *       After filling A, the reader waits                          (N=2, A full,           B empty/emptying)
  *       goto (#)
-
  */
 
 void LibAOBackend::decoder_read_thread() {
@@ -95,6 +79,24 @@ void LibAOBackend::ao_play_thread() {
 		ao_play( device, (char*)audio_buffer[1], BUF_SIZE);
 	}
 	fill_buffer_barrier.wait();
+}
+
+void LibAOBackend::start_output() {
+	/* Start output thread */
+	play_back = read_back = true;
+	try {
+		thread_decoder_read_thread = NULL;
+		thread_ao_play_thread = NULL;
+		thread_decoder_read_thread = new boost::thread(makeErrorHandler(boost::bind(&LibAOBackend::decoder_read_thread, this)));
+		thread_ao_play_thread = new boost::thread(makeErrorHandler(boost::bind(&LibAOBackend::ao_play_thread, this)));
+	}
+	catch(...) {
+		throw ThreadException("LibAOBackend: Could not start output thread!");
+	}
+}
+
+void LibAOBackend::stop_output() {
+	play_back = false;
 }
 
 LibAOBackend::~LibAOBackend() {

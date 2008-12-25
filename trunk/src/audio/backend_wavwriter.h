@@ -13,6 +13,8 @@ class WAVWriterBackend : public IBackend {
 		bool done;
 		boost::thread* outputter_thread;
 		void outputter();
+		void start_output();
+		void stop_output();
 };
 
 #endif//BACKEND_LIBAO_H

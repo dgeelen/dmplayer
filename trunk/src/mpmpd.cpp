@@ -144,7 +144,7 @@ class Server {
 			message_loop_thread.swap(tt);
 			networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
 			ac.playback_finished.connect(boost::bind(&Server::next_song, this, _1));
-			ac.StartPlayback();
+			ac.start_playback();
 		}
 
 		~Server() {
@@ -232,6 +232,7 @@ class Server {
 							 * Will halt communication with server indefinitely
 							 */
 							ac.set_data_source(server_datasource);
+							ac.start_playback();
 						}
 					}
 					{

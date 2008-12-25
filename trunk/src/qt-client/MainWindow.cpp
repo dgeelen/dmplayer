@@ -222,7 +222,7 @@ void MainWindow::on_PreviousButton_clicked()
 void MainWindow::on_PlayButton_clicked()
 {
 	progressTimer.start(250);
-	audiocontroller.StartPlayback();
+	audiocontroller.start_playback();
 }
 
 void MainWindow::on_PauseButton_clicked()
@@ -235,7 +235,7 @@ void MainWindow::on_StopButton_clicked()
 //	handler->Stop();
 	progressTimer.stop();
 	updateProgressBar();
-	audiocontroller.StopPlayback();
+	audiocontroller.stop_playback();
 }
 
 

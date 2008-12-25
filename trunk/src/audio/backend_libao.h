@@ -19,13 +19,16 @@ class LibAOBackend : public IBackend {
 		int   playing_buffer;
 		uint8* audio_buffer[2];
 		volatile bool read_back;
-		volatile bool  play_back;
+		volatile bool play_back;
 
 		boost::barrier fill_buffer_barrier;
 		boost::thread* thread_decoder_read_thread;
 		boost::thread* thread_ao_play_thread;
 		void decoder_read_thread();
 		void ao_play_thread();
+
+		void start_output();
+		void stop_output();
 };
 
 #endif//BACKEND_LIBAO_H

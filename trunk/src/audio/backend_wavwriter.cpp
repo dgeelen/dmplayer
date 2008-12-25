@@ -9,14 +9,13 @@ WAVWriterBackend::WAVWriterBackend(AudioController* dec)	: IBackend(dec) {
 	af.SampleRate    = 44100;
 	af.SignedSample  = true;
 	af.LittleEndian  = true;
-
-	f = fopen("output.wav", "wb");
-	if(!f)
-		throw Exception("Could not open file output.wav");
-
-	done = false;
 	decoder = dec;
+	outputter_thread = NULL;
+	f = NULL;
+}
 
+void WAVWriterBackend::start_output() {
+	done = false;
 	/* Start output thread */
 	try {
 		outputter_thread = new boost::thread(makeErrorHandler(boost::bind(&WAVWriterBackend::outputter, this)));
@@ -26,17 +25,31 @@ WAVWriterBackend::WAVWriterBackend(AudioController* dec)	: IBackend(dec) {
 	}
 }
 
+void WAVWriterBackend::stop_output() {
+	done = true;
+}
+
 void WAVWriterBackend::outputter() {
+	dcerr("starting WAV output");
+	f = fopen("output.wav", "wb");
+	if(!f)
+		throw Exception("Could not open file output.wav");
+
 	uint8 buf[4096];
 	while(!done) {
 		int read = decoder->getData(buf, 4096);
 		fwrite((char*)buf, sizeof(uint8), read, f);
 	}
+
+	fclose(f);
+	dcerr("stopped WAV output");
 }
 
 WAVWriterBackend::~WAVWriterBackend() {
 	done = true;
-	outputter_thread->join();
-	fclose(f);
+	if(outputter_thread) {
+		outputter_thread->join();
+		outputter_thread = NULL;
+	}
 	delete outputter_thread;
 }
