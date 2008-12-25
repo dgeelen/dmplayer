@@ -18,6 +18,7 @@
 	#include "playlist_management.h"
 	#include <boost/thread/thread.hpp>
 	#include <boost/signal.hpp>
+	#include <boost/shared_ptr.hpp>
 	#include <map>
 	#include <ctime>
 	#include <iostream>
@@ -63,10 +64,11 @@
 
 		private:
 			bool server_mode;
-			boost::thread* thread_server_tcp_connection_listener;
-			boost::thread* thread_client_tcp_connection;
-			boost::thread* thread_receive_packet_handler;
-			boost::thread* thread_send_packet_handler;
+			boost::shared_ptr<boost::thread> thread_server_tcp_connection_listener;
+			std::vector<boost::shared_ptr<boost::thread> > server_tcp_connection_handler_threads;
+			boost::shared_ptr<boost::thread> thread_client_tcp_connection;
+			boost::shared_ptr<boost::thread> thread_receive_packet_handler;
+			boost::shared_ptr<boost::thread> thread_send_packet_handler;
 			bool receive_packet_handler_running;
 			bool send_packet_handler_running;
 			uint16 tcp_port_number;

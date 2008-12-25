@@ -46,10 +46,10 @@ network_handler::network_handler(uint16 tcp_port_number) {
 void network_handler::init() {
 	are_we_done = false;
 	dcerr("network_handler(): Initializing...");
-	thread_send_packet_handler = NULL;
-	thread_receive_packet_handler = NULL;
-	thread_client_tcp_connection = NULL;
-	thread_server_tcp_connection_listener = NULL;
+	thread_send_packet_handler.reset();
+	thread_receive_packet_handler.reset();
+	thread_client_tcp_connection.reset();
+	thread_server_tcp_connection_listener.reset();
 	if(!singleton) throw LogicError("Error: network_handler() is a singleton class!");
 	singleton=false;
 	#ifdef HAVE_WINSOCK //NOTE: This is done only once, network_handler is a singleton class
@@ -80,12 +80,13 @@ void network_handler::server_tcp_connection_listener() { // Listens for incoming
 	while(!are_we_done) {
 		if (doselect(lsock, 1000, SELECT_READ)) {
 			tcp_socket_ref sock(lsock.accept());
-
-			boost::thread* t = new boost::thread(
+			dcerr("Starting new server_tcp_connection_handler_thread");
+			boost::shared_ptr<boost::thread> t = boost::shared_ptr<boost::thread>(new boost::thread(
 								   makeErrorHandler(
 								   boost::bind(&network_handler::server_tcp_connection_handler,
 											   this,
-											   sock)));
+											   sock))));
+			server_tcp_connection_handler_threads.push_back(t);
 		}
 	}
 	dcerr("bye!");
@@ -311,11 +312,14 @@ void network_handler::start() {
 		throw("Error: stop() the network_handler() before start()ing it!");
 	receive_packet_handler_running = true;
 	try {
-		thread_receive_packet_handler = new boost::thread(makeErrorHandler(boost::bind(&network_handler::receive_packet_handler, this)));
+		dcerr("Starting thread_receive_packet_handler");
+		thread_receive_packet_handler = boost::shared_ptr<boost::thread>(new boost::thread(makeErrorHandler(boost::bind(&network_handler::receive_packet_handler, this))));
 		if(server_mode)
-			thread_server_tcp_connection_listener = new boost::thread(makeErrorHandler(boost::bind(&network_handler::server_tcp_connection_listener, this)));
+			dcerr("Starting thread_server_tcp_connection_listener");
+			thread_server_tcp_connection_listener = boost::shared_ptr<boost::thread>(new boost::thread(makeErrorHandler(boost::bind(&network_handler::server_tcp_connection_listener, this))));
 		if(!server_mode) {
-			thread_send_packet_handler   = new boost::thread(makeErrorHandler(boost::bind(&network_handler::send_packet_handler, this)));
+			dcerr("Starting thread_send_packet_handler");
+			thread_send_packet_handler   = boost::shared_ptr<boost::thread>(new boost::thread(makeErrorHandler(boost::bind(&network_handler::send_packet_handler, this))));
 		}
 	}
 	catch(...) {
@@ -329,16 +333,17 @@ void network_handler::client_connect_to_server( ipv4_socket_addr dest ) {
 	client_tcp_connection_running = true;
 	tcp_socket_ref serversock(new tcp_socket(dest.first, dest.second));
 	serversockweakref = serversock;
-	thread_client_tcp_connection = new boost::thread(makeErrorHandler(boost::bind(&network_handler::client_tcp_connection, this, serversock)));
+	dcerr("Starting thread_client_tcp_connection");
+	thread_client_tcp_connection = boost::shared_ptr<boost::thread>(new boost::thread(makeErrorHandler(boost::bind(&network_handler::client_tcp_connection, this, serversock))));
 }
 
 void network_handler::client_disconnect_from_server(  ) {
 	client_tcp_connection_running = false;
 	target_server = ipv4_socket_addr();
 	if (thread_client_tcp_connection) {
+		dcerr("Joining thread_client_tcp_connection");
 		thread_client_tcp_connection->join();
-		delete thread_client_tcp_connection;
-		thread_client_tcp_connection=NULL;
+		thread_client_tcp_connection.reset();
 	}
 }
 #undef WRAP
@@ -357,20 +362,20 @@ void network_handler::stop()
 	 * we don't join on this threads.
 	 */
 	if (thread_receive_packet_handler) {
+		dcerr("Joining thread_receive_packet_handler");
 		thread_receive_packet_handler->join();
-		delete thread_receive_packet_handler;
-		thread_receive_packet_handler=NULL;
+		thread_receive_packet_handler.reset();
 	}
 	#endif
 	if (thread_send_packet_handler) {
+		dcerr("Joining thread_send_packet_handler");
 		thread_send_packet_handler->join();
-		delete thread_send_packet_handler;
-		thread_receive_packet_handler=NULL;
+		thread_receive_packet_handler.reset();
 	}
 	if(thread_server_tcp_connection_listener) {
+		dcerr("Joining thread_server_tcp_connection_listener");
 		thread_server_tcp_connection_listener->join();
-		delete thread_server_tcp_connection_listener;
-		thread_server_tcp_connection_listener=NULL;
+		thread_server_tcp_connection_listener.reset();
 	}
 	client_disconnect_from_server();
 }
