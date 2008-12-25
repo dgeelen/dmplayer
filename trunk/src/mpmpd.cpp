@@ -325,7 +325,14 @@ class Server {
 					message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
 					{
 						boost::mutex::scoped_lock lock(clients_mutex);
-						msg->apply(&(*clients.find(id))->wish_list);
+						ClientMap::iterator cmi = clients.find(id);
+						if(cmi != clients.end()) {
+							msg->apply(&((*cmi)->wish_list));
+						}
+						else {
+							//FIXME: This check should be done for *ANY* message that is received
+							networkhandler.send_message(id, messageref(new message_disconnect()));
+						}
 					}
 					recalculateplaylist();
 				}; break;
