@@ -37,7 +37,7 @@ class MencoderDecoderImplementation {
 			cansend = false;
 			readlen = 0;
 			writelen = 0;
-			servthread.swap(boost::thread(boost::bind(&MencoderDecoderImplementation::servfunc, this)));
+			servthread.swap(boost::thread(makeErrorhandler(boost::bind(&MencoderDecoderImplementation::servfunc, this))));
 
 			//string prog = "mencoder";
 			string prog = "c:\\temp\\mpmp\\mencoder.exe";
@@ -65,8 +65,10 @@ class MencoderDecoderImplementation {
 		}
 
 		~MencoderDecoderImplementation() {
+			dcerr("Shutting down");
 			servdone = true;
 			servthread.join();
+			dcerr("Shut down");
 		}
 
 		uint32 getData(uint8* buf, uint32 max) {
