@@ -173,7 +173,7 @@ void GtkMpmpClientWindow::_on_request_file(message_request_file_ref m, boost::sh
 }
 
 void GtkMpmpClientWindow::on_request_file_result(message_request_file_result_ref m) {
-	boost::shared_ptr<boost::thread> t(new  boost::thread());
+	boost::shared_ptr<boost::thread> t;
 
 	{
 		boost::mutex::scoped_lock lock(_on_request_file_threads_mutex);
@@ -183,7 +183,8 @@ void GtkMpmpClientWindow::on_request_file_result(message_request_file_result_ref
 		}
 	}
 
-	t->join();
+	if(t)
+		t->join();
 }
 
 void GtkMpmpClientWindow::on_request_file(message_request_file_ref m) {
