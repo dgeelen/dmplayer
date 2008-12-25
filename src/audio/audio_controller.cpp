@@ -74,7 +74,10 @@ AudioController::AudioController()
 }
 
 AudioController::~AudioController() {
-	delete backend;
+	dcerr("Shutting down");
+	stop_playback();
+	backend.reset();
+	dcerr("Shut down");
 }
 
 uint32 AudioController::getData(uint8* buf, uint32 len)

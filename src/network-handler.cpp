@@ -378,6 +378,11 @@ void network_handler::stop()
 		thread_server_tcp_connection_listener.reset();
 	}
 	client_disconnect_from_server();
+	typedef boost::shared_ptr<boost::thread> vtype;
+	dcerr("Joining server_tcp_connection_handler_threads");
+	BOOST_FOREACH(vtype tp, server_tcp_connection_handler_threads) {
+		tp->join();
+	}
 }
 /** End class network_handler **/
 
