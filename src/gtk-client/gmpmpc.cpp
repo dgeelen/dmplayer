@@ -23,7 +23,7 @@ GtkMpmpClientWindow::GtkMpmpClientWindow(network_handler* nh, TrackDataBase* tdb
 	trackdb_widget = new gmpmpc_trackdb_widget(trackdb, ClientID(-1));
 	construct_gui();
 
-	guint8 data[gmpmpc_icon_data.width * gmpmpc_icon_data.height * gmpmpc_icon_data.bytes_per_pixel];
+	guint8* data = new guint8[gmpmpc_icon_data.width * gmpmpc_icon_data.height * gmpmpc_icon_data.bytes_per_pixel];
 	GIMP_IMAGE_RUN_LENGTH_DECODE(data,
 	                             gmpmpc_icon_data.rle_pixel_data,
 	                             gmpmpc_icon_data.width * gmpmpc_icon_data.height,
@@ -270,6 +270,7 @@ void GtkMpmpClientWindow::send_message(messageref m) {
 
 bool GtkMpmpClientWindow::clear_status_messages() {
 	set_status_message("Ready.");
+	return true;
 }
 
 void GtkMpmpClientWindow::construct_gui() {
@@ -341,6 +342,7 @@ void GtkMpmpClientWindow::on_menu_file_preferences() {
 
 bool GtkMpmpClientWindow::on_delete_event(GdkEventAny* event) {
 	Gtk::Main::quit();
+	return true;
 }
 
 void GtkMpmpClientWindow::on_menu_file_quit() {
@@ -394,6 +396,7 @@ int main_impl(int argc, char **argv ) {
 	}
 	/* Done parsing commandline options */
 
+	if(!Glib::thread_supported()) Glib::thread_init();
 	Gtk::Main kit(argc, argv);
 
 	TrackDataBase tdb;

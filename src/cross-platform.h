@@ -4,8 +4,11 @@
   #define CROSS_PLATFORM_H
   /* fix for MSVS (C++ 2005 express edition) */
   #if defined(_MSC_VER)
+	#undef  _CRT_SECURE_NO_DEPRECATE
     #define _CRT_SECURE_NO_DEPRECATE
+	#undef  _CRT_SECURE_NO_WARNINGS
 	#define _CRT_SECURE_NO_WARNINGS
+	#undef  _SCL_SECURE_NO_WARNINGS
 	#define _SCL_SECURE_NO_WARNINGS
     #define snprintf _snprintf
   #endif
@@ -37,7 +40,10 @@
 
 		// usleep
 		#include <windows.h>
-		#define usleep(x) Sleep(x/1000)
+		//#define usleep(x) Sleep(x/1000)
+		static void usleep(unsigned long microseconds) {
+			Sleep(DWORD(double(microseconds)/1000.0));
+		}
 	#else
 		// for usleep
 		#include <unistd.h>
