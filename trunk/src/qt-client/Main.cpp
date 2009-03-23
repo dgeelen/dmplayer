@@ -72,9 +72,11 @@ int main_impl(int argc, char **argv )
 		QTBOOSTER(&mainwindow, MainWindow::UpdateServerList)
 	);
 
+/* FIXME: This is handled through the middle_end now
 	nh.server_list_removed_signal.connect(
 		QTBOOSTER(&mainwindow, MainWindow::UpdateServerList_remove)
 	);
+*/
 
 	nh.client_message_receive_signal.connect(
 		QTBOOSTER(&mainwindow, MainWindow::handleReceivedMessage)
