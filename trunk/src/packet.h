@@ -192,10 +192,8 @@ class message_vote : public message {
 	public:
 		message_vote(TrackID id_, bool is_min_vote_) : message(MSG_VOTE), id(id_), is_min_vote(is_min_vote_) {};
 		bool is_min_vote;
-		TrackID getID() { return id; }; //Fixme: Consistency among messages
-	private:
 		TrackID id;
-
+	private:
 		message_vote() {};
 
 		friend class boost::serialization::access;
@@ -349,8 +347,8 @@ typedef boost::shared_ptr<message_request_file> message_request_file_ref;
 class message_request_file_result : public message {
 	public:
 		message_request_file_result(const std::vector<uint8>& data_, TrackID id_) : message(MSG_REQUEST_FILE_RESULT), data(data_), id(id_) {};
-		TrackID id;
 		std::vector<uint8> data;
+		TrackID id;
 	private:
 		message_request_file_result() {};
 

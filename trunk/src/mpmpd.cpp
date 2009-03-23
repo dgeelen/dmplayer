@@ -373,7 +373,7 @@ class Server {
 					dcerr("Received a MSG_VOTE from " << STRFORMAT("%08x", id));
 					message_vote_ref msg = boost::static_pointer_cast<message_vote>(m);
 					if(msg->is_min_vote) {
-						vote_min_list[msg->getID()].insert(id);
+						vote_min_list[msg->id].insert(id);
 // 						* TODO *
 // 						bool is_in_playlist = false;
 // 						BOOST_FOREACH( , playlist) {
