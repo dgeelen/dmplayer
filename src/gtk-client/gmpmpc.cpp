@@ -411,31 +411,3 @@ int main_impl(int argc, char **argv ) {
 int main(int argc, char* argv[]) {
 	return makeErrorHandler(boost::bind(&main_impl, argc, argv))();
 }
-
-// int main ( int argc, char *argv[] )
-// {
-// 	// Hide SIGPIPE
-// 	sigset_t sigset;
-// 	sigemptyset(&sigset);
-// 	sigaddset(&sigset, SIGPIPE);
-// 	sigprocmask(SIG_SETMASK, &sigset, NULL);
-//
-// 	int listen_port;
-// 	bool showhelp;
-// 	string filename;
-// 	po::options_description desc("Allowed options");
-// 	desc.add_options()
-// 			("help", po::bool_switch(&showhelp)                   , "produce help message")
-// 			("port", po::value(&listen_port)->default_value(12345), "TCP Port")
-// 			("file", po::value(&filename)->default_value("")      , "Filename to test with")
-// 	;
-// 	po::variables_map vm;
-//  	po::store(po::parse_command_line(argc, argv, desc), vm);
-// 	po::notify(vm);
-// 	if (showhelp) {
-// 		cout << desc << "\n";
-// 		return 1;
-// 	}
-//
-// 	return 0;
-// }
