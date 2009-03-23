@@ -21,7 +21,7 @@ OGGDecoder::OGGDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
 }
 
 void OGGDecoder::setDecoder(IDecoderRef decoder) {
-	current_decoder = decoder; //FIXME: Smart Pointer will clean up?
+	current_decoder = decoder;
 	if(current_decoder) {
 		audioformat = current_decoder->getAudioFormat();
 	}
