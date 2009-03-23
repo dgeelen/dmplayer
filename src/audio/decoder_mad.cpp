@@ -68,7 +68,7 @@ IDecoderRef MadDecoder::tryDecode(IDataSourceRef ds)
 
 	//return new MadDecoder(datasource);
 
-	// FIXME: Very simple ID3 tag skip
+	// TODO: Improve this very simple ID3 tag skip
 	// see http://www.gigamonkeys.com/book/practical-an-id3-parser.html
 	// and http://www.id3.org/id3v2.4.0-structure
 	for(int i=0; i<9; ++i)
