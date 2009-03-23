@@ -1,15 +1,3 @@
-//
-// C++ Interface: gmpmpc
-//
-// Description:
-//
-//
-// Author:  <Da Fox>, (C) 2007,2008,2009,...
-//
-// Copyright: See COPYING file that comes with this distribution
-//
-//
-
 #ifndef GMPMPC_H
 	#define GMPMPC_H
 	#include "gmpmpc_trackdb.h"

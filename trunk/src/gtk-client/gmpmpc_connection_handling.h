@@ -16,10 +16,3 @@
 		private:
 	};
 #endif //GMPMPC_CONNECTION_HANDLING_H
-
-
-// 	#include "gmpmpc.h"
-// 	#include "../packet.h"
-//
-// 	void handle_received_message(const messageref m);
-

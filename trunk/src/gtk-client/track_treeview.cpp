@@ -37,4 +37,3 @@ void gmpmpc_track_treeview::insert(uint32 pos, const Track& track) {
 void gmpmpc_track_treeview::move(uint32 from, uint32 to) {
 	PlaylistVector::move(from, to);
 }
-
