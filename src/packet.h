@@ -192,7 +192,7 @@ class message_vote : public message {
 	public:
 		message_vote(TrackID id_, bool is_min_vote_) : message(MSG_VOTE), id(id_), is_min_vote(is_min_vote_) {};
 		bool is_min_vote;
-		TrackID getID() { return id; };
+		TrackID getID() { return id; }; //Fixme: Consistency among messages
 	private:
 		TrackID id;
 
