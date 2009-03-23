@@ -14,7 +14,7 @@
 #include "playlist_management.h"
 #include "boost/filesystem.hpp"
 #include "playlist_management.h"
-#include <boost/thread/mutex.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 #include "synced_playlist.h"
 #include "util/StrFormat.h"
 #include <algorithm>
@@ -176,7 +176,7 @@ class Server {
 			vector<ClientID> has_song;
 			vector<ClientID> does_not_have_song;
 
-			boost::mutex::scoped_lock lock(clients_mutex);
+			boost::recursive_mutex::scoped_lock lock(clients_mutex);
 			Track t = currenttrack;
 			BOOST_FOREACH(Client_ref c, clients) {
 				int pos = 0;
@@ -219,7 +219,7 @@ class Server {
 			while(message_loop_running) {
 				messageref m;
 				{
-					boost::mutex::scoped_lock lock(playlist_mutex);
+					boost::recursive_mutex::scoped_lock lock(playlist_mutex);
 					m = playlist.pop_msg();
 				}
 				if(m) {
@@ -227,7 +227,7 @@ class Server {
 				}
 				else { // meh
 					{
-						boost::mutex::scoped_lock lock(playlist_mutex);
+						boost::recursive_mutex::scoped_lock lock(playlist_mutex);
 						if(add_datasource && (playlist.size()!=0)) {
 							currenttrack = playlist.get(0);
 							lock.unlock();
@@ -245,7 +245,7 @@ class Server {
 						}
 					}
 					{
-						boost::mutex::scoped_lock lock(clients_mutex);
+						boost::recursive_mutex::scoped_lock lock(clients_mutex);
 						std::set<ClientID> votes = vote_min_list[currenttrack.id];
 						if(server_datasource && votes.size() > 0 && (votes.size()*2) > clients.size()) {
 							/* Notify sender to stop sending */
@@ -269,7 +269,7 @@ class Server {
 		}
 
 		void remove_client(ClientID id) {
-			boost::mutex::scoped_lock lock(clients_mutex);
+			boost::recursive_mutex::scoped_lock lock(clients_mutex);
 			dcerr("Removing client " << STRFORMAT("%08x", id));
 			if (clients.find(id) == clients.end())
 				return;
@@ -300,97 +300,94 @@ class Server {
 		}
 
 		void handle_received_message(const messageref m, ClientID id) {
-			switch(m->get_type()) {
-				case message::MSG_CONNECT: {
-					dcerr("Received a MSG_CONNECT from " << STRFORMAT("%08x", id));
-					{
-						boost::mutex::scoped_lock lock(clients_mutex);
+			bool recalculateplaylist = false;
+			{
+			boost::recursive_mutex::scoped_lock lock_clients(clients_mutex);
+			boost::recursive_mutex::scoped_lock lock_playlist(playlist_mutex);
+			ClientMap::iterator cmi = clients.find(id);                              // Ensure that we know this client,
+			if((m->get_type() ==  message::MSG_CONNECT) || (cmi != clients.end())) { // unless it is a genuine request.
+				switch(m->get_type()) {
+					case message::MSG_CONNECT: {
+						dcerr("Received a MSG_CONNECT from " << STRFORMAT("%08x", id));
 						clients.insert(Client_ref(new Client(id)));
-					}
-					{
-						boost::mutex::scoped_lock lock(playlist_mutex);
 						networkhandler.send_message(id, messageref(new message_playlist_update(playlist)));
-					}
-				} break;
-				case message::MSG_ACCEPT: {
-					dcerr("Received a MSG_ACCEPT from " << STRFORMAT("%08x", id));
-				}; break;
-				case message::MSG_DISCONNECT: {
-					dcerr("Received a MSG_DISCONNECT from " << STRFORMAT("%08x", id));
-					remove_client(id);
-					recalculateplaylist();
-				} break;
-				case message::MSG_PLAYLIST_UPDATE: {
-					dcerr("Received a MSG_PLAYLIST_UPDATE from " << STRFORMAT("%08x", id));
-					message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
-					{
-						boost::mutex::scoped_lock lock(clients_mutex);
-						ClientMap::iterator cmi = clients.find(id);
-						if(cmi != clients.end()) {
-							msg->apply(&((*cmi)->wish_list));
+					} break;
+					case message::MSG_ACCEPT: {
+						dcerr("Received a MSG_ACCEPT from " << STRFORMAT("%08x", id));
+					}; break;
+					case message::MSG_DISCONNECT: {
+						dcerr("Received a MSG_DISCONNECT from " << STRFORMAT("%08x", id));
+						remove_client(id);
+						recalculateplaylist = true;
+					} break;
+					case message::MSG_PLAYLIST_UPDATE: {
+						dcerr("Received a MSG_PLAYLIST_UPDATE from " << STRFORMAT("%08x", id));
+						message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
+						msg->apply(&((*cmi)->wish_list));
+						recalculateplaylist = true;
+					}; break;
+					case message::MSG_QUERY_TRACKDB: {
+						dcerr("Received a MSG_QUERY_TRACKDB from " << STRFORMAT("%08x", id));
+					}; break;
+					case message::MSG_QUERY_TRACKDB_RESULT: {
+						dcerr("Received a MSG_QUERY_TRACKDB_RESULT from " << STRFORMAT("%08x", id));
+						message_query_trackdb_result_ref msg = boost::static_pointer_cast<message_query_trackdb_result>(m);
+						uint32 qid = msg->qid;
+						std::pair<ClientID, TrackID> vote;
+						std::map<uint32, std::pair<ClientID, TrackID> >::iterator finder = query_queue.find(qid);
+						if (finder != query_queue.end()) {
+							if(msg->result.size()==1) {
+								playlist.add(msg->result.front());
+							}
+							query_queue.erase(finder);
+						} else {
+							dcerr("warning: ignoring query result");
 						}
-						else {
-							//FIXME: This check should be done for *ANY* message that is received
-							networkhandler.send_message(id, messageref(new message_disconnect()));
+					}; break;
+					case message::MSG_REQUEST_FILE: {
+						dcerr("Received a MSG_REQUEST_FILE from " << STRFORMAT("%08x", id));
+					}; break;
+					case message::MSG_REQUEST_FILE_RESULT: {
+						dcerr("Received a MSG_REQUEST_FILE_RESULT from " << STRFORMAT("%08x", id));
+						message_request_file_result_ref msg = boost::static_pointer_cast<message_request_file_result>(m);
+						if(currenttrack.id != msg->id) break;
+						if(msg->data.size()) {
+							server_datasource->appendData(msg->data);
 						}
-					}
-					recalculateplaylist();
-				}; break;
-				case message::MSG_QUERY_TRACKDB: {
-					dcerr("Received a MSG_QUERY_TRACKDB from " << STRFORMAT("%08x", id));
-				}; break;
-				case message::MSG_QUERY_TRACKDB_RESULT: {
-					dcerr("Received a MSG_QUERY_TRACKDB_RESULT from " << STRFORMAT("%08x", id));
-					message_query_trackdb_result_ref msg = boost::static_pointer_cast<message_query_trackdb_result>(m);
-					uint32 qid = msg->qid;
-					std::pair<ClientID, TrackID> vote;
-					std::map<uint32, std::pair<ClientID, TrackID> >::iterator finder = query_queue.find(qid);
-					if (finder != query_queue.end()) {
-						if(msg->result.size()==1) {
-							boost::mutex::scoped_lock lock(playlist_mutex);
-							playlist.add(msg->result.front());
+						else { // This was the last message, we have received the full file.
+							server_datasource->set_wait_for_data(false);
 						}
-						query_queue.erase(finder);
-					} else {
-						dcerr("warning: ignoring query result");
-					}
-				}; break;
-				case message::MSG_REQUEST_FILE: {
-					dcerr("Received a MSG_REQUEST_FILE from " << STRFORMAT("%08x", id));
-				}; break;
-				case message::MSG_REQUEST_FILE_RESULT: {
-					dcerr("Received a MSG_REQUEST_FILE_RESULT from " << STRFORMAT("%08x", id));
-					message_request_file_result_ref msg = boost::static_pointer_cast<message_request_file_result>(m);
-					if(currenttrack.id != msg->id) break;
-					if(msg->data.size()) {
-						server_datasource->appendData(msg->data);
-					}
-					else { // This was the last message, we have received the full file.
-						server_datasource->set_wait_for_data(false);
-					}
-				}; break;
-				case message::MSG_VOTE: {
-					dcerr("Received a MSG_VOTE from " << STRFORMAT("%08x", id));
-					message_vote_ref msg = boost::static_pointer_cast<message_vote>(m);
-					if(msg->is_min_vote) {
-						vote_min_list[msg->id].insert(id);
-// 						* TODO *
-// 						bool is_in_playlist = false;
-// 						BOOST_FOREACH( , playlist) {
-// 						}
-// 						if(is_in_playlist) {
-// 							vote_min_list[msg->getID()].insert(id);
-// 						}
-					}
-				}; break;
-				default: {
-					dcerr("Ignoring unknown message of type " << m->get_type() << " from " << STRFORMAT("%08x", id));
-				} break;
+					}; break;
+					case message::MSG_VOTE: {
+						dcerr("Received a MSG_VOTE from " << STRFORMAT("%08x", id));
+						message_vote_ref msg = boost::static_pointer_cast<message_vote>(m);
+						if(msg->is_min_vote) {
+							vote_min_list[msg->id].insert(id);
+	// 						* TODO *
+	// 						bool is_in_playlist = false;
+	// 						BOOST_FOREACH( , playlist) {
+	// 						}
+	// 						if(is_in_playlist) {
+	// 							vote_min_list[msg->getID()].insert(id);
+	// 						}
+						}
+					}; break;
+					default: {
+						dcerr("Ignoring unknown message of type " << m->get_type() << " from " << STRFORMAT("%08x", id));
+					} break;
+				}
+			}
+			else {
+				networkhandler.send_message(id, messageref(new message_disconnect()));
+			}
+			} // release locks on playlist and clientlist
+			if(recalculateplaylist) {
+				this->recalculateplaylist();
 			}
 		}
 	private:
 		SyncedPlaylist playlist;
-		boost::mutex playlist_mutex;
+		boost::recursive_mutex playlist_mutex;
 		Track currenttrack;
 		network_handler networkhandler;
 		AudioController ac;
@@ -405,7 +402,7 @@ class Server {
 		ClientMap clients;
 		std::map<TrackID, std::set<ClientID> > vote_min_list;
 		bool vote_min_penalty;
-		boost::mutex clients_mutex;
+		boost::recursive_mutex clients_mutex;
 
 		boost::thread message_loop_thread;
 		boost::shared_ptr<ServerDataSource> server_datasource;
@@ -422,8 +419,8 @@ class Server {
 		};
 
 		void recalculateplaylist() {
-			boost::mutex::scoped_lock locka(clients_mutex);
-			boost::mutex::scoped_lock lockb(playlist_mutex);
+			boost::recursive_mutex::scoped_lock locka(clients_mutex);
+			boost::recursive_mutex::scoped_lock lockb(playlist_mutex);
 			playlist.clear();
 			std::vector<std::pair<Client_ref, uint32> > client_list;
 			uint32 maxsize = 0;
