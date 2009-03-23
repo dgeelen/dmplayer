@@ -2,6 +2,7 @@
 #include "../error-handling.h"
 #include <algorithm>
 #include <iostream>
+#include <climits> // For SHRT_MAX etc, probably should use std::numeric_limits<short>::max()
 
 MadDecoder::~MadDecoder()
 {
