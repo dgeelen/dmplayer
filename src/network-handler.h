@@ -30,13 +30,19 @@
 
 	struct server_info {
 		public:
-			std::string name;
-			uint64      ping_last_seen;
-			uint64      ping_micro_secs;
-			ipv4_socket_addr sock_addr;
-			bool        connected; // todo
+			std::string       name;
+			uint64            ping_last_seen;
+			uint64            ping_micro_secs;
+			ipv4_socket_addr  sock_addr;
+			bool              connected; // todo
 
 			server_info() : ping_last_seen(0), ping_micro_secs(0) {};
+			bool operator!=(const server_info& si) const {
+				return !(this->operator !=(si));
+			}
+			bool operator==(const server_info& si) const {
+				return (name==si.name) && (sock_addr==si.sock_addr);
+			}
 	};
 
 	std::ostream& operator<<(std::ostream& os, const server_info& si);
