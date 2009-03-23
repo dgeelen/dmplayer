@@ -6,10 +6,9 @@
 MadDecoder::~MadDecoder()
 {
 	dcerr("shutting down");
-// 	//FIXME: This causes reads and writes from/to free'd memory
-// 	mad_synth_finish(&Synth);
-// 	mad_frame_finish(&Frame);
-// 	mad_stream_finish(&Stream);
+	mad_synth_finish(&Synth);
+	mad_frame_finish(&Frame);
+	mad_stream_finish(&Stream);
 	dcerr("shut down");
 }
 
