@@ -51,7 +51,9 @@ public:
 
 	std::string idstr() const;
 
-	Track() {};
+	Track() {
+		id = TrackID(ClientID(-1), LocalTrackID(-1));
+	};
 private:
 	friend class boost::serialization::access;
 	template<class Archive>

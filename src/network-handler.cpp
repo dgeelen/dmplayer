@@ -45,6 +45,9 @@ network_handler::network_handler(uint16 tcp_port_number) {
 
 void network_handler::init() {
 	are_we_done = false;
+	#ifdef DEBUG
+	next_client_id = 0; //Intentionally not initialized
+	#endif
 	dcerr("network_handler(): Initializing...");
 	thread_send_packet_handler.reset();
 	thread_receive_packet_handler.reset();
