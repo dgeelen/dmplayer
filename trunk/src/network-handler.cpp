@@ -64,7 +64,6 @@ void network_handler::init() {
 			throw NetworkException("Error: could not initialize WIN8SOCK!");
 	}
 	#endif
-	start();
 	dcerr("network_handler(): Initialization complete");
 }
 

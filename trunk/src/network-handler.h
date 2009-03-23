@@ -62,6 +62,8 @@
 			void send_message_allclients(messageref msg);
 			void send_server_message(messageref msg);
 
+			void start();
+			void stop();
 		private:
 			bool server_mode;
 			boost::shared_ptr<boost::thread> thread_server_tcp_connection_listener;
@@ -74,9 +76,7 @@
 			uint16 tcp_port_number;
 			std::map<ipv4_socket_addr, server_info> known_servers;
 			void init();
-			void start();
 			std::string server_name;
-			void stop();
 			uint64 last_ping_time;
 			uint32 ping_cookie;
 			volatile bool are_we_done;

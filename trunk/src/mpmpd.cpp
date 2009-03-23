@@ -140,6 +140,7 @@ class Server {
 			: networkhandler(listen_port, server_name)
 		{
 			networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
+			networkhandler.start();
 			dcerr("Started network_handler");
 			server_datasource = boost::shared_ptr<ServerDataSource>((ServerDataSource*)NULL);
 			add_datasource = true;
