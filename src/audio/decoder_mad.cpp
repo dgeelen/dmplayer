@@ -2,7 +2,7 @@
 #include "../error-handling.h"
 #include <algorithm>
 #include <iostream>
-#include <climits> // For SHRT_MAX etc, probably should use std::numeric_limits<short>::max()
+#include <limits>
 
 MadDecoder::~MadDecoder()
 {
@@ -233,9 +233,9 @@ signed short MadDecoder::MadFixedToSshort(mad_fixed_t Fixed)
 
 	/* Clipping */
 	if(Fixed>=MAD_F_ONE)
-		return(SHRT_MAX);
+		return(std::numeric_limits<short>::max());
 	if(Fixed<=-MAD_F_ONE)
-		return(-SHRT_MAX);
+		return(std::numeric_limits<short>::min());
 
 	/* Conversion. */
 	Fixed=Fixed>>(MAD_F_FRACBITS-15);
