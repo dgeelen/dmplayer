@@ -236,6 +236,10 @@ class message_playlist_update : public message {
 			data_index2 = to;
 		};
 
+		update_type get_type() {
+			return utype;
+		}
+
 		void apply(IPlaylist* playlist) {
 			switch (utype) {
 				case UPDATE_CLEAR: {
