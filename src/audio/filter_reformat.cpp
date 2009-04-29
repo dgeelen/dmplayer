@@ -27,19 +27,28 @@ ReformatFilter::ReformatFilter(IAudioSourceRef as, AudioFormat target)
 	while(nfilters < 32 && src->getAudioFormat() != target) {
 		// mono to stereo if needed
 		if (src->getAudioFormat().Channels == 1 && target.Channels == 2) {
+			if(src->getAudioFormat().Float
+			|| src->getAudioFormat().BitsPerSample != 16
+			) {
+				AudioFormat s16_target(src->getAudioFormat());
+				s16_target.Float = false;
+				s16_target.BitsPerSample = 16;
+				src = IAudioSourceRef(new SampleConverterFilter(src, s16_target));
+			}
 			dcerr(src->getAudioFormat().Channels << " != " << target.Channels);
 			src = IAudioSourceRef(new MonoToStereoFilter(src));
+			++nfilters;
 		}
 
 		if(src->getAudioFormat().SampleRate != target.SampleRate) {
 		#ifdef LIBSAMPLERATE_FILTER
 			dcerr("Using libsamplerate filter: " << src->getAudioFormat().SampleRate << "->" << target.SampleRate);
-			AudioFormat float_target(target);
-			float_target.Float = true;
-			IAudioSourceRef to_float_format(new SampleConverterFilter(src,    float_target));
-			IAudioSourceRef resample(new LibSamplerateFilter(to_float_format, float_target));
-			IAudioSourceRef to_target_format(new SampleConverterFilter(resample,    target));
-			src = to_target_format;
+			if(!src->getAudioFormat().Float) {
+				AudioFormat float_target(target);
+				float_target.Float = true;
+				src = IAudioSourceRef(new SampleConverterFilter(src, float_target));
+			}
+			src = IAudioSourceRef(new LibSamplerateFilter(src, target));
 		#else
 			// partially fix sample rate (only multiply by powers of 2)
 			int count = 0;
@@ -49,6 +58,16 @@ ReformatFilter::ReformatFilter(IAudioSourceRef as, AudioFormat target)
 			}
 			dcerr(src->getAudioFormat().SampleRate << " < " << target.SampleRate);
 		#endif
+			++nfilters;
+		}
+
+		if((src->getAudioFormat().Float         != target.Float)
+		|| (src->getAudioFormat().SignedSample  != target.SignedSample)
+		|| (src->getAudioFormat().LittleEndian  != target.LittleEndian)
+		|| (src->getAudioFormat().BitsPerSample != target.BitsPerSample)
+		) {
+			src = IAudioSourceRef(new SampleConverterFilter(src, target));
+			++nfilters;
 		}
 	}
 	audioformat = src->getAudioFormat();
