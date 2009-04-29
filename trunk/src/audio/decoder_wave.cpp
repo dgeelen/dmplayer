@@ -41,7 +41,7 @@ IDecoderRef WaveDecoder::tryDecode(IDataSourceRef datasource)
 	af.SampleRate = srate;
 	af.BitsPerSample = bits;
 	af.LittleEndian = true;
-	af.SignedSample = true;
+	af.SignedSample = (bits > 8);
 
 	return IDecoderRef(new WaveDecoder(af, datasource));
 }
