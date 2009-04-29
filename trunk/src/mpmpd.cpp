@@ -140,8 +140,8 @@ class Server {
 	public:
 		Server(int listen_port, string server_name)
 			: networkhandler(listen_port, server_name)
+			, message_loop_connection(networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2)))
 		{
-			networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2));
 			networkhandler.start();
 			dcerr("Started network_handler");
 			server_datasource = boost::shared_ptr<ServerDataSource>((ServerDataSource*)NULL);
@@ -159,7 +159,10 @@ class Server {
 		~Server() {
 			dcerr("shutting down");
 			message_loop_running = false;
+			dcerr("stopping networkhandler");
+			networkhandler.stop();
 			dcerr("Joining message_loop_thread");
+			message_loop_connection.disconnect();
 			message_loop_thread.join();
 			dcerr("shut down");
 		}
@@ -414,6 +417,7 @@ class Server {
 		boost::recursive_mutex clients_mutex;
 
 		boost::thread message_loop_thread;
+		boost::signals::connection message_loop_connection;
 		boost::shared_ptr<ServerDataSource> server_datasource;
 
 		/* Some playback related varialbles*/
