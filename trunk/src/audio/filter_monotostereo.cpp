@@ -1,6 +1,7 @@
 #include "filter_monotostereo.h"
 
 #include "../cross-platform.h"
+#include "../error-handling.h"
 #include <algorithm>
 
 using namespace std;
@@ -8,6 +9,10 @@ using namespace std;
 MonoToStereoFilter::MonoToStereoFilter(IAudioSourceRef as)
 	: IAudioSource(as->getAudioFormat()), src(as)
 {
+	if(audioformat.Channels != 1
+	|| audioformat.Float
+	|| audioformat.BitsPerSample != 16
+	) throw Exception("Unsupported input format!");
 	audioformat.Channels = 2;
 }
 
