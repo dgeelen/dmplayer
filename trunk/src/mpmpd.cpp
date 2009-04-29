@@ -468,7 +468,7 @@ int main_impl(int argc, char* argv[])
 	po::options_description desc("Allowed options");
 	desc.add_options()
 			("help", po::bool_switch(&showhelp)                   , "produce help message")
-			("port", po::value(&listen_port)->default_value(0), "listen port for daemon (TCP part)")
+			("port", po::value(&listen_port)->default_value(TCP_PORT_NUMBER), "listen port for daemon (TCP part)")
 			("file", po::value(&filename)->default_value("")      , "file to play (Debug for fmod lib)")
 			("name", po::value(&server_name)->default_value("mpmpd V" MPMP_VERSION_STRING), "Server name")
 			("musix", po::value(&musix)->default_value("")      , "directory to add music from")
