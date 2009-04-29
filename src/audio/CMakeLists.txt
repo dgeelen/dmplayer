@@ -163,6 +163,7 @@ ADD_LIBRARY(mpmp_audio
 	filter_monotostereo.h         filter_monotostereo.cpp
 	filter_iir.h                  filter_iir.cpp
 	filter_split.h                filter_split.cpp
+	filter_normalize.h            filter_normalize.cpp
 
 	${BACKEND_SOURCE_FILES}
 	${DECODER_SOURCE_FILES}
