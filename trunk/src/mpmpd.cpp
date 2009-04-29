@@ -326,8 +326,14 @@ class Server {
 					case message::MSG_PLAYLIST_UPDATE: {
 						dcerr("Received a MSG_PLAYLIST_UPDATE from " << STRFORMAT("%08x", id));
 						message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
-						msg->apply(&((*cmi)->wish_list));
-						recalculateplaylist = true;
+						ServerPlaylistReceiver& pl = ((*cmi)->wish_list);
+						if((pl.size() < 100) || (msg->get_type()!=message_playlist_update::UPDATE_INSERT)) {
+							msg->apply(&pl);
+							recalculateplaylist = true;
+						}
+						else {
+							dcerr("Ignoring update, playlist full."); // TODO: Penalty?
+						}
 					}; break;
 					case message::MSG_QUERY_TRACKDB: {
 						dcerr("Received a MSG_QUERY_TRACKDB from " << STRFORMAT("%08x", id));
