@@ -4,7 +4,7 @@
 #include "ui_MainWindow.h"
 #include <string>
 #include "../network-handler.h"
-#include "../audio/audio_controller.h"
+// #include "../audio/audio_controller.h"
 #include "../synced_playlist.h"
 #include <QTimer>
 
@@ -24,7 +24,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		MainWindow();
 		~MainWindow();
 
-		void setNetworkHandler(network_handler* nh_) 
+		void setNetworkHandler(network_handler* nh_)
 		{
 			nh = nh_;
 		}
@@ -55,7 +55,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 
 	private:
 		std::string file;
-		AudioController audiocontroller;
+// 		AudioController audiocontroller;
 		QTimer progressTimer;
 		std::vector<server_info> currentServers;
 
