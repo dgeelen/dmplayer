@@ -20,6 +20,7 @@
 #include "datasource_httpstream.h"
 #include "filter_reformat.h"
 #include "backend_wavwriter.h"
+#include "filter_normalize.h"
 
 // TODO, also poll for data...
 class NullBackend: public IBackend {
@@ -134,6 +135,8 @@ void AudioController::set_data_source(const IDataSourceRef ds) {
 			return;
 		}
 	}
+
+	newdecoder = IAudioSourceRef( new NormalizeFilter( newdecoder, backend->getAudioFormat()) );
 
 	if(newdecoder->getAudioFormat() != backend->getAudioFormat())
 		newdecoder = IAudioSourceRef(new ReformatFilter(newdecoder, backend->getAudioFormat()));
