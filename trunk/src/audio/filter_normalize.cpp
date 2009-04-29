@@ -160,6 +160,9 @@ NormalizeFilter::NormalizeFilter(IAudioSourceRef as, AudioFormat target)
 }
 
 NormalizeFilter::~NormalizeFilter() {
+	float pdb = 10.0 * log10(peak_amplitude); // peak_amplitude is squared
+	float db  = 20.0 * log10(gain);
+	cout << "Recommended gain: " << gain << " / " << showpos << db << noshowpos << " dB, peak amplitude: " << peak_amplitude << " / " << pdb << " dB FS" << endl;
 }
 
 void NormalizeFilter::update_gain() {
@@ -216,6 +219,7 @@ void NormalizeFilter::update_gain() {
 	float max_gain = std::min(1.0f/std::sqrt(peak_amplitude), 100.0f);
 	gain  = std::pow(10.0f, (REFERENCE_LEVEL - level) / 20.0f);
 	gain *= std::max(std::min((float(dB_map.size())-5.0f / 10.0f), 1.0f), 0.0f);
+	gain  = std::min(gain, max_gain);
 }
 
 uint32 NormalizeFilter::getData(uint8* buf, uint32 len) {

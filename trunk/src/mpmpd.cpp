@@ -165,14 +165,14 @@ class Server {
 		}
 
 		void next_song(uint32 playtime_secs) {
-			dcerr("Next song, playtime was " << playtime_secs << " seconds");
+			cout << "Next song, playtime was " << playtime_secs << " seconds" << endl;
 			if((vote_min_penalty && playtime_secs < average_song_duration * 0.2) || (playtime_secs < 15)) {
-				dcerr("issueing a penalty of " << uint32(average_song_duration) << " seconds");
+				cout << "issueing a penalty of " << uint32(average_song_duration) << " seconds" << endl;
 				playtime_secs += uint32(average_song_duration);
 			}
 			if(!vote_min_penalty) { // Update rolling average of last 16 songs
 				average_song_duration = (average_song_duration * 15.0 + double(playtime_secs)) / 16.0;
-				dcerr("average song duration now at " << uint32(average_song_duration) << " seconds");
+				cout << "average song duration now at " << uint32(average_song_duration) << " seconds" << endl;
 			}
 			vote_min_penalty = false;
 
@@ -203,12 +203,12 @@ class Server {
 				double old = (*clients.find(id))->zero_sum;
 				(*clients.find(id))->zero_sum -= avg_min;
 				(*clients.find(id))->zero_sum += avg_plus;
-				dcerr("(min)  for " << STRFORMAT("%08x", id) << ": " << old << " -> " << (*clients.find(id))->zero_sum);
+				cout << "(min)  for " << STRFORMAT("%08x", id) << ": " << old << " -> " << (*clients.find(id))->zero_sum << endl;
 			}
 			BOOST_FOREACH( ClientID& id, does_not_have_song) {
 				double old = (*clients.find(id))->zero_sum;
 				(*clients.find(id))->zero_sum += avg_plus;
-				dcerr("(plus) for " << STRFORMAT("%08x", id) << ": " << old << " -> " << (*clients.find(id))->zero_sum);
+				cout << "(plus) for " << STRFORMAT("%08x", id) << ": " << old << " -> " << (*clients.find(id))->zero_sum << endl;
 			}
 
 			lock.unlock();
