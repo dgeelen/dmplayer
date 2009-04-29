@@ -9,15 +9,14 @@
 
 class LibSamplerateFilter : public IAudioSource {
 	public:
-		typedef struct CALLBACK_DATA {
+		typedef struct {
 			SRC_STATE *src_state ;
 			uint32 channels;
 			uint32 buffer_begin;
 			uint32 buffer_end;
-			long input_buffer_index;
 			std::vector<float> input_buffer;
 			IAudioSourceRef src;
-		};
+		} CALLBACK_DATA;
 
 		LibSamplerateFilter(IAudioSourceRef as, AudioFormat target);
 		~LibSamplerateFilter();
