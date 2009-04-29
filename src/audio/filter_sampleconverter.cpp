@@ -51,6 +51,32 @@ uint32 SampleConverterFilter::fill_buffer(uint8* buffer, uint32 count, uint32 si
 	return count;
 }
 
+uint32 SampleConverterFilter::convert_int8_to_float(float* output, uint32 size) {
+	int8* input = new int8[size];
+
+	size = fill_buffer((uint8*)input, size, sizeof(int8));
+
+	for(uint32 i = 0; i < size; ++i) {
+		output[i] = float(input[i]) / 127.0f;
+	}
+
+	delete[] input;
+	return size * sizeof(float);
+}
+
+uint32 SampleConverterFilter::convert_uint8_to_float(float* output, uint32 size) {
+	uint8* input = new uint8[size];
+
+	size = fill_buffer((uint8*)input, size, sizeof(uint8));
+
+	for(uint32 i = 0; i < size; ++i) {
+		output[i] = float(input[i]) / 127.0f - 1.0;
+	}
+
+	delete[] input;
+	return size * sizeof(float);
+}
+
 uint32 SampleConverterFilter::convert_int16_to_float(float* output, uint32 size) {
 	int16* input = new int16[size];
 
@@ -62,6 +88,21 @@ uint32 SampleConverterFilter::convert_int16_to_float(float* output, uint32 size)
 
 	delete[] input;
 	return size * sizeof(float);
+}
+
+uint32 SampleConverterFilter::convert_float_to_int8(int8* output, uint32 size) {
+	float* input = new float[size];
+
+	size = fill_buffer((uint8*)input, size, sizeof(float));
+
+	for(uint32 i = 0; i < size; ++i) {
+		float f = input[i];
+		f = (f>1.0f) ? 1.0f : ((f<-1.0f) ? -1.0f : f); // Clip to -1 .. 1
+		output[i] = int8(f * 127.0f);
+	}
+
+	delete[] input;
+	return size * sizeof(int8);
 }
 
 uint32 SampleConverterFilter::convert_float_to_int16(int16* output, uint32 size) {
@@ -91,6 +132,9 @@ uint32 SampleConverterFilter::getData(uint8* buf, uint32 len) {
 		if(src->getAudioFormat().Float) {
 			switch(audioformat.BitsPerSample) {
 				case 8: {
+					if(audioformat.SignedSample) {
+						return convert_float_to_int8((int8*)buf, len / sizeof(int8));
+					}
 				}; break;
 				case 16: {
 					if(audioformat.SignedSample) {
@@ -104,6 +148,10 @@ uint32 SampleConverterFilter::getData(uint8* buf, uint32 len) {
 		else { // audioformat.Float
 			switch(src->getAudioFormat().BitsPerSample) {
 				case 8: {
+					if(src->getAudioFormat().SignedSample)
+						return convert_int8_to_float((float*)buf, len / sizeof(float));
+					else
+						return convert_uint8_to_float((float*)buf, len / sizeof(float));
 				}; break;
 				case 16: {
 					if(src->getAudioFormat().SignedSample)
