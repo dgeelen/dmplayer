@@ -27,7 +27,7 @@ IDecoderRef WaveDecoder::tryDecode(IDataSourceRef datasource)
 	STRCHECK( 0, "RIFF");
 	STRCHECK( 8, "WAVE");
 	STRCHECK(12, "fmt ");
-	STRCHECK(36, "data");
+	// STRCHECK(36, "data"); FIXME: Not always valid, see http://ccrma.stanford.edu/courses/422/projects/WaveFormat/
 
 	uint16 fmt      = hdr[20] + (hdr[21] << 8);
 	uint16 channels = hdr[22] + (hdr[23] << 8);
