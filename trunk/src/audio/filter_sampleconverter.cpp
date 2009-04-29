@@ -19,6 +19,15 @@ using namespace std;
 SampleConverterFilter::SampleConverterFilter(IAudioSourceRef as, AudioFormat target)
 	: IAudioSource(as->getAudioFormat()), src(as)
 {
+	if(
+	(audioformat.BitsPerSample == target.BitsPerSample) &&
+	(audioformat.Float         == target.Float) &&
+	(audioformat.SignedSample  == target.SignedSample) &&
+	(audioformat.LittleEndian  == target.LittleEndian)
+	) {
+		dcerr("Cannot convert sampletype [" << src->getAudioFormat() << "] to [" << audioformat << "]");
+		throw Exception("Cannot convert sampletype");
+	}
 	audioformat.BitsPerSample = target.BitsPerSample;
 	audioformat.Float         = target.Float;
 	audioformat.SignedSample  = target.SignedSample;
