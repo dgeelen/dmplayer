@@ -15,18 +15,23 @@ WAVWriterBackend::WAVWriterBackend(AudioController* dec)	: IBackend(dec) {
 }
 
 void WAVWriterBackend::start_output() {
-	done = false;
-	/* Start output thread */
-	try {
-		outputter_thread = new boost::thread(makeErrorHandler(boost::bind(&WAVWriterBackend::outputter, this)));
-	}
-	catch(...) {
-		throw ThreadException("WAVWriterBackend: Could not start output thread!");
+	if(!outputter_thread) {
+		done = false;
+		/* Start output thread */
+		try {
+			outputter_thread = new boost::thread(makeErrorHandler(boost::bind(&WAVWriterBackend::outputter, this)));
+		}
+		catch(...) {
+			throw ThreadException("WAVWriterBackend: Could not start output thread!");
+		}
 	}
 }
 
 void WAVWriterBackend::stop_output() {
 	done = true;
+	if(outputter_thread)
+		outputter_thread->join();
+	outputter_thread = NULL;
 }
 
 void WAVWriterBackend::outputter() {
