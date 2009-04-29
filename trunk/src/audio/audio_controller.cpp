@@ -59,8 +59,7 @@ AudioController::AudioController()
 	#endif
 	#if 0
 	try {
-		WAVWriterBackend* be = new WAVWriterBackend(this);
-		backend = be;
+		backend = IBackendRef(new WAVWriterBackend(this));
 		dcerr("AudioController: WAVWriterBackend is available");
 	} catch(...) {}
 	#endif
