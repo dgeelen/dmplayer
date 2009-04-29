@@ -462,7 +462,7 @@ int main_impl(int argc, char* argv[])
 	#ifdef DEBUG
 	     << "   [Debug Build]"
 	#endif
-	     << "\n";
+	     << endl;
 
 	// Declare the supported options.
 	po::options_description desc("Allowed options");
@@ -480,21 +480,21 @@ int main_impl(int argc, char* argv[])
 	po::notify(vm);
 
 	if (showhelp) {
-		cout << desc << "\n";
+		cout << desc << endl;
 		return 1;
 	}
 
 	if(filename != "") {
 		AudioController ac;
 		ac.test_functie(filename);
-		cout << "Press any key to quit\n";
+		cout << "Press any key to quit" << endl;
 		getchar();
 		return 0;
 	}
 
 	Server svr(listen_port, server_name);
 
-	cout << "Press any key to quit\n";
+	cout << "Press any key to quit" << endl;
 	getchar();
 
 	return 0;
