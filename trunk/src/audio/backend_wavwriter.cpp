@@ -37,6 +37,25 @@ void WAVWriterBackend::stop_output() {
 void WAVWriterBackend::outputter() {
 	dcerr("starting WAV output");
 	f = fopen("output.wav", "wb");
+	{
+		uint32 ByteRate = af.SampleRate * af.Channels * af.BitsPerSample / 8;
+		uint32 BlockAlign = af.Channels * af.BitsPerSample / 8;
+		char hdr[48] = {'R', 'I', 'F', 'F',
+		                  0,   0,   0,   0,
+		                'W', 'A', 'V', 'E',
+		                'f', 'm', 't', ' ',
+		                 16,   0,   0,   0,
+		                  1,   0,
+		                (af.Channels&0xff),   ((af.Channels>>8)&0xff),
+		                (af.SampleRate&0xff), ((af.SampleRate>>8)&0xff), ((af.SampleRate>>16)&0xff), ((af.SampleRate>>24)&0xff),
+		                (ByteRate&0xff), ((ByteRate>>8)&0xff), ((ByteRate>>16)&0xff), ((ByteRate>>24)&0xff),
+		                (BlockAlign&0xff),   ((BlockAlign>>8)&0xff),
+		                (af.BitsPerSample&0xff),   ((af.BitsPerSample>>8)&0xff),
+		                'd', 'a', 't', 'a',
+		                  0,   0,   0,   0,
+		               };
+		fwrite(hdr, 1, 48, f);
+	}
 	if(!f)
 		throw Exception("Could not open file output.wav");
 
