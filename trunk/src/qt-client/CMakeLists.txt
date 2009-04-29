@@ -86,7 +86,7 @@ IF(ENABLE_QT_GUI)
 		${BOOST_THREAD_LIBRARY}
 		${BOOST_SERIALIZATION_LIBRARY}
 		${BOOST_FILESYSTEM_LIBRARY}
-		mpmp_audio
+# 		mpmp_audio
 		mpmp_util
 		lib_network
 	)

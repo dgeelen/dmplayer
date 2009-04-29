@@ -60,7 +60,7 @@ MainWindow::MainWindow()
 			this->splitDockWidget (dockFileHistory, dockServerList , Qt::Vertical  );
 			this->splitDockWidget (dockFileHistory, dockDebugLog   , Qt::Horizontal);
 			this->splitDockWidget (dockServerList , dockServerInfo , Qt::Horizontal);
-			this->tabifyDockWidget(dockServerInfo , dockAudioPlayer);
+// 			this->tabifyDockWidget(dockServerInfo , dockAudioPlayer);
 		}
 	}
 
@@ -206,7 +206,7 @@ void MainWindow::openFile(const QString& str)
 		}
 	}
 	listRecentFiles->insertItem(0, new QListWidgetItem(str));
-	audiocontroller.test_functie(str.toStdString());
+// 	audiocontroller.test_functie(str.toStdString());
 }
 
 void MainWindow::on_listRecentFiles_itemDoubleClicked(QListWidgetItem* item )
@@ -222,7 +222,7 @@ void MainWindow::on_PreviousButton_clicked()
 void MainWindow::on_PlayButton_clicked()
 {
 	progressTimer.start(250);
-	audiocontroller.start_playback();
+// 	audiocontroller.start_playback();
 }
 
 void MainWindow::on_PauseButton_clicked()
@@ -235,7 +235,7 @@ void MainWindow::on_StopButton_clicked()
 //	handler->Stop();
 	progressTimer.stop();
 	updateProgressBar();
-	audiocontroller.stop_playback();
+// 	audiocontroller.stop_playback();
 }
 
 
