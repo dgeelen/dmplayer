@@ -76,12 +76,13 @@ class ServerDataSource : public IDataSource {
 		}
 
 		virtual long getpos() {
+			boost::mutex::scoped_lock lock(data_buffer_mutex);
 			return position;
 		}
 
 		virtual bool exhausted() {
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
-			return (!wait_for_data) && data_exhausted;
+			return (!wait_for_data) && data_exhausted || finished;
 		}
 
 		virtual void reset() {
@@ -93,12 +94,14 @@ class ServerDataSource : public IDataSource {
 		virtual uint32 getData(uint8* buffer, uint32 len) {
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
 			size_t n = 0;
+			size_t avail = size_t(data_buffer.size() - position);
 			if (!finished)
-				n = std::min(size_t(len), size_t(data_buffer.size() - position));
+				n = std::min(size_t(len), avail);
 			if (n>0)
 				memcpy(buffer, &data_buffer[position], n);
-			position+=n;
-			if(n==0) {
+			position += n;
+			avail    -= n;
+			if(avail==0) {
 				data_exhausted = true;
 				if(wait_for_data)
 					boost::thread::yield();
@@ -108,14 +111,13 @@ class ServerDataSource : public IDataSource {
 
 		void appendData(std::vector<uint8>& data) {
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
-			size_t n = data_buffer.size();
 			data_buffer.insert(data_buffer.end(), data.begin(), data.end());
 			data_exhausted = false;
 		}
 
 		void stop() {
-			finished = true;
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
+			finished = true;
 			position = data_buffer.size();
 		}
 
