@@ -10,4 +10,4 @@ New feature requests and fixes can be added here.
   * Connect to server over WLAN.
   * Client: Index files with extension _.mp3_ (not .mp3 in filename)
   * *DSP* manager
-  * ~~Normalize track before playback.~~
+  * ~~Normalize track before playback.~~ (implemented as of r544)
