@@ -7,5 +7,5 @@ These features are likely to be implemented in a future version of MPMPD:
   # The possibility to download songs selected in the server playlist.
   # Move icon to system tray on minimize (currently already implemented in GTK-client).
   # Download tracks in a separate thread (currently already implemented in GTK-client).
-  # Provide a task-tray icon for the Server, with a better output window. (especially imortant on windows)
+  # Provide a task-tray icon for the Server, with a better output window. (especially important on windows)
   # Fix it until it works.
