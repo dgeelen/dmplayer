@@ -11,7 +11,7 @@ Find_Path(LIBSAMPLERATE_INCLUDE_DIR
 )
 
 Find_Library(LIBSAMPLERATE_LIBRARY
- samplerate
+	libsamplerate
 	/usr/lib /usr/local/lib
 	${LIBSAMPLERATE_EXTRALIB_LIBRARY_PATHS}
 )
