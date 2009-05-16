@@ -23,7 +23,7 @@ class HTTPStreamDataSource : public IDataSource {
 		HTTPStreamDataSource(std::string url);
 		~HTTPStreamDataSource();
 
-		long getpos();
+		uint32 getpos();
 		bool exhausted();
 		virtual void reset();
 

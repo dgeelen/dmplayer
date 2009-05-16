@@ -132,7 +132,7 @@ void HTTPStreamDataSource::reset()
 	datarpos = 0;
 }
 
-long HTTPStreamDataSource::getpos() {
+uint32 HTTPStreamDataSource::getpos() {
 	return datarpos;
 }
 

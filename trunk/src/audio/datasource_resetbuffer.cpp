@@ -39,7 +39,7 @@ bool ResetBufferDataSource::exhausted() {
 	return false;
 }
 
-long ResetBufferDataSource::getpos() {
+uint32 ResetBufferDataSource::getpos() {
 	if (done_buffering)
 		return datasource->getpos();
 	return bytes_read;
