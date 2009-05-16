@@ -8,3 +8,4 @@ Makefile
 *.moc
 build/*
 build_release/*
+extralibs/*
