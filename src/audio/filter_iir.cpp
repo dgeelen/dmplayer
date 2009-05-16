@@ -62,7 +62,7 @@ uint32 IIRFilter::getData(uint8* buf, uint32 len) {
 		ninputframes = inputs.size() / audioformat.Channels;
 	}
 
-	float output[audioformat.Channels];
+	boost::shared_array<float> output(new float[audioformat.Channels]);
 	for(uint32 i = nfwdcoef - 1; (i < ninputframes) && (todo > 0); ++i) {
 	 	// Note: We try to access elements in inputs in-order to optimize memory access. Does this help?
 		for(uint32 chan = 0 ; chan < audioformat.Channels; ++chan) {
