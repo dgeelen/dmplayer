@@ -25,8 +25,6 @@
 	#include <boost/thread/mutex.hpp>
 	#define UDP_PORT_NUMBER 55555
 	#define TCP_PORT_NUMBER 4444
-	#define MPMP_CLIENT false
-	#define MPMP_SERVER true
 
 	struct server_info {
 		public:
