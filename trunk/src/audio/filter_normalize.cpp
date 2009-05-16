@@ -152,7 +152,7 @@ NormalizeFilter::NormalizeFilter(IAudioSourceRef as, AudioFormat target)
 	// Clear IIRFilters from noise samples, so that splitter->getData2() returns the same amount of samples as IIRButter->getData()
 	uint32 n_noise_sample_bytes = (YULE_TAPS + BUTTER_TAPS) * audioformat.Channels * sizeof(float);
 	uint32 toread = n_noise_sample_bytes;
-	uint8 buf[n_noise_sample_bytes];
+	boost::shared_array<uint8> buf(new uint8[n_noise_sample_bytes]);
 	while((toread>0) && (!IIRButter->exhausted())) {
 		toread -= IIRButter->getData(&buf[n_noise_sample_bytes-toread], toread);
 	}
@@ -174,7 +174,7 @@ void NormalizeFilter::update_gain() {
 	}
 	filtered_samples.resize(capacity-(todo/sizeof(float)));
 
-	float levels[audioformat.Channels];
+	std::vector<float> levels(audioformat.Channels);
 	for(uint32 sample = 0; sample < filtered_samples.size(); sample += audioformat.Channels) {
 		for(uint32 chan = 0; chan < audioformat.Channels; ++chan) {
 			float s = filtered_samples[sample + chan];
