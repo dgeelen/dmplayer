@@ -20,7 +20,7 @@ class AudioController {
 		void start_playback();
 		void stop_playback();
 		void set_data_source(IDataSourceRef ds);
-		boost::signal<void(uint32)> playback_finished;
+		boost::signal<void(uint64)> playback_finished;
 	private:
 		IBackendRef backend;
 		IAudioSourceRef curdecoder;

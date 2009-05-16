@@ -6,9 +6,9 @@
 #include <boost/shared_ptr.hpp>
 
 struct AudioFormat {
-	int SampleRate;
-	int Channels;
-	int BitsPerSample;
+	uint32 SampleRate;
+	uint32 Channels;
+	uint32 BitsPerSample;
 	bool SignedSample;
 	bool LittleEndian;
 	bool Float;

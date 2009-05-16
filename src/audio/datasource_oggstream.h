@@ -18,7 +18,7 @@ class OGGStreamDataSource: public IDataSource
 		void reset();
 		bool is_exhausted;
 		bool exhausted();
-		long getpos();
+		uint32 getpos();
 		uint32 getData(uint8* buffer, uint32 len);
 	private:
 		OGGDecoderWeakRef decoderw;

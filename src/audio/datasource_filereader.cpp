@@ -22,7 +22,7 @@ FileReaderDataSource::~FileReaderDataSource()
 	dcerr("shut down");
 }
 
-long FileReaderDataSource::getpos() {
+uint32 FileReaderDataSource::getpos() {
 	return ftell(FileHandle);
 }
 

@@ -75,7 +75,7 @@ class ServerDataSource : public IDataSource {
 			finished = false;
 		}
 
-		virtual long getpos() {
+		virtual uint32 getpos() {
 			boost::mutex::scoped_lock lock(data_buffer_mutex);
 			return position;
 		}
@@ -167,7 +167,7 @@ class Server {
 			dcerr("shut down");
 		}
 
-		void next_song(uint32 playtime_secs) {
+		void next_song(uint64 playtime_secs) {
 			cout << "Next song, playtime was " << playtime_secs << " seconds" << endl;
 			if((vote_min_penalty && playtime_secs < average_song_duration * 0.2) || (playtime_secs < 15)) {
 				cout << "issueing a penalty of " << uint32(average_song_duration) << " seconds" << endl;
@@ -185,7 +185,7 @@ class Server {
 			boost::recursive_mutex::scoped_lock lock(clients_mutex);
 			Track t = currenttrack;
 			BOOST_FOREACH(Client_ref c, clients) {
-				int pos = 0;
+				uint32 pos = 0;
 				for (;pos < c->wish_list.size(); ++pos)
 					if (c->wish_list.get(pos).id == t.id)
 						break;

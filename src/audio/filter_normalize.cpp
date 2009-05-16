@@ -21,7 +21,7 @@ using namespace std;
 #define YULE_TAPS 11
 #define BUTTER_TAPS 3
 #define N_SUPPORTED_SAMPLE_RATES 9
-int SAMPLERATE[N_SUPPORTED_SAMPLE_RATES] = {48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025};
+uint32 SAMPLERATE[N_SUPPORTED_SAMPLE_RATES] = {48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025};
 const float AYule[N_SUPPORTED_SAMPLE_RATES][YULE_TAPS] = {
 {  1.00000000000000f,  -3.84664617118067f,   7.81501653005538f, -11.34170355132042f,
   13.05504219327545f, -12.28759895145294f,   9.48293806319790f,  -5.87257861775999f,
@@ -119,10 +119,12 @@ NormalizeFilter::NormalizeFilter(IAudioSourceRef as, AudioFormat target)
 		src = IAudioSourceRef(new SampleConverterFilter(src, af_float));
 	}
 
-	int best_diff = SAMPLERATE[0];
-	int best_match = 0;
+	uint32 best_diff = SAMPLERATE[0];
+	uint32 best_match = 0;
 	for(int i = 0; i < N_SUPPORTED_SAMPLE_RATES; ++i) {
-		int diff = abs(SAMPLERATE[i] - audioformat.SampleRate);
+		int64 diff64 = int64(SAMPLERATE[i]) - int64(audioformat.SampleRate);
+		int32 diff32 = int32(diff64);
+		uint32 diff = abs(diff32);
 		if( diff < best_diff ) {
 			best_match = i;
 			best_diff = diff;

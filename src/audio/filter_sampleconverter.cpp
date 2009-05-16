@@ -70,7 +70,7 @@ uint32 SampleConverterFilter::convert_uint8_to_float(float* output, uint32 size)
 	size = fill_buffer((uint8*)input, size, sizeof(uint8));
 
 	for(uint32 i = 0; i < size; ++i) {
-		output[i] = float(input[i]) / 127.0f - 1.0;
+		output[i] = float(input[i]) / 127.0f - 1.0f;
 	}
 
 	delete[] input;

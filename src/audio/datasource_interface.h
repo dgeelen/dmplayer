@@ -12,7 +12,7 @@ class IDataSource {
 		IDataSource() {};
 		virtual ~IDataSource() {};
 
-		virtual long getpos() = 0;
+		virtual uint32 getpos() = 0;
 		virtual bool exhausted() = 0;
 		virtual void reset() = 0;
 

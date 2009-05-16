@@ -20,7 +20,7 @@ void OGGStreamDataSource::reset() {
 	throw Exception("Impossible OGGStreamDataSource::reset()");
 }
 
-long OGGStreamDataSource::getpos() {
+uint32 OGGStreamDataSource::getpos() {
 	return total_bytes_read;
 }
 
