@@ -12,6 +12,7 @@ using namespace std;
 #define BLOCK_SIZE 1024*8
 
 OGGDecoder::OGGDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
+	dcerr("New OGGDecoder");
 	datasource = ds;
 	datasource->reset();
 	ogg_sync_init(&sync);

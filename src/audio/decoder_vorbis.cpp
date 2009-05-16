@@ -4,6 +4,7 @@
 using namespace std;
 
 VorbisDecoder::VorbisDecoder(IDataSourceRef ds) : IDecoder(AudioFormat()) {
+	dcerr("New VorbisDecoder");
 	datasource = ds;
 	datasource->reset();
 
