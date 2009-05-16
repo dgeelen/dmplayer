@@ -35,9 +35,9 @@ class MadDecoder : public IDecoder {
 
 		size_t start_of_mp3_data;
 	public:
-		MadDecoder();
+		MadDecoder(AudioFormat af, IDataSourceRef source);
 		~MadDecoder();
-		IDecoderRef tryDecode(IDataSourceRef datasource);
+		static IDecoderRef tryDecode(IDataSourceRef datasource);
 		uint32 getData(uint8* buf, uint32 max);
 		bool exhausted();
 };

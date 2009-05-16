@@ -13,7 +13,9 @@ MadDecoder::~MadDecoder()
 	dcerr("shut down");
 }
 
-MadDecoder::MadDecoder() : IDecoder(AudioFormat())
+MadDecoder::MadDecoder(AudioFormat af, IDataSourceRef source)
+	: IDecoder(af)
+	, datasource(source)
 {
 	dcerr("New MadDecoder");
 	mad_stream_init(&Stream);
@@ -31,7 +33,9 @@ bool MadDecoder::exhausted() {
 	return eos;
 }
 
-MadDecoder::MadDecoder(AudioFormat af, IDataSourceRef ds, size_t start_of_mp3_data_) : IDecoder(af)
+MadDecoder::MadDecoder(AudioFormat af, IDataSourceRef ds, size_t start_of_mp3_data_)
+	: IDecoder(af)
+	, datasource(ds)
 {
 	dcerr("New MadDecoder");
 	mad_stream_init(&Stream);
@@ -58,16 +62,24 @@ void MadDecoder::fill_buffer() {
 
 IDecoderRef MadDecoder::tryDecode(IDataSourceRef ds)
 {
-	datasource = ds;
-	datasource->reset();
+	ds->reset();
 	IDecoderRef result;
-	BytesInInput = 0;
+	uint32 BytesInInput = 0;
+	uint8 input_buffer[INPUT_BUFFER_SIZE];
+	mad_stream Stream;
+	mad_synth Synth;
+	mad_frame Frame;
+	mad_timer_t Timer;
 
-	fill_buffer();
+	mad_stream_init(&Stream);
+	mad_frame_init(&Frame);
+	mad_synth_init(&Synth);
+	mad_timer_reset(&Timer);
+
+	while (BytesInInput < INPUT_BUFFER_SIZE && !ds->exhausted())
+		BytesInInput += ds->getData(input_buffer+BytesInInput, INPUT_BUFFER_SIZE-BytesInInput);
 
 	Stream.next_frame = input_buffer; // make sure while loop is entered at least once
-
-	//return new MadDecoder(datasource);
 
 	// TODO: Improve this very simple ID3 tag skip
 	// see http://www.gigamonkeys.com/book/practical-an-id3-parser.html
@@ -85,10 +97,10 @@ IDecoderRef MadDecoder::tryDecode(IDataSourceRef ds)
 			// input_buffer[6,7,8,9] == size
 				if(((input_buffer[6]&0x80)|(input_buffer[7]&0x80)|(input_buffer[8]&0x80)|(input_buffer[9]&0x80))==0) {
 					dcerr("size");
-					int length = (input_buffer[6] << (24-3)) | (input_buffer[7] << (16-2)) | (input_buffer[8] << (8-1)) | (input_buffer[9] << (0-0));
-					while(length>0 && !datasource->exhausted()) {
+					uint32 length = (input_buffer[6] << (24-3)) | (input_buffer[7] << (16-2)) | (input_buffer[8] << (8-1)) | (input_buffer[9] << (0-0));
+					while(length>0 && !ds->exhausted()) {
 						if(length>BytesInInput) {
-							int read = datasource->getData(input_buffer, INPUT_BUFFER_SIZE);
+							int read = ds->getData(input_buffer, INPUT_BUFFER_SIZE);
 							length -= BytesInInput;
 							BytesInInput = read;
 						}
@@ -96,7 +108,8 @@ IDecoderRef MadDecoder::tryDecode(IDataSourceRef ds)
 							memmove(input_buffer, input_buffer + length, BytesInInput - length);
 							BytesInInput-=length;
 							length = 0;
-							fill_buffer();
+							while (BytesInInput < INPUT_BUFFER_SIZE && !ds->exhausted())
+								BytesInInput += ds->getData(input_buffer+BytesInInput, INPUT_BUFFER_SIZE-BytesInInput);
 						}
 					}
 				}
@@ -120,12 +133,16 @@ IDecoderRef MadDecoder::tryDecode(IDataSourceRef ds)
 				af.BitsPerSample = 16;
 				af.LittleEndian = true;
 				af.SignedSample = true;
-				result = IDecoderRef(new MadDecoder(af, datasource, BytesInInput-BytesLeft));
+				result = IDecoderRef(new MadDecoder(af, ds, BytesInInput-BytesLeft));
 			}
 		}
 		if (Stream.error == MAD_ERROR_BUFLEN)
 			break;
 	}
+
+	mad_synth_finish(&Synth);
+	mad_frame_finish(&Frame);
+	mad_stream_finish(&Stream);
 
 	return result;
 }
@@ -192,14 +209,14 @@ uint32 MadDecoder::getData(uint8* buf, uint32 len)
 		int i;
 		for(i = 0; i < Synth.pcm.length && BytesOut < len; ++i)
 		{
-			for (int j = 0; j < audioformat.Channels; ++j) {
+			for (uint32 j = 0; j < audioformat.Channels; ++j) {
 				*((signed short*)(buf+BytesOut)) = MadFixedToSshort(Synth.pcm.samples[j][i]);
 				BytesOut += 2;
 			}
 		}
 
 		for (;i < Synth.pcm.length;++i) {
-			for (int j = 0; j < audioformat.Channels; ++j) {
+			for (uint32 j = 0; j < audioformat.Channels; ++j) {
 				*((signed short*)(output_buffer+BytesInOutput)) = MadFixedToSshort(Synth.pcm.samples[j][i]);
 				BytesInOutput += 2;
 			}
