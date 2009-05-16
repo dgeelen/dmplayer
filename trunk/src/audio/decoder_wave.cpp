@@ -6,6 +6,7 @@ WaveDecoder::WaveDecoder(AudioFormat af, IDataSourceRef ds)
 	: IDecoder(af)
 	, source(ds)
 {
+	dcerr("New WaveDecoder");
 }
 
 WaveDecoder::~WaveDecoder()

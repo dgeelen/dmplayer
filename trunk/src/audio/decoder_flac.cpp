@@ -6,6 +6,7 @@ FlacDecoder::FlacDecoder(IDataSourceRef ds_)
 	: IDecoder(AudioFormat())
 	, ds(ds_)
 {
+	dcerr("New Flac Decoder");
 	try_decode = true;
 	FLAC__StreamDecoderInitStatus stat = init();
 
