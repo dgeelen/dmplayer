@@ -497,6 +497,7 @@ int main_impl(int argc, char* argv[])
 	if(filename != "") {
 		AudioController ac;
 		ac.test_functie(filename);
+		ac.start_playback();
 		cout << "Press any key to quit" << endl;
 		getchar();
 		return 0;
