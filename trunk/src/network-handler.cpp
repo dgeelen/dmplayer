@@ -315,9 +315,10 @@ void network_handler::start() {
 	try {
 		dcerr("Starting thread_receive_packet_handler");
 		thread_receive_packet_handler = boost::shared_ptr<boost::thread>(new boost::thread(makeErrorHandler(boost::bind(&network_handler::receive_packet_handler, this))));
-		if(server_mode)
+		if(server_mode) {
 			dcerr("Starting thread_server_tcp_connection_listener");
 			thread_server_tcp_connection_listener = boost::shared_ptr<boost::thread>(new boost::thread(makeErrorHandler(boost::bind(&network_handler::server_tcp_connection_listener, this))));
+		}
 		if(!server_mode) {
 			dcerr("Starting thread_send_packet_handler");
 			thread_send_packet_handler   = boost::shared_ptr<boost::thread>(new boost::thread(makeErrorHandler(boost::bind(&network_handler::send_packet_handler, this))));
