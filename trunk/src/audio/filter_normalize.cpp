@@ -4,7 +4,6 @@
 #include "../util/StrFormat.h"
 #include "../error-handling.h"
 #include "filter_sampleconverter.h"
-#include "filter_libsamplerate.h"
 #include "filter_split.h"
 #include <algorithm>
 #include <limits>
