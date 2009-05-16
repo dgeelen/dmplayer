@@ -3,8 +3,8 @@
 #include "../util/StrFormat.h"
 
 #define SAMPLE_RATE    (44100)
-#define FRAMES_PER_BUFFER (64)  /* number of frames(=samples) per buffer */
-#define NUM_BUFFERS        (0)  /* number of buffers, if zero then use default minimum */
+#define FRAMES_PER_BUFFER (1024*4)  /* number of frames(=samples) per buffer */
+#define NUM_BUFFERS        (2)  /* number of buffers, if zero then use default minimum */
 
 #if PA_VERSION == 18
 static int pa_callback( void *inputBuffer, void *outputBuffer,
