@@ -265,6 +265,27 @@ void MainWindow::on_ConnectButton_clicked()
 	}
 }
 
+void MainWindow::on_AddButton_clicked()
+{
+	server_info si;
+	std::string astr = AddTextEdit->text().toStdString();
+	si.name = astr;
+	astr = astr + '.';
+	si.connected = false;
+	int i = 0;
+	while(!astr.empty() && i < 4) {
+		size_t ppos = astr.find_first_of('.');
+		std::string nstr = astr.substr(0, ppos);
+		astr.erase(0, ppos+1);
+		si.sock_addr.first.array[i] = atoi(nstr.c_str());
+		++i;
+	}
+	si.sock_addr.second = TCP_PORT_NUMBER;
+	std::vector<server_info> sil;
+	sil.push_back(si);
+	UpdateServerList(sil);
+}
+
 void MainWindow::on_DisconnectButton_clicked()
 {
 
@@ -285,6 +306,7 @@ void MainWindow::handleReceivedMessage(const messageref m)
 	switch (m->get_type()) {
 		case message::MSG_ACCEPT: {
 			message_accept_ref msg = boost::static_pointer_cast<message_accept>(m);
+			labelConnected->setText("Yes");
 			localid = msg->cid;
 		}; break;
 		case message::MSG_DISCONNECT: {
