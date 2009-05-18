@@ -1,7 +1,8 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow" >
-  <property name="geometry" >
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
@@ -9,18 +10,18 @@
     <height>800</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>QTPlayer</string>
   </property>
-  <property name="dockNestingEnabled" >
+  <property name="dockNestingEnabled">
    <bool>true</bool>
   </property>
-  <property name="dockOptions" >
+  <property name="dockOptions">
    <set>QMainWindow::AllowNestedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks|QMainWindow::VerticalTabs</set>
   </property>
-  <widget class="QWidget" name="centralwidget" />
-  <widget class="QMenuBar" name="menubar" >
-   <property name="geometry" >
+  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
@@ -28,99 +29,117 @@
      <height>19</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menu_File" >
-    <property name="title" >
+   <widget class="QMenu" name="menu_File">
+    <property name="title">
      <string>&amp;File</string>
     </property>
-    <addaction name="actionOpen" />
-    <addaction name="separator" />
-    <addaction name="actionClose" />
+    <addaction name="actionOpen"/>
+    <addaction name="separator"/>
+    <addaction name="actionClose"/>
    </widget>
-   <widget class="QMenu" name="menu_Edit" >
-    <property name="title" >
+   <widget class="QMenu" name="menu_Edit">
+    <property name="title">
      <string>&amp;Edit</string>
     </property>
-    <addaction name="actionCut" />
-    <addaction name="actionCopy" />
-    <addaction name="actionPaste" />
-    <addaction name="actionDelete" />
+    <addaction name="actionCut"/>
+    <addaction name="actionCopy"/>
+    <addaction name="actionPaste"/>
+    <addaction name="actionDelete"/>
    </widget>
-   <widget class="QMenu" name="menu_View" >
-    <property name="title" >
+   <widget class="QMenu" name="menu_View">
+    <property name="title">
      <string>&amp;View</string>
     </property>
    </widget>
-   <addaction name="menu_File" />
-   <addaction name="menu_Edit" />
-   <addaction name="menu_View" />
+   <addaction name="menu_File"/>
+   <addaction name="menu_Edit"/>
+   <addaction name="menu_View"/>
   </widget>
-  <widget class="QDockWidget" name="dockServerList" >
-   <property name="floating" >
+  <widget class="QDockWidget" name="dockServerList">
+   <property name="floating">
     <bool>false</bool>
    </property>
-   <property name="features" >
+   <property name="features">
     <set>QDockWidget::AllDockWidgetFeatures</set>
    </property>
-   <property name="allowedAreas" >
+   <property name="allowedAreas">
     <set>Qt::AllDockWidgetAreas</set>
    </property>
-   <property name="windowTitle" >
+   <property name="windowTitle">
     <string>Server List</string>
    </property>
-   <attribute name="dockWidgetArea" >
+   <attribute name="dockWidgetArea">
     <number>8</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents" >
-    <layout class="QHBoxLayout" >
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
-      <widget class="QTreeWidget" name="serverlist" >
-       <column>
-        <property name="text" >
-         <string>Name</string>
-        </property>
-       </column>
-       <column>
-        <property name="text" >
-         <string>Latency</string>
-        </property>
-       </column>
-      </widget>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="QTreeWidget" name="serverlist">
+         <column>
+          <property name="text">
+           <string>Name</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Latency</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QLineEdit" name="AddTextEdit"/>
+         </item>
+         <item>
+          <widget class="QPushButton" name="AddButton">
+           <property name="text">
+            <string>Add</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
      </item>
      <item>
-      <layout class="QVBoxLayout" >
+      <layout class="QVBoxLayout">
        <item>
-        <widget class="QPushButton" name="ConnectButton" >
-         <property name="text" >
+        <widget class="QPushButton" name="ConnectButton">
+         <property name="text">
           <string>Connect</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="DisconnectButton" >
-         <property name="text" >
+        <widget class="QPushButton" name="DisconnectButton">
+         <property name="text">
           <string>Disconnect</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="RefreshButton" >
-         <property name="text" >
+        <widget class="QPushButton" name="RefreshButton">
+         <property name="text">
           <string>Refresh</string>
          </property>
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" >
+        <layout class="QHBoxLayout">
          <item>
-          <widget class="QLabel" name="label_2" >
-           <property name="text" >
+          <widget class="QLabel" name="label_2">
+           <property name="text">
             <string>Connected:</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="labelConnected" >
-           <property name="text" >
+          <widget class="QLabel" name="labelConnected">
+           <property name="text">
             <string>No</string>
            </property>
           </widget>
@@ -129,10 +148,10 @@
        </item>
        <item>
         <spacer>
-         <property name="orientation" >
+         <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
-         <property name="sizeHint" >
+         <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
            <height>40</height>
@@ -145,61 +164,52 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="dockFileHistory" >
-   <property name="floating" >
+  <widget class="QDockWidget" name="dockFileHistory">
+   <property name="floating">
     <bool>false</bool>
    </property>
-   <property name="features" >
+   <property name="features">
     <set>QDockWidget::AllDockWidgetFeatures</set>
    </property>
-   <property name="allowedAreas" >
+   <property name="allowedAreas">
     <set>Qt::AllDockWidgetAreas</set>
    </property>
-   <property name="windowTitle" >
+   <property name="windowTitle">
     <string>Recent Files</string>
    </property>
-   <attribute name="dockWidgetArea" >
+   <attribute name="dockWidgetArea">
     <number>4</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_2" >
-    <layout class="QGridLayout" >
-     <property name="leftMargin" >
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <layout class="QGridLayout">
+     <property name="margin">
       <number>9</number>
      </property>
-     <property name="topMargin" >
-      <number>9</number>
-     </property>
-     <property name="rightMargin" >
-      <number>9</number>
-     </property>
-     <property name="bottomMargin" >
-      <number>9</number>
-     </property>
-     <item row="0" column="0" >
-      <widget class="QPushButton" name="OpenEditButton" >
-       <property name="text" >
+     <item row="0" column="0">
+      <widget class="QPushButton" name="OpenEditButton">
+       <property name="text">
         <string>Open</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1" >
-      <widget class="QLineEdit" name="lineEdit" />
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="lineEdit"/>
      </item>
-     <item row="1" column="0" >
-      <layout class="QVBoxLayout" >
+     <item row="1" column="0">
+      <layout class="QVBoxLayout">
        <item>
-        <widget class="QPushButton" name="OpenButton" >
-         <property name="text" >
+        <widget class="QPushButton" name="OpenButton">
+         <property name="text">
           <string>Browse...</string>
          </property>
         </widget>
        </item>
        <item>
         <spacer>
-         <property name="orientation" >
+         <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
-         <property name="sizeHint" >
+         <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
            <height>40</height>
@@ -209,138 +219,143 @@
        </item>
       </layout>
      </item>
-     <item row="1" column="1" >
-      <widget class="QListWidget" name="listRecentFiles" />
+     <item row="1" column="1">
+      <widget class="QListWidget" name="listRecentFiles"/>
      </item>
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="dockDebugLog" >
-   <property name="floating" >
+  <widget class="QDockWidget" name="dockDebugLog">
+   <property name="floating">
     <bool>false</bool>
    </property>
-   <property name="features" >
+   <property name="features">
     <set>QDockWidget::AllDockWidgetFeatures</set>
    </property>
-   <property name="allowedAreas" >
+   <property name="allowedAreas">
     <set>Qt::AllDockWidgetAreas</set>
    </property>
-   <property name="windowTitle" >
+   <property name="windowTitle">
     <string>Debug Log</string>
    </property>
-   <attribute name="dockWidgetArea" >
+   <attribute name="dockWidgetArea">
     <number>4</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_3" >
-    <layout class="QHBoxLayout" >
+   <widget class="QWidget" name="dockWidgetContents_3">
+    <layout class="QHBoxLayout">
      <item>
-      <widget class="QTextEdit" name="textEdit" />
+      <widget class="QTextEdit" name="textEdit"/>
      </item>
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="dockAudioPlayer" >
-   <property name="features" >
+  <widget class="QDockWidget" name="dockAudioPlayer">
+   <property name="features">
     <set>QDockWidget::AllDockWidgetFeatures</set>
    </property>
-   <property name="allowedAreas" >
+   <property name="allowedAreas">
     <set>Qt::AllDockWidgetAreas</set>
    </property>
-   <property name="windowTitle" >
+   <property name="windowTitle">
     <string>Audio Player</string>
    </property>
-   <attribute name="dockWidgetArea" >
+   <attribute name="dockWidgetArea">
     <number>8</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_6" >
-    <layout class="QGridLayout" >
-     <item row="1" column="1" >
-      <layout class="QHBoxLayout" >
+   <widget class="QWidget" name="dockWidgetContents_6">
+    <layout class="QGridLayout">
+     <item row="1" column="1">
+      <layout class="QHBoxLayout">
        <item>
-        <widget class="QProgressBar" name="trackProgress" >
-         <property name="value" >
+        <widget class="QProgressBar" name="trackProgress">
+         <property name="value">
           <number>0</number>
          </property>
-         <property name="alignment" >
+         <property name="alignment">
           <set>Qt::AlignLeading</set>
          </property>
-         <property name="textVisible" >
+         <property name="textVisible">
           <bool>false</bool>
          </property>
-         <property name="format" >
+         <property name="format">
           <string>%p%</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="label" >
-         <property name="text" >
+        <widget class="QLabel" name="label">
+         <property name="text">
           <string>mwuahahahahahahahahaha</string>
          </property>
         </widget>
        </item>
       </layout>
      </item>
-     <item row="2" column="1" >
-      <layout class="QHBoxLayout" >
+     <item row="2" column="1">
+      <layout class="QHBoxLayout">
        <item>
-        <widget class="QPushButton" name="PreviousButton" >
-         <property name="text" >
+        <widget class="QPushButton" name="PreviousButton">
+         <property name="text">
           <string>Previous</string>
          </property>
-         <property name="icon" >
-          <iconset resource="icons.qrc" >:/new/prefix1/Images/Prev.png</iconset>
+         <property name="icon">
+          <iconset resource="icons.qrc">
+           <normaloff>:/new/prefix1/Images/Prev.png</normaloff>:/new/prefix1/Images/Prev.png</iconset>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="PlayButton" >
-         <property name="text" >
+        <widget class="QPushButton" name="PlayButton">
+         <property name="text">
           <string>Play</string>
          </property>
-         <property name="icon" >
-          <iconset resource="icons.qrc" >:/new/prefix1/Images/Play.png</iconset>
+         <property name="icon">
+          <iconset resource="icons.qrc">
+           <normaloff>:/new/prefix1/Images/Play.png</normaloff>:/new/prefix1/Images/Play.png</iconset>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="PauseButton" >
-         <property name="text" >
+        <widget class="QPushButton" name="PauseButton">
+         <property name="text">
           <string>Pause</string>
          </property>
-         <property name="icon" >
-          <iconset resource="icons.qrc" >:/new/prefix1/Images/Pause.png</iconset>
+         <property name="icon">
+          <iconset resource="icons.qrc">
+           <normaloff>:/new/prefix1/Images/Pause.png</normaloff>:/new/prefix1/Images/Pause.png</iconset>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="StopButton" >
-         <property name="text" >
+        <widget class="QPushButton" name="StopButton">
+         <property name="text">
           <string>Stop</string>
          </property>
-         <property name="icon" >
-          <iconset resource="icons.qrc" >:/new/prefix1/Images/Stop.png</iconset>
+         <property name="icon">
+          <iconset resource="icons.qrc">
+           <normaloff>:/new/prefix1/Images/Stop.png</normaloff>:/new/prefix1/Images/Stop.png</iconset>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="NextButton" >
-         <property name="text" >
+        <widget class="QPushButton" name="NextButton">
+         <property name="text">
           <string>Next</string>
          </property>
-         <property name="icon" >
-          <iconset resource="icons.qrc" >:/new/prefix1/Images/Next.png</iconset>
+         <property name="icon">
+          <iconset resource="icons.qrc">
+           <normaloff>:/new/prefix1/Images/Next.png</normaloff>:/new/prefix1/Images/Next.png</iconset>
          </property>
         </widget>
        </item>
       </layout>
      </item>
-     <item row="0" column="1" >
+     <item row="0" column="1">
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0">
         <size>
          <width>20</width>
          <height>40</height>
@@ -348,12 +363,12 @@
        </property>
       </spacer>
      </item>
-     <item row="3" column="1" >
+     <item row="3" column="1">
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0">
         <size>
          <width>20</width>
          <height>40</height>
@@ -361,12 +376,12 @@
        </property>
       </spacer>
      </item>
-     <item row="1" column="0" >
+     <item row="1" column="0">
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0">
         <size>
          <width>40</width>
          <height>20</height>
@@ -374,12 +389,12 @@
        </property>
       </spacer>
      </item>
-     <item row="1" column="2" >
+     <item row="1" column="2">
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0">
         <size>
          <width>40</width>
          <height>20</height>
@@ -390,44 +405,44 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="dockServerInfo" >
-   <property name="features" >
+  <widget class="QDockWidget" name="dockServerInfo">
+   <property name="features">
     <set>QDockWidget::AllDockWidgetFeatures</set>
    </property>
-   <property name="allowedAreas" >
+   <property name="allowedAreas">
     <set>Qt::AllDockWidgetAreas</set>
    </property>
-   <property name="windowTitle" >
+   <property name="windowTitle">
     <string>Server Info</string>
    </property>
-   <attribute name="dockWidgetArea" >
+   <attribute name="dockWidgetArea">
     <number>8</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_4" >
-    <layout class="QGridLayout" >
-     <item row="0" column="0" >
-      <widget class="QLabel" name="lblsvname" >
-       <property name="text" >
+   <widget class="QWidget" name="dockWidgetContents_4">
+    <layout class="QGridLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="lblsvname">
+       <property name="text">
         <string>Server Name</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1" >
-      <widget class="QLabel" name="lblServerName" >
-       <property name="text" >
+     <item row="0" column="1">
+      <widget class="QLabel" name="lblServerName">
+       <property name="text">
         <string/>
        </property>
-       <property name="indent" >
+       <property name="indent">
         <number>-1</number>
        </property>
       </widget>
      </item>
-     <item row="0" column="2" >
+     <item row="0" column="2">
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0">
         <size>
          <width>40</width>
          <height>20</height>
@@ -435,40 +450,40 @@
        </property>
       </spacer>
      </item>
-     <item row="1" column="0" >
-      <widget class="QLabel" name="lblping" >
-       <property name="text" >
+     <item row="1" column="0">
+      <widget class="QLabel" name="lblping">
+       <property name="text">
         <string>Ping</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1" >
-      <widget class="QLabel" name="lblPing" >
-       <property name="text" >
+     <item row="1" column="1">
+      <widget class="QLabel" name="lblPing">
+       <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="2" column="0" >
-      <widget class="QLabel" name="lblAddress" >
-       <property name="text" >
+     <item row="2" column="0">
+      <widget class="QLabel" name="lblAddress">
+       <property name="text">
         <string>Server Address</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1" >
-      <widget class="QLabel" name="lblServerAddress" >
-       <property name="text" >
+     <item row="2" column="1">
+      <widget class="QLabel" name="lblServerAddress">
+       <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="3" column="0" >
+     <item row="3" column="0">
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0">
         <size>
          <width>20</width>
          <height>40</height>
@@ -479,46 +494,46 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="dockPlaylist" >
-   <property name="windowTitle" >
+  <widget class="QDockWidget" name="dockPlaylist">
+   <property name="windowTitle">
     <string>Playlist</string>
    </property>
-   <attribute name="dockWidgetArea" >
+   <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_5" >
-    <layout class="QVBoxLayout" >
+   <widget class="QWidget" name="dockWidgetContents_5">
+    <layout class="QVBoxLayout">
      <item>
-      <widget class="QPlaylist" name="PlayListWidget" >
+      <widget class="QPlaylist" name="PlayListWidget">
        <column>
-        <property name="text" >
+        <property name="text">
          <string>1</string>
         </property>
        </column>
       </widget>
      </item>
      <item>
-      <layout class="QHBoxLayout" >
+      <layout class="QHBoxLayout">
        <item>
-        <widget class="QPushButton" name="buttonVotePlus" >
-         <property name="text" >
+        <widget class="QPushButton" name="buttonVotePlus">
+         <property name="text">
           <string>Vote+</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="buttonVoteMin" >
-         <property name="text" >
+        <widget class="QPushButton" name="buttonVoteMin">
+         <property name="text">
           <string>Vote-</string>
          </property>
         </widget>
        </item>
        <item>
         <spacer>
-         <property name="orientation" >
+         <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
-         <property name="sizeHint" >
+         <property name="sizeHint" stdset="0">
           <size>
            <width>40</width>
            <height>20</height>
@@ -531,54 +546,54 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="dockDatabase" >
-   <property name="windowTitle" >
+  <widget class="QDockWidget" name="dockDatabase">
+   <property name="windowTitle">
     <string>Track Database</string>
    </property>
-   <attribute name="dockWidgetArea" >
+   <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_7" >
-    <layout class="QVBoxLayout" >
+   <widget class="QWidget" name="dockWidgetContents_7">
+    <layout class="QVBoxLayout">
      <item>
-      <widget class="QLineEdit" name="editTrackSearch" />
+      <widget class="QLineEdit" name="editTrackSearch"/>
      </item>
      <item>
-      <widget class="QPlaylist" name="DataBaseWidget" >
-       <property name="editTriggers" >
+      <widget class="QPlaylist" name="DataBaseWidget">
+       <property name="editTriggers">
         <set>QAbstractItemView::AllEditTriggers</set>
        </property>
-       <property name="selectionMode" >
+       <property name="selectionMode">
         <enum>QAbstractItemView::ContiguousSelection</enum>
        </property>
-       <property name="selectionBehavior" >
+       <property name="selectionBehavior">
         <enum>QAbstractItemView::SelectRows</enum>
        </property>
-       <property name="textElideMode" >
+       <property name="textElideMode">
         <enum>Qt::ElideRight</enum>
        </property>
        <column>
-        <property name="text" >
+        <property name="text">
          <string>1</string>
         </property>
        </column>
       </widget>
      </item>
      <item>
-      <layout class="QHBoxLayout" >
+      <layout class="QHBoxLayout">
        <item>
-        <widget class="QPushButton" name="buttonPlaylistAdd" >
-         <property name="text" >
+        <widget class="QPushButton" name="buttonPlaylistAdd">
+         <property name="text">
           <string>Add to Playlist</string>
          </property>
         </widget>
        </item>
        <item>
         <spacer>
-         <property name="orientation" >
+         <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
-         <property name="sizeHint" >
+         <property name="sizeHint" stdset="0">
           <size>
            <width>40</width>
            <height>20</height>
@@ -587,8 +602,8 @@
         </spacer>
        </item>
        <item>
-        <widget class="QPushButton" name="buttonMusicAdd" >
-         <property name="text" >
+        <widget class="QPushButton" name="buttonMusicAdd">
+         <property name="text">
           <string>Add new music...</string>
          </property>
         </widget>
@@ -598,38 +613,38 @@
     </layout>
    </widget>
   </widget>
-  <action name="action_Quit" >
-   <property name="text" >
+  <action name="action_Quit">
+   <property name="text">
     <string>&amp;Quit</string>
    </property>
   </action>
-  <action name="actionOpen" >
-   <property name="text" >
+  <action name="actionOpen">
+   <property name="text">
     <string>Open</string>
    </property>
   </action>
-  <action name="actionClose" >
-   <property name="text" >
+  <action name="actionClose">
+   <property name="text">
     <string>Close</string>
    </property>
   </action>
-  <action name="actionCut" >
-   <property name="text" >
+  <action name="actionCut">
+   <property name="text">
     <string>Cut</string>
    </property>
   </action>
-  <action name="actionCopy" >
-   <property name="text" >
+  <action name="actionCopy">
+   <property name="text">
     <string>Copy</string>
    </property>
   </action>
-  <action name="actionPaste" >
-   <property name="text" >
+  <action name="actionPaste">
+   <property name="text">
     <string>Paste</string>
    </property>
   </action>
-  <action name="actionDelete" >
-   <property name="text" >
+  <action name="actionDelete">
+   <property name="text">
     <string>Delete</string>
    </property>
   </action>
@@ -642,7 +657,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="icons.qrc" />
+  <include location="icons.qrc"/>
  </resources>
  <connections>
   <connection>
@@ -651,11 +666,11 @@
    <receiver>MainWindow</receiver>
    <slot>close()</slot>
    <hints>
-    <hint type="sourcelabel" >
+    <hint type="sourcelabel">
      <x>-1</x>
      <y>-1</y>
     </hint>
-    <hint type="destinationlabel" >
+    <hint type="destinationlabel">
      <x>127</x>
      <y>80</y>
     </hint>
@@ -667,11 +682,11 @@
    <receiver>OpenEditButton</receiver>
    <slot>click()</slot>
    <hints>
-    <hint type="sourcelabel" >
+    <hint type="sourcelabel">
      <x>485</x>
      <y>340</y>
     </hint>
-    <hint type="destinationlabel" >
+    <hint type="destinationlabel">
      <x>485</x>
      <y>312</y>
     </hint>
@@ -683,11 +698,11 @@
    <receiver>actionOpen</receiver>
    <slot>trigger()</slot>
    <hints>
-    <hint type="sourcelabel" >
+    <hint type="sourcelabel">
      <x>47</x>
      <y>90</y>
     </hint>
-    <hint type="destinationlabel" >
+    <hint type="destinationlabel">
      <x>-1</x>
      <y>-1</y>
     </hint>

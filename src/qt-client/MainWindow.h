@@ -42,6 +42,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		void on_StopButton_clicked();
 		void on_NextButton_clicked();
 		void on_ConnectButton_clicked();
+		void on_AddButton_clicked();
 		void on_RefreshButton_clicked();
 		void on_DisconnectButton_clicked();
 		void on_DataBaseWidget_doubleClicked(QModelIndex);
