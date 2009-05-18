@@ -27,6 +27,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow
 		void setNetworkHandler(network_handler* nh_)
 		{
 			nh = nh_;
+			nh->start();
 		}
 
 	public Q_SLOTS:
