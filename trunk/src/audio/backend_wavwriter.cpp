@@ -53,6 +53,7 @@ void WAVWriterBackend::outputter() {
 		                (af.BitsPerSample&0xff),   ((af.BitsPerSample>>8)&0xff),
 		                'd', 'a', 't', 'a',
 		                  0,   0,   0,   0,
+		                  0,   0,   0,   0,
 		               };
 		fwrite(hdr, 1, 48, f);
 	}
