@@ -9,6 +9,7 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/foreach.hpp>
+#include <boost/version.hpp>
 #include <string>
 #include <map>
 #include "types.h"
@@ -105,7 +106,14 @@ class packet {
  *      TCP Packets       *
  ** ** ** ** ** ** ** ** **/
 
-#define NETWERK_PROTOCOL_VERSION 2
+/* 
+ * Changelog for NETWORK_PROTOCOL_VERSION 
+ *  - New in version 3:
+ *    + Check for compatible versions of boost::serialize.
+ *    + On disconnect tell the client why we disconnected.
+ */
+#define NETWORK_PROTOCOL_VERSION 3 // FIXME: Investigate breakage with mixed versions of Boost
+
 
 class message {
 	// is not used, but marks inheritance as virtual
@@ -142,11 +150,11 @@ class message {
 typedef boost::shared_ptr<message> messageref;
 typedef boost::shared_ptr<const message> messagecref;
 
-
 class message_connect : public message {
 	public:
-		message_connect() : message(MSG_CONNECT), version(NETWERK_PROTOCOL_VERSION) {};
+		message_connect() : message(MSG_CONNECT), version(NETWORK_PROTOCOL_VERSION), boost_version(BOOST_VERSION) {};
 		uint32 get_version() { return version; };
+		uint32 get_boost_version() { return boost_version; };
 	private:
 		friend class boost::serialization::access;
 		template<class Archive>
@@ -154,19 +162,30 @@ class message_connect : public message {
 			ar & boost::serialization::base_object<message>(*this);
 			// IMPORTANT! Don't *EVER* try to serialize the 'const unsigned int version' in the method definition!
 			ar & this->version;
+			if ( this->version >= 3) {
+				ar & this->boost_version;
+			}
+			else {
+				this->boost_version = 0;
+			}
 		}
 		uint32 version;
+		uint32 boost_version;
 };
 typedef boost::shared_ptr<message_connect> message_connect_ref;
 
 class message_disconnect : public message {
 	public:
-		message_disconnect() : message(MSG_DISCONNECT) {};
+		message_disconnect(std::string _reason) : message(MSG_DISCONNECT), reason(_reason) {};
+		std::string get_reason() { return reason; };
 	private:
+		message_disconnect() : message(MSG_DISCONNECT), reason("No reason was specified") {};
 		friend class boost::serialization::access;
+		std::string reason;
 		template<class Archive>
 		void serialize(Archive & ar, const unsigned int version) {
 			ar & boost::serialization::base_object<message>(*this);
+			ar & this->reason;
 		}
 };
 typedef boost::shared_ptr<message_disconnect> message_disconnect_ref;
