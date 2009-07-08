@@ -5,6 +5,7 @@
 #include "../error-handling.h"
 #include <boost/bind.hpp>
 #include "QtBooster.h"
+#include "../util/UPXFix.h"
 
 #include <QProcess>
 #include <QDir>
