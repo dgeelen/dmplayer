@@ -61,7 +61,10 @@ vector<LocalTrack> TrackDataBase::search(Track track) {
 }
 
 void TrackDataBase::add_directory(fs::path path) {
-	if(!fs::exists(path)) return;
+	try {
+		if(!fs::exists(path)) return;
+	} catch(exception& e) { return; }
+
 	if(fs::is_directory(path)) {
 		fs::directory_iterator end_iter; // default construction yields past-the-end
 		for(fs::directory_iterator iter(path);  iter != end_iter; ++iter ) {
