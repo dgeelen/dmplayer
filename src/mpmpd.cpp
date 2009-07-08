@@ -17,6 +17,7 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include "synced_playlist.h"
 #include "util/StrFormat.h"
+#include "util/UPXFix.h"
 #include <algorithm>
 
 namespace po = boost::program_options;
