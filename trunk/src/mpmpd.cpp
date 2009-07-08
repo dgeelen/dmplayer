@@ -390,7 +390,7 @@ class Server {
 				}
 			}
 			else {
-				networkhandler.send_message(id, messageref(new message_disconnect()));
+				networkhandler.send_message(id, messageref(new message_disconnect("You are not connected! Go away.")));
 			}
 			} // release locks on playlist and clientlist
 			if(recalculateplaylist) {

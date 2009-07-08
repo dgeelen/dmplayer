@@ -138,7 +138,7 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 			switch (m->get_type()) {
 				case message::MSG_CONNECT: {
 					message_connect_ref msg = boost::static_pointer_cast<message_connect>(m);
-					if (msg->get_version() == NETWERK_PROTOCOL_VERSION) {
+					if(msg->get_version() == NETWORK_PROTOCOL_VERSION && msg->get_boost_version() == BOOST_VERSION) {
 						dcerr("Accepted a client connection from " << sock->get_ipv4_socket_addr() << " ClientID="<<cid);
 						{
 						boost::mutex::scoped_lock lock(clients_mutex);
@@ -146,9 +146,12 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 						}
 						(*sock) << messageref(new message_accept(cid));
 						server_message_receive_signal(m, cid);
-					} else {
-						dcerr("Client tried to connect with wrong version (got " << msg->get_version() << ", expected " << NETWERK_PROTOCOL_VERSION<< ")");
-						(*sock) << messageref(new message_disconnect());
+					}
+					else {
+						dcerr("Client tried to connect with wrong version");
+						dcerr("Client protocol version " << msg->get_version() << ", expected " << NETWORK_PROTOCOL_VERSION<< ")");
+						dcerr("Boost version " << msg->get_boost_version() << ", expected " << BOOST_VERSION << ")");
+						(*sock) << messageref(new message_disconnect(STRFORMAT("Protocol mismatch, you tried to connect with protocol v%i and Boost version %i while this server expects protocol v%i and boost version %i.",msg->get_version(), msg->get_boost_version(), NETWORK_PROTOCOL_VERSION,BOOST_VERSION)));
 						active = false;
 					}
 				}; break;

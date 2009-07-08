@@ -2,6 +2,7 @@
 using namespace std;
 
 #include "error-handling.h"
+#include "util/StrFormat.h"
 #include <boost/serialization/shared_ptr.hpp>
 
 // NOTE: I'm not sure why it works, but I think these BOOST_CLASS_EXPORTs need to be here...
@@ -48,7 +49,7 @@ void operator>>(tcp_socket& sock,       messageref& msg)
 		boost::archive::text_iarchive ia(ss);
 		ia >> msg;
 	} catch (std::exception& e) {
-		msg = messageref(new message_disconnect);
+		msg = messageref(new message_disconnect(STRFORMAT("Exception while reading from socket: %s", e.what())));
 	}
 }
 
