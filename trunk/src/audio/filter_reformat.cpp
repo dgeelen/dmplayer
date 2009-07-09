@@ -20,7 +20,7 @@ ReformatFilter::ReformatFilter(IAudioSourceRef as, AudioFormat target)
 	// Abort on invalid AudioFormat
 	if(src->getAudioFormat().Channels==-1 || target.Channels==-1 ||
 	   src->getAudioFormat().SampleRate==-1 || target.SampleRate==-1 ) {
-		throw Exception("Invalid audioformat!");
+		throw Exception("Invalid audioformat! (source or target samplerate unset while matching audioformats)");
 	}
 
 	uint32 nfilters = 0;
