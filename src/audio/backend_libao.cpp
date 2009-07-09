@@ -3,6 +3,7 @@
 #include <boost/bind.hpp>
 
 #define BUF_SIZE 1024*8 /* 8K buffers =~ 0.0464399sec of buffer) */
+
 LibAOBackend::LibAOBackend(AudioController* dec)	: IBackend(dec), thread_started_barrier(2) {
 	if(!decoder) throw(Exception("Error: decoder is NULL!"));
 	ao_initialize();
@@ -88,11 +89,11 @@ void LibAOBackend::stop_output() {
 	active = false;
 	readback_lock_mutex.unlock();
 	read_next_condition.notify_one(); // decoder_read_thread exits
-	thread_decoder_read_thread->join();
+	if(thread_decoder_read_thread) thread_decoder_read_thread->join();
 	playback_lock_mutex.lock(); // Only when ao_play_thread is waiting
 	playback_lock_mutex.unlock();
 	play_next_condition.notify_one(); // ao_play_thread exits
-	thread_ao_play_thread->join();
+	if(thread_ao_play_thread) thread_ao_play_thread->join();
 	dcerr("stopped");
 }
 
