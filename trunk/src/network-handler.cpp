@@ -14,6 +14,7 @@
 #include "network-handler.h"
 #include "packet.h"
 #include "error-handling.h"
+#include "util/StrFormat.h"
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
