@@ -102,6 +102,7 @@ uint32 tcp_socket::receive( const uint8* buf, const uint32 len )
 void tcp_listen_socket::disconnect()
 {
 	if (sock != INVALID_SOCKET) {
+		shutdown(sock, SHUT_RDWR);
 		closesocket(sock);
 		sock = INVALID_SOCKET;
 	}
@@ -110,6 +111,7 @@ void tcp_listen_socket::disconnect()
 void tcp_socket::disconnect()
 {
 	if (sock != INVALID_SOCKET) {
+		shutdown(sock, SHUT_RDWR);
 		closesocket(sock);
 		sock = INVALID_SOCKET;
 	}
@@ -153,7 +155,7 @@ void tcp_listen_socket::listen(const ipv4_addr addr, const uint16 portnumber)
 
 	if ( bind( sock, ( sockaddr* )&addr_in, sizeof( addr_in ) ) == SOCKET_ERROR ) {
 		cout << "tcp_listen_socket: Bind to network failed: error " << NetGetLastError() << "\n";
-		closesocket( sock );
+		disconnect();
 		stringstream ss;
 		ss << "tcp_listen_socket: Bind to network failed: error " << NetGetLastError();
 		throw std::runtime_error(ss.str().c_str());
@@ -161,7 +163,7 @@ void tcp_listen_socket::listen(const ipv4_addr addr, const uint16 portnumber)
 
 	socklen_t addrlen = sizeof( addr_in );
 	if (getsockname(sock, ( sockaddr* )&addr_in, &addrlen) == SOCKET_ERROR ) {
-		closesocket(sock);
+		disconnect();
 		throw std::runtime_error("unable to retrieve port");
 	}
 	port = htons(addr_in.sin_port); // assume x = htons(htons(x))
@@ -193,7 +195,7 @@ bool udp_socket::bind(const ipv4_addr addr, const uint16 portnumber) {
 	addr_in.sin_port = htons( portnumber );
 
 	if (/*portnumber && */::bind( sock, ( sockaddr* )&addr_in, sizeof( addr_in ) ) == SOCKET_ERROR ) {
-		closesocket( sock );
+		close();
 		stringstream ss;
 		ss << "udp_socket: Bind to network failed: error " << NetGetLastError();
 		throw std::runtime_error(ss.str().c_str());
@@ -202,7 +204,7 @@ bool udp_socket::bind(const ipv4_addr addr, const uint16 portnumber) {
 	// now enable broadcasting
 	unsigned long bc = 1;
 	if ( setsockopt( sock, SOL_SOCKET, SO_BROADCAST, ( char* )&bc, sizeof( bc )) == SOCKET_ERROR ) {
-		closesocket( sock );
+		close();
 		stringstream ss;
 		ss << "udp_socket: Unable to enable broadcasting: error " << NetGetLastError();
 		throw std::runtime_error(ss.str().c_str());
@@ -229,9 +231,9 @@ uint32 udp_socket::receive( ipv4_addr* from_addr, uint16* from_port, const uint8
 	return 0;
 }
 
-void udp_socket::close()
-{
+void udp_socket::close() {
 	if (sock != INVALID_SOCKET) {
+		shutdown(sock, SHUT_RDWR);
 		closesocket(sock);
 		sock = INVALID_SOCKET;
 	}
