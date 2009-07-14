@@ -315,9 +315,9 @@ void network_handler::start() {
 	dcerr("Starting network IO threads");
 	if(thread_receive_packet_handler!=NULL || thread_send_packet_handler!=NULL)
 		throw("Error: stop() the network_handler() before start()ing it!");
-	receive_packet_handler_running = true;
 	try {
 		dcerr("Starting thread_receive_packet_handler");
+		receive_packet_handler_running = true;
 		thread_receive_packet_handler = boost::shared_ptr<boost::thread>(new boost::thread(makeErrorHandler(boost::bind(&network_handler::receive_packet_handler, this))));
 		if(server_mode) {
 			dcerr("Starting thread_server_tcp_connection_listener");
