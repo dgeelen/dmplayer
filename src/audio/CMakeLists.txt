@@ -1,6 +1,4 @@
 # Try to find all packages that we need/support
-find_package(SDL)
-find_package(SDL_mixer)
 find_package(PortAudio)
 find_package(Mad)
 find_package(LibAO)
@@ -29,19 +27,6 @@ IF(PORTAUDIO_FOUND) #PortAudio backend
 	INCLUDE_DIRECTORIES(${PORTAUDIO_INCLUDE_DIR})
 	ADD_DEFINITIONS(-DPORTAUDIO_BACKEND)
 ENDIF(PORTAUDIO_FOUND)
-
-IF(SDLMIXER_FOUND) #SDL backend
-	SET(BACKEND_SOURCE_FILES ${BACKEND_SOURCE_FILES}
-		backend_sdlmixer.h
-		backend_sdlmixer.cpp
-	)
-	SET(BACKEND_LIBRARIES ${BACKEND_LIBRARIES} ${SDLMIXER_LIBRARY})
-	INCLUDE_DIRECTORIES(
-		${SDL_INCLUDE_DIR}
-		${SDLMIXER_INCLUDE_DIR}
-	)
-	ADD_DEFINITIONS(-DSDL_MIXER_BACKEND)
-ENDIF(SDLMIXER_FOUND)
 
 IF(LIBAO_FOUND) # Xiph.org libao backend
 	SET(BACKEND_SOURCE_FILES ${BACKEND_SOURCE_FILES}
