@@ -362,17 +362,11 @@ void network_handler::stop()
 	udp_rsock.close();
 	udp_ssock.close();
 
-	#ifndef __linux__
-	/* There appears to be something funny going on under linux
-	 * wrt closing blocking sockets, so until that is resolved
-	 * we don't join on this threads.
-	 */
 	if (thread_receive_packet_handler) {
 		dcerr("Joining thread_receive_packet_handler");
 		thread_receive_packet_handler->join();
 		thread_receive_packet_handler.reset();
 	}
-	#endif
 	if (thread_send_packet_handler) {
 		dcerr("Joining thread_send_packet_handler");
 		thread_send_packet_handler->join();
