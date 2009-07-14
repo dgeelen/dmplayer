@@ -32,6 +32,7 @@ SampleConverterFilter::SampleConverterFilter(IAudioSourceRef as, AudioFormat tar
 	audioformat.Float         = target.Float;
 	audioformat.SignedSample  = target.SignedSample;
 	audioformat.LittleEndian  = target.LittleEndian;
+	dcerr("Conversion: [" << src->getAudioFormat() << "] to [" << audioformat << "]");
 }
 
 SampleConverterFilter::~SampleConverterFilter() {
@@ -57,7 +58,7 @@ uint32 SampleConverterFilter::convert_int8_to_float(float* output, uint32 size) 
 	size = fill_buffer((uint8*)input, size, sizeof(int8));
 
 	for(uint32 i = 0; i < size; ++i) {
-		output[i] = float(input[i]) / 127.0f;
+		output[i] = float(input[i]) / 128.0f;
 	}
 
 	delete[] input;
@@ -70,7 +71,7 @@ uint32 SampleConverterFilter::convert_uint8_to_float(float* output, uint32 size)
 	size = fill_buffer((uint8*)input, size, sizeof(uint8));
 
 	for(uint32 i = 0; i < size; ++i) {
-		output[i] = float(input[i]) / 127.0f - 1.0f;
+		output[i] = float(input[i]) / 128.0f - 1.0f;
 	}
 
 	delete[] input;
@@ -83,7 +84,7 @@ uint32 SampleConverterFilter::convert_int16_to_float(float* output, uint32 size)
 	size = fill_buffer((uint8*)input, size, sizeof(int16));
 
 	for(uint32 i = 0; i < size; ++i) {
-		output[i] = float(input[i]) / 32767.0f;
+		output[i] = float(input[i]) / 32768.0f;
 	}
 
 	delete[] input;
