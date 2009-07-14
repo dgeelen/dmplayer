@@ -10,7 +10,19 @@
 
 using namespace std;
 
-#define REFERENCE_LEVEL (-20) // NOTE: 00497-Pink_min_20_dBFS_RMS_uncor_st_441.WAV averages at -31dB FS, but the replaygain site states 20dB FS?
+//TODO: This is a pretty random number, but probably
+//      that is the best we can do anyway.
+//      It is not always possible to bring up a song to
+//      a 'loud' level of -20dBFS without introducing clipping,
+//      so the best we can do is try to make loud songs quieter,
+//      and use an external amplifier.
+//  		(OR: Look into compression, but that will distort
+//  		     the audio too...)
+#define REFERENCE_LEVEL (-31)
+
+// NOTE: 00497-Pink_min_20_dBFS_RMS_uncor_st_441.WAV averages at -31dB FS, but the replaygain site states 20dB FS?
+// #define REFERENCE_LEVEL (-20)
+
 
 /*
  * for each filter, [0] is 48000, [1] is 44100, [2] is 32000,
@@ -149,7 +161,7 @@ NormalizeFilter::NormalizeFilter(IAudioSourceRef as, AudioFormat target)
 
 	rms_period_sample_count = audioformat.SampleRate / 20; // ~1/50sec (or 2205 samples for 44.1khz source)
 	position = rms_period_sample_count * audioformat.Channels * sizeof(float);
-	peak_amplitude = -std::numeric_limits<float>::max();
+	peak_amplitude = std::numeric_limits<float>::min();
 
 	// Clear IIRFilters from noise samples, so that splitter->getData2() returns the same amount of samples as IIRButter->getData()
 	uint32 n_noise_sample_bytes = (YULE_TAPS + BUTTER_TAPS) * audioformat.Channels * sizeof(float);
@@ -181,7 +193,6 @@ void NormalizeFilter::update_gain() {
 		for(uint32 chan = 0; chan < audioformat.Channels; ++chan) {
 			float s = filtered_samples[sample + chan];
 			s = s * s;
-			peak_amplitude = std::max(peak_amplitude, s);
 			levels[chan] += s;
 		}
 	}
@@ -197,15 +208,6 @@ void NormalizeFilter::update_gain() {
 	}
 	level /= audioformat.Channels;
 
-#if 0
-	// NOTE: This occusionally happens, (especially level<0) but I don't know how;
-	//       level is calculated from filtered_samples^2 so should never be negative...
-	if(level>1.0f || level<0.0f) {
-		dcerr("WARNING: FAILFAILFAIL: " << level << "\n");
-		level = 0.5f;
-	}
-#endif
-
 	level = 10.0f * (log10(level + std::numeric_limits<float>::epsilon())); // NOTE: 20 * log10( sqrt( x ) / 1 ) == 10 * log10( x )
 	dB_map.insert(dB_map.end(), level); // FIXME: perhaps do something when dB_map gets really big
 
@@ -219,7 +221,6 @@ void NormalizeFilter::update_gain() {
 
 	float max_gain = std::min(1.0f/std::sqrt(peak_amplitude), 100.0f);
 	gain  = std::pow(10.0f, (REFERENCE_LEVEL - level) / 20.0f);
-	gain *= std::max(std::min((float(dB_map.size())-5.0f / 10.0f), 1.0f), 0.0f);
 	gain  = std::min(gain, max_gain);
 }
 
@@ -241,10 +242,20 @@ uint32 NormalizeFilter::getData(uint8* buf, uint32 len) {
 		toread -= read;
 		done   += read;
 	}
-	for(std::vector<float>::iterator i=b.begin(); i!=b.end(); ++i) {
-		*i *= gain;
+
+	uint32 samples_done = done / sizeof(float);
+	float* s = &b[0];
+	float* d = (float*)&buf[0];
+	for(uint32 i = 0; i < samples_done; ++i) {
+		if(peak_amplitude < *s**s) {
+			peak_amplitude = *s**s;
+			gain = std::min(std::min(1.0f/std::sqrt(peak_amplitude), 100.0f), gain);
+		}
+		*d = (*s) * gain;
+		++s;
+		++d;
 	}
-	copy(b.begin(),b.end(), (float*)&buf[0]);
+
 	return done;
 }
 
