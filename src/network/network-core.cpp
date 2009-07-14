@@ -153,6 +153,17 @@ void tcp_listen_socket::listen(const ipv4_addr addr, const uint16 portnumber)
 	addr_in.sin_addr.s_addr = (addr.full == 0) ? INADDR_ANY : addr.full;
 	addr_in.sin_port = htons( portnumber );
 
+	// We set SO_REUSEADDR, so that we may re-use the same portnumber
+	// incase we need to quickly shutdown and restart.
+	int optval = 1;
+	if ( setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, ( char* )&optval, sizeof( optval )) == SOCKET_ERROR ) {
+		stringstream ss;
+		ss << "tcp_listen_socket: Could not set socket option: error " << NetGetLastError() << "(" << strerror(NetGetLastError()) << ")" << "\n";
+		cout << ss.str();
+		disconnect();
+		throw std::runtime_error(ss.str().c_str());
+	}
+
 	if ( bind( sock, ( sockaddr* )&addr_in, sizeof( addr_in ) ) == SOCKET_ERROR ) {
 		stringstream ss;
 		ss << "tcp_listen_socket: Bind to network failed: error " << NetGetLastError() << "(" << strerror(NetGetLastError()) << ")" << "\n";
