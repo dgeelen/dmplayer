@@ -8,9 +8,6 @@
 #ifdef PORTAUDIO_BACKEND
 	#include "backend_portaudio.h"
 #endif
-#ifdef LIBAO_BACKEND
-	#include "backend_libao.h"
-#endif
 
 /* FOR TESTING PURPOSES ONLY */
 #include "datasource_filereader.h"
@@ -40,12 +37,6 @@ AudioController::AudioController()
 	try {
 		backend = IBackendRef(new PortAudioBackend(this));
 		dcerr("AudioController: PortAudioBackend is available");
-	} catch(...) {}
-	#endif
-	#ifdef LIBAO_BACKEND
-	try {
-		backend = IBackendRef(new LibAOBackend(this));
-		dcerr("AudioController: LibAOBackend is available");
 	} catch(...) {}
 	#endif
 	#if 0
