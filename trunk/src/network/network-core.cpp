@@ -154,10 +154,10 @@ void tcp_listen_socket::listen(const ipv4_addr addr, const uint16 portnumber)
 	addr_in.sin_port = htons( portnumber );
 
 	if ( bind( sock, ( sockaddr* )&addr_in, sizeof( addr_in ) ) == SOCKET_ERROR ) {
-		cout << "tcp_listen_socket: Bind to network failed: error " << NetGetLastError() << "\n";
-		disconnect();
 		stringstream ss;
-		ss << "tcp_listen_socket: Bind to network failed: error " << NetGetLastError();
+		ss << "tcp_listen_socket: Bind to network failed: error " << NetGetLastError() << "(" << strerror(NetGetLastError()) << ")" << "\n";
+		cout << ss.str();
+		disconnect();
 		throw std::runtime_error(ss.str().c_str());
 	}
 
@@ -169,7 +169,7 @@ void tcp_listen_socket::listen(const ipv4_addr addr, const uint16 portnumber)
 	port = htons(addr_in.sin_port); // assume x = htons(htons(x))
 
 	if(::listen(sock, 16)) { //Queue up to 16 connections
-		cout << "tcp_listen_socket: Could not listen() on socket: error " << NetGetLastError() << "\n";
+		cout << "tcp_listen_socket: Could not listen() on socket: error " << NetGetLastError() << "(" << strerror(NetGetLastError()) << ")" << "\n";
 	}
 }
 
@@ -197,7 +197,7 @@ bool udp_socket::bind(const ipv4_addr addr, const uint16 portnumber) {
 	if (/*portnumber && */::bind( sock, ( sockaddr* )&addr_in, sizeof( addr_in ) ) == SOCKET_ERROR ) {
 		close();
 		stringstream ss;
-		ss << "udp_socket: Bind to network failed: error " << NetGetLastError();
+		ss << "udp_socket: Bind to network failed: error " << NetGetLastError() << "(" << strerror(NetGetLastError()) << ")";
 		throw std::runtime_error(ss.str().c_str());
 	}
 
@@ -206,7 +206,7 @@ bool udp_socket::bind(const ipv4_addr addr, const uint16 portnumber) {
 	if ( setsockopt( sock, SOL_SOCKET, SO_BROADCAST, ( char* )&bc, sizeof( bc )) == SOCKET_ERROR ) {
 		close();
 		stringstream ss;
-		ss << "udp_socket: Unable to enable broadcasting: error " << NetGetLastError();
+		ss << "udp_socket: Unable to enable broadcasting: error " << NetGetLastError() << "(" << strerror(NetGetLastError()) << ")";
 		throw std::runtime_error(ss.str().c_str());
 	};
 	return true;
