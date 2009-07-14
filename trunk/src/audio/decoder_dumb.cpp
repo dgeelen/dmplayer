@@ -1,10 +1,7 @@
 #include "decoder_dumb.h"
 
 #include "../error-handling.h"
-
 #define BUFSIZE 8192
-
-typedef boost::shared_ptr<class DUMBDecoder> DUMBDecoderRef;
 
 int DUMBDecoder::DUMBFS_skip(void* f, long n) {
 	return static_cast<DUMBDecoder*>(f)->DUMBFS_skip(n);
@@ -56,7 +53,6 @@ long DUMBDecoder::DUMBFS_getnc(char* ptr, long n) {
 			buffer.clear();
 			fill_buffer();
 			if(buffer.size() == 0) {
-				dcerr("arg error");
 				return i;
 			}
 			b = buffer.begin();
@@ -103,9 +99,6 @@ DUMBDecoder::DUMBDecoder(IDataSourceRef ds_, DUMB_TYPE filetype)
 			duh = NULL;
 		}
 	}
-
-// 	dumb_register_stdfiles();
-// 	duh = dumb_load_xm("/tmp/bo/95.xm");
 
 	if(!duh) {
 		throw Exception("Error while intializing DUH");
@@ -189,7 +182,13 @@ IDecoderRef DUMBDecoder::tryDecode(IDataSourceRef ds) {
 	}
 
 	if(type != DUMB_TYPE_INVALID) {
-		return IDecoderRef(new DUMBDecoder(ds, type));
+		try {
+			return IDecoderRef(new DUMBDecoder(ds, type));
+		}
+		catch( Exception e ) {
+			std::cout << "DUMBDecoder: Possible bug in LibDUMB, file will not play!" << std::endl;
+			return IDecoderRef();
+		}
 	}
 	else {
 		dcerr("Could not match data format");
