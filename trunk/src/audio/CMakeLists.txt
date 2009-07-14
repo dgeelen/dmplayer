@@ -1,7 +1,6 @@
 # Try to find all packages that we need/support
 find_package(PortAudio)
 find_package(Mad)
-find_package(LibAO)
 find_package(LibOGG)
 find_package(LibVorbis)
 find_package(LibFaad2)
@@ -27,18 +26,6 @@ IF(PORTAUDIO_FOUND) #PortAudio backend
 	INCLUDE_DIRECTORIES(${PORTAUDIO_INCLUDE_DIR})
 	ADD_DEFINITIONS(-DPORTAUDIO_BACKEND)
 ENDIF(PORTAUDIO_FOUND)
-
-IF(LIBAO_FOUND) # Xiph.org libao backend
-	SET(BACKEND_SOURCE_FILES ${BACKEND_SOURCE_FILES}
-		backend_libao.h
-		backend_libao.cpp
-	)
-	SET(BACKEND_LIBRARIES ${BACKEND_LIBRARIES} ${LIBAO_LIBRARY})
-	INCLUDE_DIRECTORIES(
-		${LIBAO_INCLUDE_DIR}
-	)
-	ADD_DEFINITIONS(-DLIBAO_BACKEND)
-ENDIF(LIBAO_FOUND)
 
 SET(ENABLE_MENCODER_DECODER OFF CACHE BOOL "Enable building of the mencoder decoder")
 
