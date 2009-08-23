@@ -197,7 +197,7 @@ ipv4_socket_addr network_handler::get_target_server_address() {
 
 void network_handler::send_server_message(messageref msg) {
 	tcp_socket_ref servsock = serversockweakref.lock();
-	if (!servsock) throw std::runtime_error("no valid server connected");
+	if (!servsock) throw Exception("no valid server connected");
 	*servsock << msg;
 }
 
