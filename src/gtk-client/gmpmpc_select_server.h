@@ -15,14 +15,18 @@
 	class gmpmpc_select_server_window : public Gtk::Window {
 		public:
 			gmpmpc_select_server_window();
-			~gmpmpc_select_server_window();
-			void update_serverlist(const std::vector<server_info>& si);
-			void connection_accepted();
-			boost::signal<void(ipv4_socket_addr)> connect_signal;
-			boost::signal<void(void)>             cancel_signal;
+// 			~gmpmpc_select_server_window();
+// 			void update_serverlist(const std::vector<server_info>& si);
+			void add_servers(const std::vector<server_info>& si);
+			void remove_servers(const std::vector<server_info>& si);
+
+			void connection_accepted(ipv4_socket_addr addr, ClientID id);
+			boost::signal<void(ipv4_socket_addr)> sig_connect_to_server;
+// 			boost::signal<void(void)>             cancel_signal;
 			boost::signal<void(std::string)>      status_message_signal;
 
 		private:
+			ipv4_socket_addr target_server;
 			class ModelColumns : public Gtk::TreeModelColumnRecord {
 				public:
 					ModelColumns() {
@@ -39,6 +43,9 @@
 			};
 			ModelColumns m_Columns;
 
+			void save_selected();
+			void restore_selected();
+			ipv4_socket_addr selected_addr;
 			void on_cancel_button_click();
 			void on_connect_button_click();
 			bool on_serverlist_double_click(GdkEventButton *event);

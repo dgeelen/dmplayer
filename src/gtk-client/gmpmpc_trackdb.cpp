@@ -7,8 +7,7 @@
 
 using namespace std;
 
-gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(TrackDataBase* tdb, ClientID cid) {
-	trackdb = tdb;
+gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(TrackDataBase& tdb, ClientID cid) : trackdb(tdb) {
 	clientid = cid;
 	scrolledwindow.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
 	scrolledwindow.add(treeview);
@@ -41,6 +40,9 @@ gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(TrackDataBase* tdb, ClientID cid) {
 // 	treeview.signal_button_press_event().connect(sigc::mem_fun(*this, &gmpmpc_trackdb_widget::on_treeview_clicked), false);
 
 	update_treeview();
+	#ifdef DEBUG
+	network_search_id=0; //Intentionally not initialized
+	#endif
 }
 
 void gmpmpc_trackdb_widget::set_clientid(ClientID id) {
@@ -69,7 +71,7 @@ void gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked() {
 		Gtk::TreeModel::iterator i = model->get_iter(p);
 		Track q;
 		q = (*i)[treeview.m_Columns.track];
-		std::vector<LocalTrack> r = trackdb->search(q);
+		std::vector<LocalTrack> r = trackdb.search(q);
 		Track t(q.id, r[0].metadata);
 		enqueue_track_signal(t);
 	}
@@ -83,7 +85,7 @@ bool gmpmpc_trackdb_widget::update_treeview() {
 	MetaDataMap m;
 	m["FILENAME"] = search_entry.get_text();
 	Track query(TrackID(ClientID(0xffffffff), LocalTrackID(0xffffffff)), m);
-	vector<LocalTrack> s = trackdb->search(query);
+	vector<LocalTrack> s = trackdb.search(query);
 	BOOST_FOREACH(LocalTrack lt, s) {
 		Track t(TrackID(clientid, lt.id), lt.metadata);
 		treeview.add(t);
@@ -95,6 +97,9 @@ void gmpmpc_trackdb_widget::on_search_entry_changed() {
 	update_treeview_connection.disconnect();
 	sigc::slot<bool> slot = sigc::mem_fun(*this, &gmpmpc_trackdb_widget::update_treeview);
 	update_treeview_connection = Glib::signal_timeout().connect(slot, 250);
+
+	network_search_result.clear();
+	++network_search_id;
 
 // 	sigc::connection conn = Glib::signal_timeout().connect(boost::bind<bool>(&gmpmpc_trackdb_widget::update_treeview, this), 250);
 }
@@ -144,11 +149,11 @@ void gmpmpc_trackdb_widget::on_drag_data_received_signal(const Glib::RefPtr<Gdk:
 	switch(info) {
 		case 0: {
 			BOOST_FOREACH(std::string file, urilist_convert(selection_data.get_data_as_string())) {
-				trackdb->add_directory(file);
+				trackdb.add_directory(file);
 			}
 		}; break;
 		case 1: {
-			trackdb->add(boost::filesystem::path(selection_data.get_data_as_string()));
+			trackdb.add(boost::filesystem::path(selection_data.get_data_as_string()));
 		}; break;
 		default:
 			dcerr("Unhandled drop? info="<<info);

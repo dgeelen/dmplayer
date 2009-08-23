@@ -17,7 +17,7 @@
 
 	class gmpmpc_trackdb_widget : public Gtk::Frame {
 		public:
-			gmpmpc_trackdb_widget(TrackDataBase* tdb, ClientID cid);
+			gmpmpc_trackdb_widget(TrackDataBase& tdb, ClientID cid);
 			void set_clientid(ClientID id);
 			boost::signal<void(Track&)>      enqueue_track_signal;
 			boost::signal<void(std::string)> status_message_signal;
@@ -26,11 +26,14 @@
 // 			bool on_treeview_clicked(GdkEventButton *event);
 			void on_search_entry_changed();
 			void on_add_to_wishlist_button_clicked();
-			void on_drag_data_received_signal(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, const Gtk::SelectionData& selection_data, guint info, guint time);
+			void on_drag_data_received_signal(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, const
+			Gtk::SelectionData& selection_data, guint info, guint time);
 			sigc::connection update_treeview_connection;
 			bool update_treeview();
-			TrackDataBase*        trackdb;
+			TrackDataBase&        trackdb;
 			ClientID              clientid;
+			uint32                network_search_id;
+			std::vector<Track>    network_search_result;
 
 
 			Gtk::ScrolledWindow   scrolledwindow;

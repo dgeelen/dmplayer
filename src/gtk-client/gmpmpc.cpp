@@ -16,11 +16,9 @@ namespace po = boost::program_options;
 
 #define statusicon_pixbuf_data MagickImage
 
-GtkMpmpClientWindow::GtkMpmpClientWindow(network_handler* nh, TrackDataBase* tdb) {
-	networkhandler = nh;
-	trackdb = tdb;
-	trackdb->add_directory("/home/dafox/sharedfolder/music/");
-	trackdb_widget = new gmpmpc_trackdb_widget(trackdb, ClientID(-1));
+GtkMpmpClientWindow::GtkMpmpClientWindow() {
+	middleend.trackdb.add_directory("/home/dafox/sharedfolder/music/");
+	trackdb_widget = new gmpmpc_trackdb_widget(middleend.trackdb, ClientID(-1));
 	construct_gui();
 
 	guint8* data = new guint8[gmpmpc_icon_data.width * gmpmpc_icon_data.height * gmpmpc_icon_data.bytes_per_pixel];
@@ -55,56 +53,60 @@ GtkMpmpClientWindow::GtkMpmpClientWindow(network_handler* nh, TrackDataBase* tdb
 	set_icon(statusicon_pixbuf);
 	select_server_window.set_icon(statusicon_pixbuf);
 
-	_on_connection_accepted_dispatcher_connection =
-		_on_connection_accepted_dispatcher.connect(
-			boost::bind(&GtkMpmpClientWindow::_on_connection_accepted, this));
-
-	_on_playlist_update_dispatcher_connection =
-		_on_playlist_update_dispatcher.connect(
-			boost::bind(&GtkMpmpClientWindow::_on_playlist_update, this));
-
 	connected_signals["enqueue_track_signal"] =
 		trackdb_widget->enqueue_track_signal.connect(
-			boost::bind(&GtkMpmpClientWindow::on_enqueue_track_signal, this, _1));
+			dispatcher.wrap(boost::bind(&GtkMpmpClientWindow::on_enqueue_track_signal, this, _1)));
 	connected_signals["playlist_send_message_signal"] =
 		playlist_widget.send_message_signal.connect(
 			boost::bind(&GtkMpmpClientWindow::send_message, this, _1));
 	connected_signals["vote_signal"] =
 		playlist_widget.vote_signal.connect(
 			boost::bind(&GtkMpmpClientWindow::on_vote_signal, this, _1, _2));
-	connected_signals["connection_accepted_signal"] =
-		connection_handler.connection_accepted_signal.connect(
-			boost::bind(&GtkMpmpClientWindow::on_connection_accepted, this, _1));
+	connected_signals["connect_to_server_success_signal"] =
+		middleend.sig_connect_to_server_success.connect(
+			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::connection_accepted, &select_server_window, _1, _2)));
+// 	connection_handler.connection_accepted_signal.connect(
+// 		dispatcher.wrap(boost::bind(&GtkMpmpClientWindow::on_connection_accepted, this, _1)));
 	connected_signals["playlist_update_signal"] =
 		connection_handler.playlist_update_signal.connect(
-			boost::bind(&GtkMpmpClientWindow::on_playlist_update, this, _1));
-	connected_signals["request_file_signal"] =
-		connection_handler.request_file_signal.connect(
-			boost::bind(&GtkMpmpClientWindow::on_request_file, this, _1));
-	connected_signals["request_file_result_signal"] =
-			connection_handler.request_file_result_signal.connect(
-				boost::bind(&GtkMpmpClientWindow::on_request_file_result, this, _1));
-	connected_signals["connect_signal"] =
-		select_server_window.connect_signal.connect(
-			boost::bind(&GtkMpmpClientWindow::on_select_server_connect, this, _1));
-	connected_signals["cancel_signal"] =
-		select_server_window.cancel_signal.connect(
-			boost::bind(&GtkMpmpClientWindow::on_select_server_cancel, this));
-	connected_signals["client_message_receive_signal"] =
-		networkhandler->client_message_receive_signal.connect(
-			boost::bind(&gmpmpc_connection_handler::handle_message, &connection_handler, _1));
-	connected_signals["server_list_update_signal"] =
- 		networkhandler->server_list_update_signal.connect(
- 			boost::bind(&gmpmpc_select_server_window::update_serverlist, &select_server_window, _1));
+			dispatcher.wrap(boost::bind(&GtkMpmpClientWindow::on_playlist_update, this, _1)));
+
+// Requesting of files will be implemented in middleend
+// 	connected_signals["request_file_signal"] =
+// 		connection_handler.request_file_signal.connect(
+// 			boost::bind(&GtkMpmpClientWindow::on_request_file, this, _1));
+// 	connected_signals["request_file_result_signal"] =
+// 			connection_handler.request_file_result_signal.connect(
+// 				boost::bind(&GtkMpmpClientWindow::on_request_file_result, this, _1));
+
+	connected_signals["sig_connect_to_server"] =
+		select_server_window.sig_connect_to_server.connect(
+			boost::bind(&middle_end::connect_to_server, &middleend, _1, 0));
+// 	connected_signals["cancel_signal"] =
+// 		select_server_window.cancel_signal.connect(
+// 			boost::bind(&GtkMpmpClientWindow::on_select_server_cancel, this));
+// 	connected_signals["client_message_receive_signal"] =
+// 		networkhandler->client_message_receive_signal.connect(
+// 			boost::bind(&gmpmpc_connection_handler::handle_message, &connection_handler, _1));
+	connected_signals["select_server_window::add_servers"] =
+		middleend.sig_servers_added.connect(
+			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::add_servers, &select_server_window, _1)));
+	connected_signals["select_server_window::remove_servers"] =
+		middleend.sig_servers_removed.connect(
+			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::remove_servers, &select_server_window, _1)));
 	connected_signals["trackdb_status_signal"] =
 		trackdb_widget->status_message_signal.connect(
 			boost::bind(&GtkMpmpClientWindow::set_status_message, this, _1));
 	connected_signals["select_server_status_signal"] =
-			select_server_window.status_message_signal.connect(
-				boost::bind(&GtkMpmpClientWindow::set_status_message, this, _1));
+		select_server_window.status_message_signal.connect(
+			boost::bind(&GtkMpmpClientWindow::set_status_message, this, _1));
+
+// //WIP//HAX:!!
+// 	middleend->networkhandler->start();
 
 	set_status_message("Selecting server.");
 	select_server_window.show_all();
+	middleend.start();
 }
 
 GtkMpmpClientWindow::~GtkMpmpClientWindow() {
@@ -112,8 +114,6 @@ GtkMpmpClientWindow::~GtkMpmpClientWindow() {
 	BOOST_FOREACH(vtype signal, connected_signals) {
 		signal.second.disconnect();
 	}
-	_on_connection_accepted_dispatcher_connection.disconnect();
-	_on_playlist_update_dispatcher_connection.disconnect();
 	delete trackdb_widget;
 }
 
@@ -122,139 +122,123 @@ void GtkMpmpClientWindow::on_statusicon_popup_menu(guint button, guint32 activat
 	statusicon->popup_menu_at_position(*m, button, activate_time);
 }
 
-void GtkMpmpClientWindow::_on_request_file(message_request_file_ref m, boost::shared_ptr<bool> done) {
-	MetaDataMap md;
-	Track q(m->id, md);
-	vector<LocalTrack> s = trackdb->search(q);
-	if(s.size() == 1) {
-		if(boost::filesystem::exists(s[0].filename)) {
-			boost::filesystem::ifstream f( s[0].filename, std::ios_base::in | std::ios_base::binary );
-			uint32 n = 1024 * 32; // Well over 5sec of 44100KHz 2Channel 16Bit WAV
-			std::vector<uint8> data;
-			data.resize(1024*1024);
-			while(!(*done)) {
-				f.read((char*)&data[0], n);
-				uint32 read = f.gcount();
-				if(read) {
-					std::vector<uint8> vdata;
-					std::vector<uint8>::iterator from = data.begin();
-					std::vector<uint8>::iterator to = from + read;
-					vdata.insert(vdata.begin(), from, to);
-					message_request_file_result_ref msg(new message_request_file_result(vdata, m->id));
-					networkhandler->send_server_message(msg);
-					if(n<1024*1024) {
-						n<<=1;
-					}
-					//FIXME: this does not take network latency into account (LAN APP!)
-					usleep(n*10); // Ease up on CPU usage, starts with ~0.3 sec sleep and doubles every loop
-				}
-				else { //EOF or Error reading file
-					*done = true;
-				}
-			}
-		}
-		else { // Error opening file
-			dcerr("Warning: could not open " << s[0].filename << ", Sending as-is...");
-			std::vector<uint8> vdata;
-			BOOST_FOREACH(char c, s[0].filename.string()) {
-				vdata.push_back((uint8)c);
-			}
-			message_request_file_result_ref msg(new message_request_file_result(vdata, m->id));
-			networkhandler->send_server_message(msg);
-		}
-	}
-	// Send final empty message
-	std::vector<uint8> vdata;
-	message_request_file_result_ref msg(new message_request_file_result(vdata, m->id));
-	networkhandler->send_server_message(msg);
+// void GtkMpmpClientWindow::_on_request_file(message_request_file_ref m, boost::shared_ptr<bool> done) {
+// 	MetaDataMap md;
+// 	Track q(m->id, md);
+// 	vector<LocalTrack> s = middleend.trackdb.search(q);
+// 	if(s.size() == 1) {
+// 		if(boost::filesystem::exists(s[0].filename)) {
+// 			boost::filesystem::ifstream f( s[0].filename, std::ios_base::in | std::ios_base::binary );
+// 			uint32 n = 1024 * 32; // Well over 5sec of 44100KHz 2Channel 16Bit WAV
+// 			std::vector<uint8> data;
+// 			data.resize(1024*1024);
+// 			while(!(*done)) {
+// 				f.read((char*)&data[0], n);
+// 				uint32 read = f.gcount();
+// 				if(read) {
+// 					std::vector<uint8> vdata;
+// 					std::vector<uint8>::iterator from = data.begin();
+// 					std::vector<uint8>::iterator to = from + read;
+// 					vdata.insert(vdata.begin(), from, to);
+// 					message_request_file_result_ref msg(new message_request_file_result(vdata, m->id));
+// // 					networkhandler->send_server_message(msg);
+// 					if(n<1024*1024) {
+// 						n<<=1;
+// 					}
+// 					//FIXME: this does not take network latency into account (LAN APP!)
+// // 					usleep(n*10); // Ease up on CPU usage, starts with ~0.3 sec sleep and doubles every loop
+// 				}
+// 				else { //EOF or Error reading file
+// 					dcerr("EOF or Error reading file");
+// 					*done = true;
+// 				}
+// 			}
+// 			dcerr("Transfer complete");
+// 		}
+// 		else { // Error opening file
+// 			dcerr("Warning: could not open " << s[0].filename << ", Sending as-is...");
+// 			std::vector<uint8> vdata;
+// 			BOOST_FOREACH(char c, s[0].filename.string()) {
+// 				vdata.push_back((uint8)c);
+// 			}
+// 			message_request_file_result_ref msg(new message_request_file_result(vdata, m->id));
+// // 			networkhandler->send_server_message(msg);
+// 		}
+// 	}
+// 	// Send final empty message
+// 	std::vector<uint8> vdata;
+// 	message_request_file_result_ref msg(new message_request_file_result(vdata, m->id));
+// // 	networkhandler->send_server_message(msg);
+//
+// 	boost::mutex::scoped_lock lock(_on_request_file_threads_mutex);
+// 	_on_request_file_threads.erase(_on_request_file_threads.find(m->id));
+// }
+//
+// void GtkMpmpClientWindow::on_request_file_result(message_request_file_result_ref m) {
+// 	boost::shared_ptr<boost::thread> t;
+//
+// 	{
+// 		dcerr("Aquiring lock");
+// 		boost::mutex::scoped_lock lock(_on_request_file_threads_mutex);
+// 		dcerr("checking for id");
+// 		if(_on_request_file_threads.find(m->id) != _on_request_file_threads.end()) {
+// 			dcerr("Aborting request for file " << (m->id.first) << ":" << (m->id.second));
+// 			(*_on_request_file_threads[m->id].second) = true;
+// 			t = _on_request_file_threads[m->id].first;
+// 		}
+// 	}
+//
+// 	if(t) {
+// 		dcerr("joining");
+// 		t->join();
+// 	}
+// 	dcerr("done");
+// }
+//
+// void GtkMpmpClientWindow::on_request_file(message_request_file_ref m) {
+// 	// We transfer the file in a separate thread so that we can still send/receive messages.
+// 	// FIXME: We can only send a (the same) file one at a time
+// 	if(_on_request_file_threads.find(m->id) == _on_request_file_threads.end()) {
+// 		boost::mutex::scoped_lock lock(_on_request_file_threads_mutex);
+// 		boost::shared_ptr<bool> b = boost::shared_ptr<bool>(new bool(false));
+// 		boost::shared_ptr<boost::thread> t = boost::shared_ptr<boost::thread>(new boost::thread(makeErrorHandler(
+// 			boost::bind(&GtkMpmpClientWindow::_on_request_file, this, m, b))));
+//
+// 		_on_request_file_threads[m->id] = pair<boost::shared_ptr<boost::thread>, boost::shared_ptr<bool> >(t, b);
+// 	}
+// }
 
-	boost::mutex::scoped_lock lock(_on_request_file_threads_mutex);
-	_on_request_file_threads.erase(_on_request_file_threads.find(m->id));
-}
-
-void GtkMpmpClientWindow::on_request_file_result(message_request_file_result_ref m) {
-	boost::shared_ptr<boost::thread> t;
-
-	{
-		boost::mutex::scoped_lock lock(_on_request_file_threads_mutex);
-		if(_on_request_file_threads.find(m->id) != _on_request_file_threads.end()) {
-			(*_on_request_file_threads[m->id].second) = true;
-			t = _on_request_file_threads[m->id].first;
-		}
-	}
-
-	if(t)
-		t->join();
-}
-
-void GtkMpmpClientWindow::on_request_file(message_request_file_ref m) {
-	// We transfer the file in a separate thread so that we can still send/receive messages.
-	// FIXME: We can only send a (the same) file one at a time
-	if(_on_request_file_threads.find(m->id) == _on_request_file_threads.end()) {
-		boost::mutex::scoped_lock lock(_on_request_file_threads_mutex);
-		boost::shared_ptr<bool> b = boost::shared_ptr<bool>(new bool(false));
-		boost::shared_ptr<boost::thread> t = boost::shared_ptr<boost::thread>(new boost::thread(makeErrorHandler(
-			boost::bind(&GtkMpmpClientWindow::_on_request_file, this, m, b))));
-
-		_on_request_file_threads[m->id] = pair<boost::shared_ptr<boost::thread>, boost::shared_ptr<bool> >(t, b);
-	}
-}
-
-void GtkMpmpClientWindow::_on_connection_accepted() { // actually executes callback in GUI thread
-	boost::mutex::scoped_lock lock(clientid_mutex);
-
-	select_server_window.connection_accepted();
-	select_server_window.hide();
-	trackdb_widget->set_clientid(clientid);
-	connected_signals["server_list_update_signal"].block();
-}
-
-void GtkMpmpClientWindow::on_connection_accepted(ClientID id) {
-	// This is called from the network thread so we first need
-	// to get back into the GUI thread
-	boost::mutex::scoped_lock lock(clientid_mutex);
-	clientid = id;
-	_on_connection_accepted_dispatcher();
-}
+// void GtkMpmpClientWindow::on_connection_accepted(ClientID clientid) {
+// 	select_server_window.connection_accepted();
+// 	select_server_window./*hide()*/;
+// 	trackdb_widget->set_clientid(clientid);
+// 	connected_signals["server_list_update_signal"].block();
+// }
 
 void GtkMpmpClientWindow::on_enqueue_track_signal(Track& track) {
-	// Might happen synchronis with a playlist_update so we need to lock
-	boost::mutex::scoped_lock lock(_on_playlist_update_mutex);
 	playlist_widget.add_to_wishlist(track);
 }
 
-void GtkMpmpClientWindow::_on_playlist_update() {
-	boost::mutex::scoped_lock lock(_on_playlist_update_mutex);
-	while(!_on_playlist_update_messages.empty()) {
-		message_playlist_update_ref m = _on_playlist_update_messages.front();
-		playlist_widget.update(m);
-		_on_playlist_update_messages.pop_front();
-	}
-}
-
 void GtkMpmpClientWindow::on_playlist_update(message_playlist_update_ref m) {
-	boost::mutex::scoped_lock lock(_on_playlist_update_mutex);
-	_on_playlist_update_messages.push_back(m);
-	_on_playlist_update_dispatcher();
+	playlist_widget.update(m);
 }
 
 void GtkMpmpClientWindow::on_vote_signal(TrackID id, int type) {
 	if(type < 0) {
 		message_vote_ref m = message_vote_ref(new message_vote(id, true));
-		networkhandler->send_server_message(m);
+// 		networkhandler->send_server_message(m);
 	}
 }
 
-void GtkMpmpClientWindow::on_select_server_connect( ipv4_socket_addr addr ) {
-	networkhandler->client_disconnect_from_server();
-	set_status_message(STRFORMAT("Connecting to %s.", addr.std_str()));
-	networkhandler->client_connect_to_server(addr);
-}
+// void GtkMpmpClientWindow::on_select_server_connect( ipv4_socket_addr addr ) {
+// 	networkhandler->client_disconnect_from_server();
+// 	set_status_message(STRFORMAT("Connecting to %s.", addr.std_str()));
+// 	networkhandler->client_connect_to_server(addr);
+// }
 
-void GtkMpmpClientWindow::on_select_server_cancel() {
-	connected_signals["server_list_update_signal"].block();
-	select_server_window.hide();
-}
+// void GtkMpmpClientWindow::on_select_server_cancel() {
+// 	select_server_window.hide();
+// }
 
 void GtkMpmpClientWindow::set_status_message(std::string msg) {
 	statusbar.pop();
@@ -265,7 +249,7 @@ void GtkMpmpClientWindow::set_status_message(std::string msg) {
 }
 
 void GtkMpmpClientWindow::send_message(messageref m) {
-	networkhandler->send_server_message(m);
+// 	networkhandler->send_server_message(m);
 }
 
 bool GtkMpmpClientWindow::clear_status_messages() {
@@ -399,10 +383,9 @@ int main_impl(int argc, char **argv ) {
 	if(!Glib::thread_supported()) Glib::thread_init();
 	Gtk::Main kit(argc, argv);
 
-	TrackDataBase tdb;
-	network_handler nh(listen_port);
-	GtkMpmpClientWindow gmpmpc(&nh, &tdb);
-
+// 	TrackDataBase tdb;
+// 	network_handler nh(listen_port);
+	GtkMpmpClientWindow gmpmpc;
 
 	Gtk::Main::run();
 	return 0;
