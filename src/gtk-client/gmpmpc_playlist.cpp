@@ -1,7 +1,9 @@
 #include "gmpmpc_playlist.h"
 #include <boost/bind.hpp>
 
-gmpmpc_playlist_widget::gmpmpc_playlist_widget() {
+gmpmpc_playlist_widget::gmpmpc_playlist_widget(middle_end& m)
+: middleend(m)
+{
 	treeview = IPlaylistRef(new gmpmpc_track_treeview());
 	scrolledwindow.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
 	scrolledwindow.add(*(gmpmpc_track_treeview*)treeview.get());
@@ -12,11 +14,17 @@ gmpmpc_playlist_widget::gmpmpc_playlist_widget() {
 	vote_min_button.set_border_width(3);
 	vote_min_button.set_label("Vote MIN");
 	vote_min_button.signal_clicked().connect(boost::bind(&gmpmpc_playlist_widget::on_vote_min_button_clicked, this));
+
+	sig_update_playlist_connection =
+		middleend.sig_update_playlist.connect(
+			boost::bind(&gmpmpc_playlist_widget::sig_update_playlist_handler, this));
 }
 
 gmpmpc_playlist_widget::~gmpmpc_playlist_widget() {
+	sig_update_playlist_connection.disconnect();
 }
 
+/* This function may be called asynchronously, so be carefull when using GTK here */
 IPlaylistRef gmpmpc_playlist_widget::sig_update_playlist_handler() {
 	return treeview;
 }

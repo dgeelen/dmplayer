@@ -2,7 +2,9 @@
 	#define GMPMPC_TRACKDB_H
 	#include "../error-handling.h"
 	#include "../network-handler.h"
+	#include "dispatcher_marshaller.h"
 	#include "../playlist_management.h"
+	#include "../middle_end.h"
 	#include "track_treeview.h"
 	#include <boost/signal.hpp>
 	#include <gtkmm/box.h>
@@ -17,7 +19,8 @@
 
 	class gmpmpc_trackdb_widget : public Gtk::Frame {
 		public:
-			gmpmpc_trackdb_widget(TrackDataBase& tdb, ClientID cid);
+			gmpmpc_trackdb_widget(middle_end& m);
+			~gmpmpc_trackdb_widget();
 			void set_clientid(ClientID id);
 			boost::signal<void(Track&)>      enqueue_track_signal;
 			boost::signal<void(std::string)> status_message_signal;
@@ -28,13 +31,22 @@
 			void on_add_to_wishlist_button_clicked();
 			void on_drag_data_received_signal(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, const
 			Gtk::SelectionData& selection_data, guint info, guint time);
-			sigc::connection update_treeview_connection;
-			bool update_treeview();
-			TrackDataBase&        trackdb;
-			ClientID              clientid;
-			uint32                network_search_id;
-			std::vector<Track>    network_search_result;
+			boost::signals::connection update_treeview_connection;
+			void update_treeview();
+			DispatcherMarshaller dispatcher; // Execute a function in the gui thread
 
+			/* searches */
+			SearchID search_id;
+			boost::signals::connection sig_search_tracks_connection;
+			void sig_search_tracks_handler(const SearchID id, const std::vector<Track>&);
+			sigc::connection search_entry_timeout_connection;
+			bool search_entry_timeout_handler();
+
+// 			TrackDataBase&        trackdb;
+			ClientID              clientid;
+// 			uint32                network_search_id;
+// 			std::vector<Track>    network_search_result;
+			middle_end&           middleend;
 
 			Gtk::ScrolledWindow   scrolledwindow;
 			Gtk::HBox             search_hbox;

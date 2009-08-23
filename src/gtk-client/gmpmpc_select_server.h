@@ -11,11 +11,14 @@
 	#include <gtkmm/frame.h>
 	#include <gtkmm/button.h>
 	#include "../network-handler.h"
+	#include "../middle_end.h"
+	#include "dispatcher_marshaller.h"
+	#include <boost/signals.hpp>
 
 	class gmpmpc_select_server_window : public Gtk::Window {
 		public:
-			gmpmpc_select_server_window();
-// 			~gmpmpc_select_server_window();
+			gmpmpc_select_server_window(middle_end& _middleend);
+			~gmpmpc_select_server_window();
 // 			void update_serverlist(const std::vector<server_info>& si);
 			void add_servers(const std::vector<server_info>& si);
 			void remove_servers(const std::vector<server_info>& si);
@@ -26,18 +29,23 @@
 			boost::signal<void(std::string)>      status_message_signal;
 
 		private:
+			middle_end& middleend;
+			boost::signals::connection sig_connect_to_server_success_connection;
+			boost::signals::connection sig_servers_added_connection;
+			boost::signals::connection sig_servers_removed_connection;
+			DispatcherMarshaller dispatcher; // Execute a function in the gui thread
 			ipv4_socket_addr target_server;
 			class ModelColumns : public Gtk::TreeModelColumnRecord {
 				public:
 					ModelColumns() {
 						add(name);
-						add(ping);
+// 						add(ping);
 						add(addr_str);
 						add(addr);
 					}
 
 					Gtk::TreeModelColumn<Glib::ustring>    name;
-					Gtk::TreeModelColumn<Glib::ustring>    ping;
+// 					Gtk::TreeModelColumn<Glib::ustring>    ping;
 					Gtk::TreeModelColumn<Glib::ustring>    addr_str;
 					Gtk::TreeModelColumn<ipv4_socket_addr> addr;
 			};

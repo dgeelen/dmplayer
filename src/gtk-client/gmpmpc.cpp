@@ -17,9 +17,12 @@ namespace po = boost::program_options;
 
 #define statusicon_pixbuf_data MagickImage
 
-GtkMpmpClientWindow::GtkMpmpClientWindow() {
-	middleend.trackdb.add_directory("/home/dafox/sharedfolder/music/");
-	trackdb_widget = new gmpmpc_trackdb_widget(middleend.trackdb, ClientID(-1));
+GtkMpmpClientWindow::GtkMpmpClientWindow(middle_end& _middleend)
+	: middleend(_middleend),
+	  playlist_widget(middleend),
+	  trackdb_widget(middleend),
+	  select_server_window(middleend)
+{
 	construct_gui();
 
 	guint8* data = new guint8[gmpmpc_icon_data.width * gmpmpc_icon_data.height * gmpmpc_icon_data.bytes_per_pixel];
@@ -51,18 +54,10 @@ GtkMpmpClientWindow::GtkMpmpClientWindow() {
 	set_icon(statusicon_pixbuf);
 	select_server_window.set_icon(statusicon_pixbuf);
 
-	connected_signals["enqueue_track_signal"] =
-		trackdb_widget->enqueue_track_signal.connect(
-			dispatcher.wrap(boost::bind(&GtkMpmpClientWindow::on_enqueue_track_signal, this, _1)));
-	connected_signals["playlist_send_message_signal"] =
-		playlist_widget.send_message_signal.connect(
-			boost::bind(&GtkMpmpClientWindow::send_message, this, _1));
-	connected_signals["vote_signal"] =
-		playlist_widget.vote_signal.connect(
-			boost::bind(&GtkMpmpClientWindow::on_vote_signal, this, _1, _2));
-	connected_signals["connect_to_server_success_signal"] =
-		middleend.sig_connect_to_server_success.connect(
-			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::connection_accepted, &select_server_window, _1, _2)));
+// 	connected_signals["enqueue_track_signal"] =
+// 		trackdb_widget->enqueue_track_signal.connect(
+// 			dispatcher.wrap(boost::bind(&GtkMpmpClientWindow::on_enqueue_track_signal, this, _1)));
+
 // 	connection_handler.connection_accepted_signal.connect(
 // 		dispatcher.wrap(boost::bind(&GtkMpmpClientWindow::on_connection_accepted, this, _1)));
 // 	connected_signals["playlist_update_signal"] =
@@ -77,19 +72,15 @@ GtkMpmpClientWindow::GtkMpmpClientWindow() {
 // 			connection_handler.request_file_result_signal.connect(
 // 				boost::bind(&GtkMpmpClientWindow::on_request_file_result, this, _1));
 
-	connected_signals["sig_connect_to_server"] =
-		select_server_window.sig_connect_to_server.connect(
-			boost::bind(&middle_end::connect_to_server, &middleend, _1, 0));
-	connected_signals["sig_cancel_connect_to_server"] =
-		select_server_window.sig_cancel_connect_to_server.connect(
-			boost::bind(&middle_end::cancel_connect_to_server, &middleend, _1));
 	connected_signals["sig_disconnected"] =
 		middleend.sig_disconnected.connect(
 			dispatcher.wrap(boost::bind(&GtkMpmpClientWindow::on_disconnect_signal, this, _1)));
-	connected_signals["sig_update_playlist_handler"] =
-		middleend.sig_update_playlist.connect(
-			boost::bind(&gmpmpc_playlist_widget::sig_update_playlist_handler, &playlist_widget));
-
+// 	connected_signals["playlist_send_message_signal"] =
+// 		playlist_widget.send_message_signal.connect(
+// 			boost::bind(&GtkMpmpClientWindow::send_message, this, _1));
+// 	connected_signals["vote_signal"] =
+// 		playlist_widget.vote_signal.connect(
+// 			boost::bind(&GtkMpmpClientWindow::on_vote_signal, this, _1, _2));
 
 // 	connected_signals["cancel_signal"] =
 // 		select_server_window.cancel_signal.connect(
@@ -97,15 +88,10 @@ GtkMpmpClientWindow::GtkMpmpClientWindow() {
 // 	connected_signals["client_message_receive_signal"] =
 // 		networkhandler->client_message_receive_signal.connect(
 // 			boost::bind(&gmpmpc_connection_handler::handle_message, &connection_handler, _1));
-	connected_signals["select_server_window::add_servers"] =
-		middleend.sig_servers_added.connect(
-			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::add_servers, &select_server_window, _1)));
-	connected_signals["select_server_window::remove_servers"] =
-		middleend.sig_servers_removed.connect(
-			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::remove_servers, &select_server_window, _1)));
-	connected_signals["trackdb_status_signal"] =
-		trackdb_widget->status_message_signal.connect(
-			boost::bind(&GtkMpmpClientWindow::set_status_message, this, _1));
+
+// // // // 	connected_signals["trackdb_status_signal"] =
+// // // // 		trackdb_widget->status_message_signal.connect(
+// // // // 			boost::bind(&GtkMpmpClientWindow::set_status_message, this, _1));
 	connected_signals["select_server_status_signal"] =
 		select_server_window.status_message_signal.connect(
 			boost::bind(&GtkMpmpClientWindow::set_status_message, this, _1));
@@ -116,7 +102,6 @@ GtkMpmpClientWindow::GtkMpmpClientWindow() {
 	set_status_message("Selecting server.");
 	select_server_window.show_all();
 	select_server_window.present();
-	middleend.start();
 }
 
 void GtkMpmpClientWindow::on_disconnect_signal_dialog_response(int response_id) {
@@ -138,7 +123,7 @@ GtkMpmpClientWindow::~GtkMpmpClientWindow() {
 	BOOST_FOREACH(vtype signal, connected_signals) {
 		signal.second.disconnect();
 	}
-	delete trackdb_widget;
+// 	delete trackdb_widget;
 }
 
 void GtkMpmpClientWindow::on_statusicon_popup_menu(guint button, guint32 activate_time) {
@@ -239,9 +224,9 @@ void GtkMpmpClientWindow::on_statusicon_popup_menu(guint button, guint32 activat
 // 	connected_signals["server_list_update_signal"].block();
 // }
 
-void GtkMpmpClientWindow::on_enqueue_track_signal(Track& track) {
-	playlist_widget.add_to_wishlist(track);
-}
+// void GtkMpmpClientWindow::on_enqueue_track_signal(Track& track) {
+// 	playlist_widget.add_to_wishlist(track);
+// }
 
 // // void GtkMpmpClientWindow::on_playlist_update(message_playlist_update_ref m) {
 // // 	playlist_widget.update(m);
@@ -325,7 +310,7 @@ void GtkMpmpClientWindow::construct_gui() {
 	menubar_ptr = (Gtk::Menu*)m_refUIManager->get_widget("/MenuBar");
 
 	main_paned.add(playlist_widget);
-	main_paned.add(*trackdb_widget);
+	main_paned.add(trackdb_widget);
 
 	main_vbox.pack_start(*menubar_ptr, Gtk::PACK_SHRINK);
 	main_vbox.add(main_paned);
@@ -397,7 +382,8 @@ int main_impl(int argc, char **argv ) {
 
 // 	TrackDataBase tdb;
 // 	network_handler nh(listen_port);
-	GtkMpmpClientWindow gmpmpc;
+	middle_end middleend;
+	GtkMpmpClientWindow gmpmpc(middleend);
 
 	Gtk::Main::run();
 	return 0;
