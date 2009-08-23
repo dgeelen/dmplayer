@@ -122,6 +122,11 @@ void middle_end::handle_received_message(const messageref m) {
 // 			gmpmpc_network_handler->client_message_receive_signal.disconnect(handle_received_message);
 		} break;
 		case message::MSG_PLAYLIST_UPDATE: {
+			if(!sig_update_playlist.empty()) {
+				IPlaylistRef playlist = sig_update_playlist();
+				const message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
+				msg->apply(playlist);
+			}
 // 			playlist_update_signal(boost::static_pointer_cast<message_playlist_update>(m));
 		}; break;
 		case message::MSG_QUERY_TRACKDB: {

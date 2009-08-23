@@ -45,6 +45,14 @@
 			boost::signal<void(const ipv4_socket_addr, ErrorID)> sig_connect_to_server_failure;
 
 			/**
+			 * Emitted when the client is disconnected by the server.
+			 * The callback is provided with a string describing the reason for the disconnect.
+			 * @note This signal is only raised upon receiving a message_disconnect, so not when the
+			 *       client forcibly disconnects from a server.
+			 */
+			boost::signal<void(const std::string&)> sig_disconnected;
+
+			/**
 			 * Emitted when a local track search completes. Initiate the search with search_local_tracks().
 			 * @note The callback is provided with the SearchID that search_local_tracks() returned
 			 *       and a list of tracks that matched the search parameters.
@@ -81,12 +89,11 @@
 			boost::signal<void(const std::vector<server_info>&)> sig_servers_removed;
 
 			/**
-			 * Emitted when the client is disconnected by the server.
-			 * The callback is provided with a string describing the reason for the disconnect.
-			 * @note This signal is only raised upon receiving a message_disconnect, so not when the
-			 *       client forcibly disconnects from a server.
+			 * Emitted when there is a change detected in the playlist.
+			 * The client should return a reference to it's IPlaylist, so that
+			 * it's contents may be updated.
 			 */
-			boost::signal<void(const std::string&)> sig_disconnected;
+			boost::signal<IPlaylistRef(void)> sig_update_playlist;
 
 			/********************
 			 ** Constructor(s) **
