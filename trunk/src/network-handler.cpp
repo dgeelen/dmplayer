@@ -190,6 +190,11 @@ void network_handler::send_message(ClientID id, messageref msg) {
 	}
 }
 
+ipv4_socket_addr network_handler::get_target_server_address() {
+	tcp_socket_ref servsock = serversockweakref.lock();
+	return servsock->get_ipv4_socket_addr();
+}
+
 void network_handler::send_server_message(messageref msg) {
 	tcp_socket_ref servsock = serversockweakref.lock();
 	if (!servsock) throw std::runtime_error("no valid server connected");
@@ -346,8 +351,9 @@ void network_handler::client_connect_to_server( ipv4_socket_addr dest ) {
 
 void network_handler::client_disconnect_from_server(  ) {
 	client_tcp_connection_running = false;
-	target_server = ipv4_socket_addr();
-	if (thread_client_tcp_connection) {
+	tcp_socket_ref servsock = serversockweakref.lock();
+	if(servsock) servsock->disconnect();
+	if (thread_client_tcp_connection && (boost::this_thread::get_id() != thread_client_tcp_connection->get_id())) {
 		dcerr("Joining thread_client_tcp_connection");
 		thread_client_tcp_connection->join();
 		thread_client_tcp_connection.reset();

@@ -82,6 +82,10 @@ GtkMpmpClientWindow::GtkMpmpClientWindow() {
 	connected_signals["sig_connect_to_server"] =
 		select_server_window.sig_connect_to_server.connect(
 			boost::bind(&middle_end::connect_to_server, &middleend, _1, 0));
+	connected_signals["sig_cancel_connect_to_server"] =
+		select_server_window.sig_cancel_connect_to_server.connect(
+			boost::bind(&middle_end::cancel_connect_to_server, &middleend, _1));
+
 // 	connected_signals["cancel_signal"] =
 // 		select_server_window.cancel_signal.connect(
 // 			boost::bind(&GtkMpmpClientWindow::on_select_server_cancel, this));
@@ -106,6 +110,7 @@ GtkMpmpClientWindow::GtkMpmpClientWindow() {
 
 	set_status_message("Selecting server.");
 	select_server_window.show_all();
+	select_server_window.present();
 	middleend.start();
 }
 
@@ -310,14 +315,15 @@ void GtkMpmpClientWindow::construct_gui() {
 	add(main_vbox);
 
 	statusbar.push("Ready.", 0);
-
 	show_all();
+	present();
 	main_paned.set_position(main_paned.get_width()/2);
 }
 
 void GtkMpmpClientWindow::on_menu_file_connect() {
-	select_server_window.show();
-	connected_signals["server_list_update_signal"].unblock();
+	select_server_window.show_all();
+	select_server_window.present();
+// 	connected_signals["server_list_update_signal"].unblock();
 }
 
 void GtkMpmpClientWindow::on_menu_file_preferences() {
@@ -350,7 +356,8 @@ bool GtkMpmpClientWindow::on_window_state_signal(GdkEventWindowState* event) {
 void GtkMpmpClientWindow::on_statusicon_activate() {
 	if(is_iconified) {
 		is_iconified = false;
-		show	();
+		show_all();
+		present();
 		deiconify();
 	}
 	else {

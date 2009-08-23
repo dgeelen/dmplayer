@@ -63,6 +63,7 @@
 			void send_message(ClientID id, messageref msg);
 			void send_message_allclients(messageref msg);
 			void send_server_message(messageref msg);
+			ipv4_socket_addr get_target_server_address();
 
 			void start();
 			void stop();
@@ -92,7 +93,6 @@
 			/* Client connection with server */
 			void client_tcp_connection(tcp_socket_ref sock);
 			bool client_tcp_connection_running;
-			ipv4_socket_addr target_server;
 
 			/* Server connection with client */
 			void server_tcp_connection_handler(tcp_socket_ref sock);

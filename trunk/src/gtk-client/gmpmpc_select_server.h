@@ -22,7 +22,7 @@
 
 			void connection_accepted(ipv4_socket_addr addr, ClientID id);
 			boost::signal<void(ipv4_socket_addr)> sig_connect_to_server;
-// 			boost::signal<void(void)>             cancel_signal;
+			boost::signal<void(ipv4_socket_addr)> sig_cancel_connect_to_server;
 			boost::signal<void(std::string)>      status_message_signal;
 
 		private:

@@ -14,9 +14,15 @@ void middle_end::start() {
 }
 
 void middle_end::connect_to_server(const ipv4_socket_addr address, int timeout) {
+	boost::mutex::scoped_lock lock(dest_server_mutex);
 	networkhandler.client_disconnect_from_server();
 	dest_server = address;
 	networkhandler.client_connect_to_server(address);
+}
+
+void middle_end::cancel_connect_to_server(const ipv4_socket_addr address) {
+	boost::mutex::scoped_lock lock(dest_server_mutex);
+	dest_server = ipv4_socket_addr(); // invalid address
 }
 
 /**
@@ -102,7 +108,13 @@ void middle_end::handle_received_message(const messageref m) {
 		case message::MSG_CONNECT: { } break;
 		case message::MSG_ACCEPT: {
 			const message_accept_ref msg = boost::static_pointer_cast<message_accept>(m);
-			sig_connect_to_server_success(dest_server, msg->cid);
+			boost::mutex::scoped_lock lock(dest_server_mutex);
+			if((dest_server == networkhandler.get_target_server_address()) && (dest_server != ipv4_socket_addr())) {
+				sig_connect_to_server_success(dest_server, msg->cid);
+			}
+			else {
+				networkhandler.client_disconnect_from_server();
+			}
 		}; break;
 		case message::MSG_DISCONNECT: {
 // 			gmpmpc_network_handler->client_message_receive_signal.disconnect(handle_received_message);
