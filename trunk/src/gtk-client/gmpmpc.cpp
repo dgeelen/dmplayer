@@ -5,6 +5,7 @@
 #include <boost/bind.hpp>
 #include <signal.h>
 #include <gtkmm/stock.h>
+#include <gtkmm/messagedialog.h>
 #include "../network-handler.h"
 #include "../util/StrFormat.h"
 #include <glib/gthread.h>
@@ -85,6 +86,9 @@ GtkMpmpClientWindow::GtkMpmpClientWindow() {
 	connected_signals["sig_cancel_connect_to_server"] =
 		select_server_window.sig_cancel_connect_to_server.connect(
 			boost::bind(&middle_end::cancel_connect_to_server, &middleend, _1));
+	connected_signals["sig_disconnected"] =
+		middleend.sig_disconnected.connect(
+			dispatcher.wrap(boost::bind(&GtkMpmpClientWindow::on_disconnect_signal, this, _1)));
 
 // 	connected_signals["cancel_signal"] =
 // 		select_server_window.cancel_signal.connect(
@@ -112,6 +116,19 @@ GtkMpmpClientWindow::GtkMpmpClientWindow() {
 	select_server_window.show_all();
 	select_server_window.present();
 	middleend.start();
+}
+
+void GtkMpmpClientWindow::on_disconnect_signal_dialog_response(int response_id) {
+	if(response_id == Gtk::RESPONSE_YES) {
+		on_menu_file_connect();
+	}
+}
+
+void GtkMpmpClientWindow::on_disconnect_signal(const std::string reason) {
+	Gtk::MessageDialog dialog("Disconnected from server.", false, Gtk::MESSAGE_INFO, Gtk::BUTTONS_YES_NO, true);
+	dialog.set_secondary_text(STRFORMAT("You were disconnected from the server:\n\n\"%s\"\n\nWould you like to connect to a different server now?", reason));
+	dialog.signal_response().connect(boost::bind(&GtkMpmpClientWindow::on_disconnect_signal_dialog_response, this, _1));
+	dialog.run();
 }
 
 GtkMpmpClientWindow::~GtkMpmpClientWindow() {

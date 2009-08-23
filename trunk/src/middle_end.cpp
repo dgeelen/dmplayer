@@ -117,6 +117,8 @@ void middle_end::handle_received_message(const messageref m) {
 			}
 		}; break;
 		case message::MSG_DISCONNECT: {
+			const message_disconnect_ref msg = boost::static_pointer_cast<message_disconnect>(m);
+			sig_disconnected(msg->get_reason());
 // 			gmpmpc_network_handler->client_message_receive_signal.disconnect(handle_received_message);
 		} break;
 		case message::MSG_PLAYLIST_UPDATE: {
