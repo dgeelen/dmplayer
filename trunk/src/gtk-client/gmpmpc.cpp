@@ -40,14 +40,11 @@ GtkMpmpClientWindow::GtkMpmpClientWindow() {
 	statusicon->set_tooltip("gmpmpc\nA GTK+ Client for MPMP");
 	statusicon->set_visible(true);
 
-	is_iconified = false;
 	statusicon->signal_activate().connect(
 		boost::bind(&GtkMpmpClientWindow::on_statusicon_activate, this));
 	statusicon->signal_popup_menu().connect(
 		sigc::mem_fun(*this, &GtkMpmpClientWindow::on_statusicon_popup_menu));
 
-	this->signal_window_state_event().connect(
-		sigc::mem_fun(*this, &GtkMpmpClientWindow::on_window_state_signal));
 	this->signal_delete_event().connect(
 		sigc::mem_fun(*this, &GtkMpmpClientWindow::on_delete_event));
 
@@ -348,39 +345,25 @@ void GtkMpmpClientWindow::on_menu_file_preferences() {
 }
 
 bool GtkMpmpClientWindow::on_delete_event(GdkEventAny* event) {
-	Gtk::Main::quit();
+	on_statusicon_activate();
 	return true;
 }
 
 void GtkMpmpClientWindow::on_menu_file_quit() {
-	on_delete_event(NULL);
-}
-
-bool GtkMpmpClientWindow::on_window_state_signal(GdkEventWindowState* event) {
-	if(event->changed_mask == GDK_WINDOW_STATE_ICONIFIED && (event->new_window_state == GDK_WINDOW_STATE_ICONIFIED || event->new_window_state == (GDK_WINDOW_STATE_ICONIFIED | GDK_WINDOW_STATE_MAXIMIZED))) {
-		is_iconified = true;
-// 		hide();
-		iconify();
-	}
-	else if(event->changed_mask == GDK_WINDOW_STATE_WITHDRAWN && (event->new_window_state == GDK_WINDOW_STATE_ICONIFIED || event->new_window_state == (GDK_WINDOW_STATE_ICONIFIED | GDK_WINDOW_STATE_MAXIMIZED))) {
-			is_iconified = false;
-// 			show();
-			deiconify();
-	}
-	return true;
+	Gtk::Main::quit();
 }
 
 void GtkMpmpClientWindow::on_statusicon_activate() {
-	if(is_iconified) {
-		is_iconified = false;
-		show_all();
-		present();
-		deiconify();
+	if( is_visible() ) {
+		if( property_is_active() ) {
+			hide();
+		}
+		else {
+			present();
+		}
 	}
 	else {
-		is_iconified = true;
-		hide();
-		iconify();
+		show();
 	}
 }
 
