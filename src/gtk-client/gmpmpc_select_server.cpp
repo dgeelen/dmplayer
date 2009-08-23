@@ -129,15 +129,18 @@ void gmpmpc_select_server_window::on_connect_button_click() {
 		statusbar.pop();
 		statusbar.push("Connecting...");
 		status_message_signal("Connecting...");
-		sig_connect_to_server((*sel->get_selected())[m_Columns.addr]);
+		target_server = (*sel->get_selected())[m_Columns.addr];
+		sig_connect_to_server(target_server);
 	}
 }
 
 void gmpmpc_select_server_window::on_cancel_button_click() {
+
 	if(connect_button.sensitive()) {
 		hide();
 	}
 	else {
+		sig_cancel_connect_to_server(target_server);
 		connect_button.set_sensitive(true);
 		serverlist.set_sensitive(true);
 	}

@@ -3,7 +3,9 @@
 
 	#include <vector>
 	#include <boost/signal.hpp>
+	#include <boost/thread/mutex.hpp>
 	#include <boost/strong_typedef.hpp>
+
 	#include "packet.h"
 	#include "network-handler.h"
 	#include "playlist_management.h"
@@ -111,6 +113,12 @@
 			void connect_to_server(const ipv4_socket_addr address, int timeout = 0);
 
 			/**
+			 * Aborts an ongoing connection attempt initiated by connect_to_server()
+			 * @param address is the ipv4 address of the server which the client specified in the call to connect_to_server()
+			 */
+			void cancel_connect_to_server(const ipv4_socket_addr address);
+
+			/**
 			 * Initiates a search of the local track database.
 			 * @note the seach is performed in a separate thead, which will call sig_search_local_tracks() upon
 			 *       completion of the search.
@@ -171,6 +179,7 @@
 			std::vector<server_info> known_servers;
 			ClientID                 client_id;
 			network_handler          networkhandler;
+			boost::mutex             dest_server_mutex;
 			ipv4_socket_addr         dest_server;
 	};
 
