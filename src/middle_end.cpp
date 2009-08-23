@@ -19,9 +19,17 @@ middle_end::middle_end()
 
 middle_end::~middle_end() {
 	{
-		mutex::scoped_lock lock(file_requests_mutex);
-		for(vector<file_requests_type>::iterator i = file_requests.begin(); i != file_requests.end(); ++i) {
-			*((*i).first.first) = true;
+		bool done(false);
+		while(!done) {
+			mutex::scoped_lock lock(file_requests_mutex);
+			vector<file_requests_type>::iterator i = file_requests.begin();
+			if(i != file_requests.end()) {
+				lock.unlock();
+				abort_file_transfer((*i).second);
+			}
+			else {
+				done = true;
+			}
 		}
 	}
 	networkhandler.stop();
@@ -170,7 +178,37 @@ void middle_end::handle_message_request_file(const message_request_file_ref requ
 	if(s.size() == 1) {
 		if(filesystem::exists(s[0].filename)) {
 			filesystem::ifstream f( s[0].filename, std::ios_base::in | std::ios_base::binary );
-			uint32 n = 1024 * 32; // Well over 5sec of 44100KHz 2Channel 16Bit WAV
+			std::vector<uint8> data;
+			data.resize(1024*40); // 320bpbs
+			while(!tl_done) {
+				f.read((char*)&data[0], 1024*40);
+				uint32 read = f.gcount();
+				if(read) {
+					std::vector<uint8> vdata;
+					std::vector<uint8>::iterator from = data.begin();
+					std::vector<uint8>::iterator to = from + read;
+					vdata.insert(vdata.begin(), from, to);
+					//FIXME: it is impossible to detect if the server is still listening (or even alive)
+					message_request_file_result_ref msg(new message_request_file_result(vdata, request->id));
+					try {
+						networkhandler.send_server_message(msg);
+					}
+					catch(Exception e) {
+						tl_done = true;
+					}
+					//FIXME: this does not take network latency into account (LAN APP!)
+					usleep(750000);
+					{
+						mutex::scoped_lock lock(file_requests_mutex);
+						tl_done = *done;
+					}
+				}
+				else { //EOF or Error reading file
+					tl_done = true;
+				}
+			}
+			#if 0 // Leave this disabled for now. Do we really want to send 1MB chunks?
+			uint32 n = 1024 * 32; // Well over 5sec of 44100KHz 2Channel 16Bit WAV, 32Kb
 			std::vector<uint8> data;
 			data.resize(1024*1024);
 			while(!tl_done) {
@@ -189,6 +227,7 @@ void middle_end::handle_message_request_file(const message_request_file_ref requ
 					catch(Exception e) {
 						tl_done = true;
 					}
+
 					if(n<1024*1024) {
 						n<<=1;
 					}
@@ -203,6 +242,7 @@ void middle_end::handle_message_request_file(const message_request_file_ref requ
 					tl_done = true;
 				}
 			}
+			#endif
 		}
 		else { // Error opening file // FIXME: This is a hack!
 			dcerr("Warning: could not open " << s[0].filename << ", Sending as-is...");
@@ -222,6 +262,7 @@ void middle_end::handle_message_request_file(const message_request_file_ref requ
 	try {
 		networkhandler.send_server_message(msg);
 	} catch(Exception e) {}
+	dcerr("Tranfer complete");
 
 	{
 		mutex::scoped_lock lock(file_requests_mutex);
@@ -232,6 +273,24 @@ void middle_end::handle_message_request_file(const message_request_file_ref requ
 			}
 		}
 		delete done;
+	}
+}
+
+void middle_end::abort_file_transfer(LocalTrackID id) {
+	mutex::scoped_lock lock(file_requests_mutex);
+	for(vector<file_requests_type>::iterator i = file_requests.begin(); i != file_requests.end(); ++i) {
+		if((*i).second == id) {
+			*(*i).first.first = true;
+			BOOST_FOREACH(thread& t, threads) {
+				if(t.get_id() == (*i).first.second) {
+					lock.unlock();
+					t.interrupt();
+					t.join(); // Should not take long ...
+					break;
+				}
+			}
+			break;
+		}
 	}
 }
 
@@ -320,22 +379,7 @@ void middle_end::handle_received_message(const messageref m) {
 		case message::MSG_REQUEST_FILE_RESULT: {
 			message_request_file_result_ref msg = static_pointer_cast<message_request_file_result>(m);
 			if(msg->id.first == client_id) {
-				mutex::scoped_lock lock(file_requests_mutex);
-				for(vector<file_requests_type>::iterator i = file_requests.begin(); i != file_requests.end(); ++i) {
-					if((*i).second == msg->id.second) {
-						*(*i).first.first = true;
-						dcerr(*(*i).first.first);
-						BOOST_FOREACH(thread& t, threads) {
-							if(t.get_id() == (*i).first.second) {
-								lock.unlock();
-								t.interrupt();
-								t.join(); // Should not take long ...
-								break;
-							}
-						}
-						break;
-					}
-				}
+				abort_file_transfer(msg->id.second);
 			}
 		}; break;
 		default: {
