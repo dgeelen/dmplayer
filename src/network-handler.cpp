@@ -336,6 +336,7 @@ void network_handler::start() {
 
 void network_handler::client_connect_to_server( ipv4_socket_addr dest ) {
 	dcerr(dest);
+	client_disconnect_from_server();
 	client_tcp_connection_running = true;
 	tcp_socket_ref serversock(new tcp_socket(dest.first, dest.second));
 	serversockweakref = serversock;
