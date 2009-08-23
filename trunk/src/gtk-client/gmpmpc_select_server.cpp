@@ -5,7 +5,9 @@
 #include <gtkmm/treeselection.h>
 #include <glibmm/main.h>
 
-gmpmpc_select_server_window::gmpmpc_select_server_window() {
+gmpmpc_select_server_window::gmpmpc_select_server_window(middle_end& _middleend)
+: middleend(_middleend)
+{
 	set_title( "Select a server" );
 	set_default_size( 512, 320);
 	set_position( Gtk::WIN_POS_CENTER_ON_PARENT );
@@ -33,15 +35,40 @@ gmpmpc_select_server_window::gmpmpc_select_server_window() {
 	Glib::RefPtr<Gtk::ListStore> refListStore = Gtk::ListStore::create(m_Columns);
 	serverlist.set_model(refListStore);
 	serverlist.append_column("Name", m_Columns.name);
-	serverlist.append_column("Ping", m_Columns.ping);
+// 	serverlist.append_column("Ping", m_Columns.ping);
 	serverlist.append_column("Address", m_Columns.addr_str);
+
+	// Since the middle_end is already running, we may have missed some add/remove events for servers.
+	// Therefor we need to get up-to-speed on the current state of events, but without missing any more
+	// events. We do this by running add_servers(get_known_servers()) in the same thread as the regular
+	// add/delete events will be running later on.
+	dispatcher.enqueue(
+		boost::bind( &gmpmpc_select_server_window::add_servers,
+		             this,
+		             boost::bind( &middle_end::get_known_servers, &middleend )
+		           )
+	);
+
+	sig_connect_to_server_success_connection =
+		middleend.sig_connect_to_server_success.connect(
+			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::connection_accepted, this, _1, _2)));
+	sig_servers_added_connection =
+		middleend.sig_servers_added.connect(
+			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::add_servers, this, _1)));
+	sig_servers_removed_connection =
+		middleend.sig_servers_removed.connect(
+			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::remove_servers, this, _1)));
+
+	dispatcher();
 
 	set_modal(true);
 }
 
-// gmpmpc_select_server_window::~gmpmpc_select_server_window() {
-// // 	cancel_signal();
-// }
+gmpmpc_select_server_window::~gmpmpc_select_server_window() {
+	sig_connect_to_server_success_connection.disconnect();
+	sig_servers_added_connection.disconnect();
+	sig_servers_removed_connection.disconnect();
+}
 
 bool gmpmpc_select_server_window::focus_connect_button(GdkEventWindowState* event) {
 	connect_button.grab_focus();
@@ -75,14 +102,16 @@ void gmpmpc_select_server_window::add_servers(const std::vector<server_info>& ad
 
 	save_selected();
 
-	if(store->children().size() == 0) {                     // If the server list was empty
-		selected_addr = added_server_list.begin()->sock_addr; // Select a server by default
+	if(store->children().size() == 0) {                       // If the server list was empty
+		if(added_server_list.size() > 0) {                      // And there now is a server present
+			selected_addr = added_server_list.begin()->sock_addr; // Select a server by default
+		}
 	}
 
 	BOOST_FOREACH(server_info si, added_server_list) {
 		Gtk::TreeModel::iterator i = store->append();
 		(*i)[m_Columns.name]     = si.name;
-		(*i)[m_Columns.ping]     = STRFORMAT("%0.02f", ((long)((double)si.ping_micro_secs) / ((double)10000))/100.0f);
+// 		(*i)[m_Columns.ping]     = STRFORMAT("%0.02f", ((long)((double)si.ping_micro_secs) / ((double)10000))/100.0f);
 		(*i)[m_Columns.addr_str] = si.sock_addr.std_str().c_str();
 		(*i)[m_Columns.addr]     = si.sock_addr;
 	}
@@ -130,7 +159,9 @@ void gmpmpc_select_server_window::on_connect_button_click() {
 		statusbar.push("Connecting...");
 		status_message_signal("Connecting...");
 		target_server = (*sel->get_selected())[m_Columns.addr];
-		sig_connect_to_server(target_server);
+// 		target_server.first.array[3] = 32;
+// 		sig_connect_to_server(target_server);
+		middleend.connect_to_server(target_server, 0);
 	}
 }
 
@@ -140,7 +171,8 @@ void gmpmpc_select_server_window::on_cancel_button_click() {
 		hide();
 	}
 	else {
-		sig_cancel_connect_to_server(target_server);
+// 		sig_cancel_connect_to_server(target_server);
+		middleend.cancel_connect_to_server(target_server);
 		connect_button.set_sensitive(true);
 		serverlist.set_sensitive(true);
 	}

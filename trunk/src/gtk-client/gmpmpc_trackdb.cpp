@@ -7,8 +7,10 @@
 
 using namespace std;
 
-gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(TrackDataBase& tdb, ClientID cid) : trackdb(tdb) {
-	clientid = cid;
+gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(middle_end& m)
+: middleend(m),
+  clientid(m.get_client_id())
+{
 	scrolledwindow.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
 	scrolledwindow.add(treeview);
 	search_hbox.pack_start(search_label, Gtk::PACK_SHRINK);
@@ -39,10 +41,24 @@ gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(TrackDataBase& tdb, ClientID cid) :
 // 	treeview.add_events(Gdk::BUTTON_PRESS_MASK);
 // 	treeview.signal_button_press_event().connect(sigc::mem_fun(*this, &gmpmpc_trackdb_widget::on_treeview_clicked), false);
 
+	sig_search_tracks_connection =
+		middleend.sig_search_tracks.connect(
+			dispatcher.wrap(boost::bind(&gmpmpc_trackdb_widget::sig_search_tracks_handler, this, _1, _2)));
+	update_treeview_connection =
+		middleend.sig_client_id_changed.connect(
+			dispatcher.wrap(boost::bind(&gmpmpc_trackdb_widget::update_treeview, this)));
+
 	update_treeview();
-	#ifdef DEBUG
-	network_search_id=0; //Intentionally not initialized
-	#endif
+// 	#ifdef DEBUG
+// 	network_search_id=0; //Intentionally not initialized
+// 	#endif
+}
+
+gmpmpc_trackdb_widget::~gmpmpc_trackdb_widget() {
+	update_treeview_connection.disconnect();
+	sig_search_tracks_connection.disconnect();
+	search_entry_timeout_connection.disconnect();
+	//FIXME: Should we also disconnect search_entry and others
 }
 
 void gmpmpc_trackdb_widget::set_clientid(ClientID id) {
@@ -64,44 +80,45 @@ void gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked() {
 	Glib::RefPtr<Gtk::TreeModel> model = treeview.get_model();
 	Glib::RefPtr<Gtk::ListStore> store = Glib::RefPtr<Gtk::ListStore>::cast_dynamic(model);
 
-	status_message_signal("Voting...");
+	status_message_signal("Appending track...");
 	Glib::RefPtr<Gtk::TreeSelection> sel = treeview.get_selection();
 	std::vector<Gtk::TreeModel::Path> selected_rows = sel->get_selected_rows();
 	BOOST_FOREACH(Gtk::TreeModel::Path p, selected_rows) {
 		Gtk::TreeModel::iterator i = model->get_iter(p);
-		Track q;
-		q = (*i)[treeview.m_Columns.track];
-		std::vector<LocalTrack> r = trackdb.search(q);
-		Track t(q.id, r[0].metadata);
-		enqueue_track_signal(t);
+		middleend.mylist_append((*i)[treeview.m_Columns.track]);
+// 		Track q;
+// 		q = (*i)[treeview.m_Columns.track];
+// 		std::vector<LocalTrack> r;// = trackdb.search(q);
+// 		Track t(q.id, r[0].metadata);
+// 		enqueue_track_signal(q);
 	}
 }
 
-bool gmpmpc_trackdb_widget::update_treeview() {
-	// TODO: is this reallly neccessary? Shouldn't Glib::signal_timeout ensure this?
-	boost::mutex::scoped_lock lock(treeview_update_mutex);
+void gmpmpc_trackdb_widget::update_treeview() {
+	search_entry_timeout_handler();
+}
 
-	treeview.clear();
+bool gmpmpc_trackdb_widget::search_entry_timeout_handler() {
 	MetaDataMap m;
 	m["FILENAME"] = search_entry.get_text();
 	Track query(TrackID(ClientID(0xffffffff), LocalTrackID(0xffffffff)), m);
-	vector<LocalTrack> s = trackdb.search(query);
-	BOOST_FOREACH(LocalTrack lt, s) {
-		Track t(TrackID(clientid, lt.id), lt.metadata);
-		treeview.add(t);
-	}
+	treeview.clear();
+	search_id = middleend.search_tracks(query);
 	return false;
 }
 
+void gmpmpc_trackdb_widget::sig_search_tracks_handler(const SearchID id, const std::vector<Track>& tracklist) {
+	if(id == search_id) {
+		BOOST_FOREACH(Track t, tracklist) {
+			treeview.add(t);
+		}
+	}
+}
+
 void gmpmpc_trackdb_widget::on_search_entry_changed() {
-	update_treeview_connection.disconnect();
-	sigc::slot<bool> slot = sigc::mem_fun(*this, &gmpmpc_trackdb_widget::update_treeview);
-	update_treeview_connection = Glib::signal_timeout().connect(slot, 250);
-
-	network_search_result.clear();
-	++network_search_id;
-
-// 	sigc::connection conn = Glib::signal_timeout().connect(boost::bind<bool>(&gmpmpc_trackdb_widget::update_treeview, this), 250);
+	search_entry_timeout_connection.disconnect();
+	sigc::slot<bool> slot = sigc::mem_fun(*this, &gmpmpc_trackdb_widget::search_entry_timeout_handler);
+	search_entry_timeout_connection = Glib::signal_timeout().connect(slot, 333);
 }
 
 string urldecode(std::string s) { //http://www.koders.com/cpp/fid6315325A03C89DEB1E28732308D70D1312AB17DD.aspx
@@ -149,11 +166,11 @@ void gmpmpc_trackdb_widget::on_drag_data_received_signal(const Glib::RefPtr<Gdk:
 	switch(info) {
 		case 0: {
 			BOOST_FOREACH(std::string file, urilist_convert(selection_data.get_data_as_string())) {
-				trackdb.add_directory(file);
+// 				trackdb.add_directory(file);
 			}
 		}; break;
 		case 1: {
-			trackdb.add(boost::filesystem::path(selection_data.get_data_as_string()));
+// 			trackdb.add(boost::filesystem::path(selection_data.get_data_as_string()));
 		}; break;
 		default:
 			dcerr("Unhandled drop? info="<<info);

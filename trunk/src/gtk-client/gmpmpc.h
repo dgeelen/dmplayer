@@ -30,23 +30,35 @@
 
 	class GtkMpmpClientWindow : public Gtk::Window {
 		public:
-			GtkMpmpClientWindow();
+			GtkMpmpClientWindow(middle_end& _middleend);
 			~GtkMpmpClientWindow();
 		private:
+			/* Variables */
+// 			TrackDataBase*                                    trackdb;
+// 			network_handler*                                  networkhandler;
+			DispatcherMarshaller dispatcher; // Execute a function in the gui thread
+			middle_end&                                       middleend;
+			std::map<std::string, boost::signals::connection> connected_signals;
+			gmpmpc_connection_handler                         connection_handler;
+			sigc::connection                                  clear_statusbar_connection;
+			bool                                              is_iconified;
+
 			/* Helpers */
 			Glib::RefPtr<Gtk::UIManager> m_refUIManager;
   		Glib::RefPtr<Gtk::ActionGroup> m_refActionGroup;
+
 			/* Containers (widgets not referenced by code) */
 			Gtk::VBox             main_vbox;
 			Gtk::HPaned           main_paned;
 			Gtk::Frame            playlist_frame;
 			Gtk::ScrolledWindow   playlist_scrolledwindow;
+
 			/* Widgets (referenced by code) */
 			Gtk::Menu*      menubar_ptr; // Menu is created dynamically using UIManager
 			Gtk::Statusbar  statusbar;
 			Glib::RefPtr<Gdk::Pixbuf>     statusicon_pixbuf;
 			Glib::RefPtr<Gtk::StatusIcon> statusicon;
-			gmpmpc_trackdb_widget*        trackdb_widget;
+			gmpmpc_trackdb_widget         trackdb_widget;
 			gmpmpc_playlist_widget        playlist_widget;
 			gmpmpc_select_server_window   select_server_window;
 
@@ -70,17 +82,6 @@
 			void set_status_message(std::string msg);
 			void send_message(messageref m);
 			bool clear_status_messages();
-
-
-			/* Variables */
-// 			TrackDataBase*                                    trackdb;
-// 			network_handler*                                  networkhandler;
-			DispatcherMarshaller dispatcher; // Execute a function in the gui thread
-			middle_end                                        middleend;
-			std::map<std::string, boost::signals::connection> connected_signals;
-			gmpmpc_connection_handler                         connection_handler;
-			sigc::connection                                  clear_statusbar_connection;
-			bool                                              is_iconified;
 	};
 
 #endif
