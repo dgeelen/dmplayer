@@ -106,8 +106,8 @@ class packet {
  *      TCP Packets       *
  ** ** ** ** ** ** ** ** **/
 
-/* 
- * Changelog for NETWORK_PROTOCOL_VERSION 
+/*
+ * Changelog for NETWORK_PROTOCOL_VERSION
  *  - New in version 3:
  *    + Check for compatible versions of boost::serialize.
  *    + On disconnect tell the client why we disconnected.
@@ -247,7 +247,11 @@ class message_playlist_update : public message {
 			utype = UPDATE_INSERT;
 			data_track = track;
 			data_index = pos;
-
+		};
+		message_playlist_update(std::vector<Track> track, uint32 pos = 0xFFFFFFFF) : message(MSG_PLAYLIST_UPDATE) {
+			utype = UPDATE_INSERT;
+			data_list = track;
+			data_index = pos;
 		};
 		message_playlist_update(uint32 from, uint32 to = 0xFFFFFFFF) : message(MSG_PLAYLIST_UPDATE) {
 			utype = UPDATE_MOVE;
@@ -259,24 +263,28 @@ class message_playlist_update : public message {
 			return utype;
 		}
 
-		void apply(IPlaylist* playlist) {
+		void apply(IPlaylistRef playlist) {
+			apply(*playlist);
+		}
+
+		void apply(IPlaylist& playlist) {
 			switch (utype) {
 				case UPDATE_CLEAR: {
-					playlist->clear();
+					playlist.clear();
 					BOOST_FOREACH(const Track& t, data_list)
-						playlist->add(t);
+						playlist.add(t);
 				}; break;
 				case UPDATE_INSERT: {
 					if (data_index == 0xFFFFFFFF)
-						playlist->add(data_track);
+						playlist.add(data_track);
 					else
-						playlist->insert(data_index, data_track);
+						playlist.insert(data_index, data_track);
 				}; break;
 				case UPDATE_MOVE: {
 					if (data_index2 == 0xFFFFFFFF)
-						playlist->remove(data_index);
+						playlist.remove(data_index);
 					else
-						playlist->move(data_index, data_index2);
+						playlist.move(data_index, data_index2);
 				}; break;
 			};
 		}

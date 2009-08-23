@@ -314,7 +314,7 @@ void MainWindow::handleReceivedMessage(const messageref m)
 		}; break;
 		case message::MSG_PLAYLIST_UPDATE: {
 			message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
-			msg->apply(PlayListWidget);
+			msg->apply(*PlayListWidget);
 		}; break;
 		case message::MSG_REQUEST_FILE: {
 			message_request_file_ref msg = boost::static_pointer_cast<message_request_file>(m);
