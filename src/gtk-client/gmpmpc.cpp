@@ -125,6 +125,7 @@ void GtkMpmpClientWindow::on_disconnect_signal(const std::string reason) {
 	Gtk::MessageDialog dialog("Disconnected from server.", false, Gtk::MESSAGE_INFO, Gtk::BUTTONS_YES_NO, true);
 	dialog.set_secondary_text(STRFORMAT("You were disconnected from the server:\n\n\"%s\"\n\nWould you like to connect to a different server now?", reason));
 	dialog.signal_response().connect(boost::bind(&GtkMpmpClientWindow::on_disconnect_signal_dialog_response, this, _1));
+	dialog.set_default_response(Gtk::RESPONSE_YES);
 	dialog.run();
 }
 
