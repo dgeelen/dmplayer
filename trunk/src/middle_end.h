@@ -5,11 +5,13 @@
 	#include <boost/signal.hpp>
 	#include <boost/thread/mutex.hpp>
 	#include <boost/strong_typedef.hpp>
-
+	#include <boost/thread.hpp>
+	#include "util/thread_group2.h"
 	#include "packet.h"
 	#include "network-handler.h"
 	#include "playlist_management.h"
 	#include "network/network-core.h"
+	#include "synced_playlist.h"
 
 	BOOST_STRONG_TYPEDEF(uint32, SearchID);
 	BOOST_STRONG_TYPEDEF(uint32, ErrorID);
@@ -20,7 +22,7 @@
 	 * development of new clients.
 	 *
 	 * @todo this class should provide a way for clients to store/retrieve
-	 *       @common configuration options.
+	 *       common configuration options.
 	 */
 	class middle_end {
 		public:
@@ -53,18 +55,30 @@
 			boost::signal<void(const std::string&)> sig_disconnected;
 
 			/**
+			 * Emitted when a track search completes. Initiate the search with search_tracks().
+			 * @note The callback is provided with the SearchID that search_tracks() returned
+			 *       and a list of tracks that matched the search parameters.
+			 * @see search_tracks()
+			 * @todo figure out if this callback may be executed more than once for the same SearchID
+			 */
+			boost::signal<void(const SearchID id, const std::vector<Track>&)> sig_search_tracks;
+
+			/**
 			 * Emitted when a local track search completes. Initiate the search with search_local_tracks().
 			 * @note The callback is provided with the SearchID that search_local_tracks() returned
 			 *       and a list of tracks that matched the search parameters.
 			 * @see search_local_tracks()
+			 * @todo figure out if this should return a list of LocalTrack or Track.
+			 * @deprecated in favor of sig_search_tracks()
 			 */
-			boost::signal<void(const SearchID id, const std::vector<Track>&)> sig_search_local_tracks;
+			boost::signal<void(const SearchID id, const std::vector<LocalTrack>&)> sig_search_local_tracks;
 
 			/**
 			 * Emitted when a global track search completes. Initiate the search with search_remote_tracks().
 			 * @note The callback is provided with the SearchID that search_remote_tracks() returned
 			 *       and a list of tracks that matched the search parameters.
 			 * @see search_remote_tracks()
+			 * @* @deprecated in favor of sig_search_tracks()
 			 */
 			boost::signal<void(const SearchID id, const std::vector<Track>&)> sig_search_remote_tracks;
 
@@ -90,30 +104,42 @@
 
 			/**
 			 * Emitted when there is a change detected in the playlist.
-			 * The client should return a reference to it's IPlaylist, so that
-			 * it's contents may be updated.
+			 * @note The client should return a reference to it's IPlaylist, so that
+			 *       it's contents may be updated.
+			 * @todo perhaps rename this function as it is also used to manipulate the playlist
+			 *       in other ways. (for example to append tracks etc).
 			 */
 			boost::signal<IPlaylistRef(void)> sig_update_playlist;
+
+			/**
+			 * Emitted when the ClientID changes. For example when the client connects to a different server.
+			 * @note The callback is provided with the new ClientID.
+			 */
+			boost::signal<void(ClientID)> sig_client_id_changed;
 
 			/********************
 			 ** Constructor(s) **
 			 ********************/
 			/**
 			 * Constructor for middle_end.
-			 * After instantiating an instance, connect all required signals then call start().
-			 * @see start()
+			 * After instantiating an instance, connect all required signals then call connect_to_server().
+			 * @see connect_to_server()
+			 * @see ~middle_end()
 			 */
 			middle_end();
+
+			/****************
+			 ** Destructor **
+			 ****************/
+			/**
+			 * Destructor for middle_end. Cleans up all resources allocated by the client and disconnects from any connected server.
+			 * @see middle_end()
+			 */
+			~middle_end();
 
 			/***************
 			 ** Functions **
 			 ***************/
-			/**
-			 * When a client has connected all signals it is interested in and is ready to begin
-			 * receiving events it should call start() to notify the middle_end.
-			 * @see middle_end()
-			 */
-			void start();
 
 			/**
 			 * Instructs the middle_end to attempt to connect to the server present on address
@@ -132,24 +158,89 @@
 			void cancel_connect_to_server(const ipv4_socket_addr address);
 
 			/**
+			 * Initiates both a local and a global search.
+			 * @note the seach is performed in a separate thead, which will call sig_search_tracks() upon
+			 *       completion of the search.
+			 * @param query contains the search parameters.
+			 * @return a SearchID which can be used by the client to distinguish between different searches.
+			 * @see sig_search_tracks()
+			 * @todo decide wether to keep the local and global versions of search()
+			 */
+			SearchID search_tracks(const Track query);
+
+			/**
 			 * Initiates a search of the local track database.
 			 * @note the seach is performed in a separate thead, which will call sig_search_local_tracks() upon
 			 *       completion of the search.
-			 * @param track contains the search parameters.
+			 * @param query contains the search parameters.
 			 * @return a SearchID which can be used by the client to distinguish between different searches.
 			 * @see sig_search_local_tracks()
+			 * @deprecated in favor of search_tracks()
 			 */
-			SearchID search_local_tracks(const Track track);
+			SearchID search_local_tracks(const Track query);
 
 			/**
 			 * Initiates a global search for tracks.
 			 * @note the seach is performed in a separate thead, which will call sig_search_remote_tracks() upon
 			 *       completion of the search.
-			 * @param track contains the search parameters.
+			 * @param query contains the search parameters.
 			 * @return a SearchID which can be used by the client to distinguish between different searches.
 			 * @see sig_search_remote_tracks()
+			 * @deprecated in favor of search_tracks()
 			 */
-			SearchID search_remote_tracks(const Track track);
+			SearchID search_remote_tracks(const Track query);
+
+			/**
+			 * Appends track to this client's playlist.
+			 * @param track is a Track (obtain one from the TrackDataBase).
+			 */
+			void mylist_append(Track track);
+
+			/**
+			 * Appends every Track in tracklist to this client's playlist.
+			 * @param tracklist is a std::vector of Track (obtain one from the TrackDataBase).
+			 */
+			void mylist_append(std::vector<Track> tracklist);
+
+			/**
+			 * Inserts track at position where in this client's playlist.
+			 * @param track is a Track (obtain one from the TrackDataBase).
+			 * @param where is an uint32 indicating the position in the client's playlist that track should be inserted.
+			 */
+			void mylist_insert(Track track, uint32 where);
+
+			/**
+			 * Inserts every Track in tracklist at position where in this client's playlist.
+			 * @param tracklist is a std::vector of Track (obtain one from the TrackDataBase).
+			 * @param where is an uint32 indicating the position in the client's playlist that tracklist should be inserted.
+			 */
+			void mylist_insert(std::vector<Track> tracklist, uint32 where);
+
+			/**
+			 * Removes track from the client's playlist.
+			 * @param track is a Track.
+			 */
+			void mylist_remove(Track track);
+
+			/**
+			 * Removes every track in tracklist from the client's playlist.
+			 * @param tracklist
+			 */
+			void mylist_remove(std::vector<Track> tracklist);
+
+			/**
+			 * Moves the track at position from in the client's playlist to position to.
+			 * @param from a valid index into the playlist.
+			 * @param to either a valid index into the playlist, or one past the last index to indicate an append.
+			 */
+			void mylist_reorder(uint32 from, uint32 to);
+
+			/**
+			 * Moves for each position <i>p</i> in fromlist, perform mylist_reorder(<i>p</i>, to), such that for each invocation of mylist_reorder() to is adjusted to reflect the index into the original playlist.
+			 * @param fromlist a list of valid indices into the playlist.
+			 * @param to either a valid index into the playlist, or one past the last index to indicate an append.
+			 */
+			void mylist_reorder(std::vector<uint32> fromlist, uint32 to);
 
 			/**
 			 * @return a descriptive message for a given ErrorID
@@ -165,35 +256,38 @@
 
 			/**
 			 * @return the list of currently known servers.
-			 * @todo Decide wether to keep this or remove it in favor of sig_servers_added/sig_servers_deleted
 			 */
 			std::vector<server_info> get_known_servers();
 
 			/**
 			 * @return the current ClientID.
-			 * @todo Decide wether to keep this or remove it in favor of sig_connected_to_server
+			 * @todo Decide wether to keep this or remove it in favor of sig_connected_to_server and/or sig_client_id_changed
 			 */
 			ClientID get_client_id();
 
 			/***************
 			 ** Variables **
 			 ***************/
-			/**
-			 * The TrackDataBase which stores this clients tracks.
-			 * @todo this should probably be hidden behind a set of convenience functions which
-			 *       handle things such as which directories and filetypes to add to the database
-			 *       as well as other settings.
-			 */
-			TrackDataBase trackdb;
 
 		private: //NOTE: Private interfaces are documented in middle_end.cpp
 			void                     handle_sig_server_list_update(const std::vector<server_info>&);
 			void                     handle_received_message(const messageref m);
+			boost::mutex             file_requests_mutex;
+			std::vector<std::pair<std::pair<boost::shared_ptr<bool>, boost::thread::id>, LocalTrackID> > file_requests;
+			void                     handle_message_request_file(const message_request_file_ref request, boost::shared_ptr<bool> done);
+			boost::mutex             search_mutex;
+			void                     _search_tracks(SearchID search_id, const Track track);
+			boost::mutex             known_servers_mutex;
 			std::vector<server_info> known_servers;
 			ClientID                 client_id;
+			util::thread_group2      threads;
+			SearchID                 search_id;
+			boost::mutex             search_id_mutex;
 			network_handler          networkhandler;
+			TrackDataBase            trackdb;
 			boost::mutex             dest_server_mutex;
 			ipv4_socket_addr         dest_server;
+			SyncedPlaylist           client_synced_playlist;
 	};
 
 #endif //MIDDLE_END_H
