@@ -24,13 +24,13 @@
 
 		private:
 			middle_end& middleend;
-			void on_vote_min_button_clicked();
+			void on_vote_down_button_clicked();
 			IPlaylistRef treeview;
 			boost::signals::connection sig_update_playlist_connection;
 
 			Gtk::ScrolledWindow scrolledwindow;
 			Gtk::VBox           vbox;
-			Gtk::Button         vote_min_button;
+			Gtk::Button         vote_down_button;
 			SyncedPlaylist wish_list;
 	};
 
