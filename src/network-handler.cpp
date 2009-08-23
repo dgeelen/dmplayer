@@ -343,7 +343,7 @@ void network_handler::client_connect_to_server( ipv4_socket_addr dest ) {
 	dcerr(dest);
 	client_disconnect_from_server();
 	client_tcp_connection_running = true;
-	tcp_socket_ref serversock(new tcp_socket(dest.first, dest.second));
+	tcp_socket_ref serversock(new tcp_socket(dest.first, dest.second)); //FIXME: Connecting should be doe in the new thread (connecting to a non-existant address may take a while to time-out). Also, we should catch the error somewhere in that case
 	serversockweakref = serversock;
 	dcerr("Starting thread_client_tcp_connection");
 	thread_client_tcp_connection = boost::shared_ptr<boost::thread>(new boost::thread(makeErrorHandler(boost::bind(&network_handler::client_tcp_connection, this, serversock))));
