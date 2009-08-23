@@ -68,7 +68,7 @@ void tcp_socket::connect( const ipv4_addr addr, const uint16 port )
 		int res = ::connect(sock, (sockaddr*)&addr_in, sizeof(addr_in));
 		if (res == SOCKET_ERROR) throw std::runtime_error("failed to connect tcp socket");
 
-		peer = ipv4_socket_addr(ipv4_addr(addr_in.sin_addr.s_addr), addr_in.sin_port);
+		peer = ipv4_socket_addr(ipv4_addr(addr_in.sin_addr.s_addr), ntohs(addr_in.sin_port));
 	} catch (...) {
 		this->disconnect();
 		throw;
