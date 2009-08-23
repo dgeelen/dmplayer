@@ -59,6 +59,8 @@
 			void on_playlist_update(message_playlist_update_ref m);
 // 			void on_request_file(message_request_file_ref m);
 // 			void on_request_file_result(message_request_file_result_ref m);
+			void on_disconnect_signal(const std::string reason);
+			void on_disconnect_signal_dialog_response(int response_id);
 			void on_vote_signal(TrackID id, int type);
 			void on_statusicon_activate();
 			void on_statusicon_popup_menu(guint button, guint32 activate_time);

@@ -80,7 +80,13 @@
 			 */
 			boost::signal<void(const std::vector<server_info>&)> sig_servers_removed;
 
-
+			/**
+			 * Emitted when the client is disconnected by the server.
+			 * The callback is provided with a string describing the reason for the disconnect.
+			 * @note This signal is only raised upon receiving a message_disconnect, so not when the
+			 *       client forcibly disconnects from a server.
+			 */
+			boost::signal<void(const std::string&)> sig_disconnected;
 
 			/********************
 			 ** Constructor(s) **

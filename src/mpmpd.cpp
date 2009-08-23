@@ -161,6 +161,7 @@ class Server {
 			dcerr("shutting down");
 			message_loop_running = false;
 			dcerr("stopping networkhandler");
+			networkhandler.send_message_allclients(messageref(new message_disconnect("Server is shutting down.")));
 			networkhandler.stop();
 			dcerr("Joining message_loop_thread");
 			message_loop_connection.disconnect();
