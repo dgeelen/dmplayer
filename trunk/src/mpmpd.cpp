@@ -333,7 +333,7 @@ class Server {
 						message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
 						ServerPlaylistReceiver& pl = ((*cmi)->wish_list);
 						if((pl.size() < 100) || (msg->get_type()!=message_playlist_update::UPDATE_INSERT)) {
-							msg->apply(&pl);
+							msg->apply(pl);
 							recalculateplaylist = true;
 						}
 						else {

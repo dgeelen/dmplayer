@@ -7,6 +7,7 @@
 #include <map>
 #include <boost/filesystem.hpp>
 #include <boost/strong_typedef.hpp>
+#include <boost/foreach.hpp>
 
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/map.hpp>
@@ -93,6 +94,10 @@ class IPlaylist {
 		/// adds given track to the end of the playlist
 		virtual void add(const Track& track) = 0;
 
+		/// appends a list of tracks at once to the playlist
+		/// (can be used to increase performance incase add() is a slow operation)
+		virtual void batch_add(const std::vector<Track> tracklist) = 0;
+
 		/// removes track at given position from the playlist
 		virtual void remove(uint32 pos) = 0;
 
@@ -130,6 +135,7 @@ class IPlaylist {
 		const_iterator begin() const { return const_iterator(this, 0); };
 		const_iterator end() const { return const_iterator(this, size()); };
 };
+typedef boost::shared_ptr<IPlaylist> IPlaylistRef;
 
 class PlaylistVector : public IPlaylist {
 	private:
@@ -137,6 +143,12 @@ class PlaylistVector : public IPlaylist {
 	public:
 		virtual void add(const Track& track) {
 			data.push_back(track);
+		}
+
+		virtual void batch_add(const std::vector<Track> tracklist) {
+			BOOST_FOREACH(const Track& track, tracklist) {
+				data.push_back(track);
+			}
 		}
 
 		virtual void remove(uint32 pos) {
