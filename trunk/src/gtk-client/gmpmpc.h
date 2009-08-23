@@ -56,7 +56,7 @@
 			void on_menu_file_connect();
 // 			void on_connection_accepted(ClientID id);  // callback from network connection handler
 // 			void on_select_server_cancel();
-			void on_playlist_update(message_playlist_update_ref m);
+// 			void on_playlist_update(message_playlist_update_ref m);
 // 			void on_request_file(message_request_file_ref m);
 // 			void on_request_file_result(message_request_file_result_ref m);
 			void on_disconnect_signal(const std::string reason);

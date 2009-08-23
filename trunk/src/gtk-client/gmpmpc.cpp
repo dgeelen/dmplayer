@@ -65,9 +65,9 @@ GtkMpmpClientWindow::GtkMpmpClientWindow() {
 			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::connection_accepted, &select_server_window, _1, _2)));
 // 	connection_handler.connection_accepted_signal.connect(
 // 		dispatcher.wrap(boost::bind(&GtkMpmpClientWindow::on_connection_accepted, this, _1)));
-	connected_signals["playlist_update_signal"] =
-		connection_handler.playlist_update_signal.connect(
-			dispatcher.wrap(boost::bind(&GtkMpmpClientWindow::on_playlist_update, this, _1)));
+// 	connected_signals["playlist_update_signal"] =
+// 		connection_handler.playlist_update_signal.connect(
+// 			dispatcher.wrap(boost::bind(&GtkMpmpClientWindow::on_playlist_update, this, _1)));
 
 // Requesting of files will be implemented in middleend
 // 	connected_signals["request_file_signal"] =
@@ -86,6 +86,10 @@ GtkMpmpClientWindow::GtkMpmpClientWindow() {
 	connected_signals["sig_disconnected"] =
 		middleend.sig_disconnected.connect(
 			dispatcher.wrap(boost::bind(&GtkMpmpClientWindow::on_disconnect_signal, this, _1)));
+	connected_signals["sig_update_playlist_handler"] =
+		middleend.sig_update_playlist.connect(
+			boost::bind(&gmpmpc_playlist_widget::sig_update_playlist_handler, &playlist_widget));
+
 
 // 	connected_signals["cancel_signal"] =
 // 		select_server_window.cancel_signal.connect(
@@ -239,9 +243,9 @@ void GtkMpmpClientWindow::on_enqueue_track_signal(Track& track) {
 	playlist_widget.add_to_wishlist(track);
 }
 
-void GtkMpmpClientWindow::on_playlist_update(message_playlist_update_ref m) {
-	playlist_widget.update(m);
-}
+// // void GtkMpmpClientWindow::on_playlist_update(message_playlist_update_ref m) {
+// // 	playlist_widget.update(m);
+// // }
 
 void GtkMpmpClientWindow::on_vote_signal(TrackID id, int type) {
 	if(type < 0) {
