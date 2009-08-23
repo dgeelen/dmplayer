@@ -5,19 +5,20 @@
 #include <string>
 #include <map>
 
-template<typename T1, typename T2>
-class sigcbooster {
-	public:
-	sigcbooster(boost::function<T1(T2)> t1) {
-		f = t1;
-	}
-	void operator()(T2 x) {
-		return f(x);
-	}
-	private:
-		boost::function<T1(T2)> f;
-		T2 arg_1;
-};
+//  ????
+// template<typename T1, typename T2>
+// class sigcbooster {
+// 	public:
+// 	sigcbooster(boost::function<T1(T2)> t1) {
+// 		f = t1;
+// 	}
+// 	void operator()(T2 x) {
+// 		return f(x);
+// 	}
+// 	private:
+// 		boost::function<T1(T2)> f;
+// 		T2 arg_1;
+// };
 
 gmpmpc_connection_handler::gmpmpc_connection_handler() {
 }

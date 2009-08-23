@@ -45,6 +45,7 @@ IF(ENABLE_GTK_GUI)
 	INCLUDE_DIRECTORIES(${BOOST_INCLUDE_DIR}
 	                    ${GTKMM24_INCLUDE_DIRS}
 	                    ${GTHREAD_INCLUDE_DIRS}
+	                    ${CMAKE_CURRENT_SOURCE_DIR} # For boost/preprocessor/iteration
 	                   )
 	LINK_DIRECTORIES   (${BOOST_LIBRARY_DIR}
 	                    ${GTKMM24_LIBRARY_DIRS}
@@ -63,6 +64,8 @@ IF(ENABLE_GTK_GUI)
 	               track_treeview.cpp             track_treeview.h
 	               gmpmpc_playlist.cpp            gmpmpc_playlist.h
 	               gmpmpc_icon.h
+	               dispatcher_marshaller.h
+	               ../middle_end.cpp              ../middle_end.h
 	               ../error-handling.cpp          ../error-handling.h
 	               ../network-handler.cpp         ../network-handler.h
 	               ../playlist_management.cpp     ../playlist_management.h

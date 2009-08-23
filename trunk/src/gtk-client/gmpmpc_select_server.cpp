@@ -39,38 +39,74 @@ gmpmpc_select_server_window::gmpmpc_select_server_window() {
 	set_modal(true);
 }
 
-gmpmpc_select_server_window::~gmpmpc_select_server_window() {
-	cancel_signal();
-}
+// gmpmpc_select_server_window::~gmpmpc_select_server_window() {
+// // 	cancel_signal();
+// }
 
 bool gmpmpc_select_server_window::focus_connect_button(GdkEventWindowState* event) {
 	connect_button.grab_focus();
 	return false;
 }
 
-void gmpmpc_select_server_window::update_serverlist(const std::vector<server_info>& si) {
+void gmpmpc_select_server_window::save_selected() {
+	Glib::RefPtr<Gtk::TreeSelection> sel = serverlist.get_selection();
+	if(sel->count_selected_rows() == 1) {
+		selected_addr = (*sel->get_selected())[m_Columns.addr];
+	}
+}
+
+void gmpmpc_select_server_window::restore_selected() {
+	Glib::RefPtr<Gtk::TreeModel> model = serverlist.get_model();
+	Glib::RefPtr<Gtk::ListStore> store = Glib::RefPtr<Gtk::ListStore>::cast_dynamic(model);
+	Glib::RefPtr<Gtk::TreeSelection> sel = serverlist.get_selection();
+
+	for(Gtk::TreeModel::Children::iterator row = store->children().begin(); row != store->children().end(); ++row) {
+		ipv4_socket_addr addr  = (*row)[m_Columns.addr]; //TODO: Fold this into the if statement below
+		if(addr == selected_addr) {
+			sel->select(row);
+			break;
+		}
+	}
+}
+
+void gmpmpc_select_server_window::add_servers(const std::vector<server_info>& added_server_list) {
 	Glib::RefPtr<Gtk::TreeModel> model = serverlist.get_model();
 	Glib::RefPtr<Gtk::ListStore> store = Glib::RefPtr<Gtk::ListStore>::cast_dynamic(model);
 
-	Glib::RefPtr<Gtk::TreeSelection> sel = serverlist.get_selection();
-	std::vector<Gtk::TreeModel::Path> selected = sel->get_selected_rows();
+	save_selected();
 
-	store->clear();
-	BOOST_FOREACH(const server_info& s, si) {
+	if(store->children().size() == 0) {                     // If the server list was empty
+		selected_addr = added_server_list.begin()->sock_addr; // Select a server by default
+	}
+
+	BOOST_FOREACH(server_info si, added_server_list) {
 		Gtk::TreeModel::iterator i = store->append();
-		(*i)[m_Columns.name]     = s.name;
-		(*i)[m_Columns.ping]     = STRFORMAT("%0.02f", ((long)((double)s.ping_micro_secs) / ((double)10000))/100.0f);
-		(*i)[m_Columns.addr_str] = s.sock_addr.std_str().c_str();
-		(*i)[m_Columns.addr]     = s.sock_addr;
+		(*i)[m_Columns.name]     = si.name;
+		(*i)[m_Columns.ping]     = STRFORMAT("%0.02f", ((long)((double)si.ping_micro_secs) / ((double)10000))/100.0f);
+		(*i)[m_Columns.addr_str] = si.sock_addr.std_str().c_str();
+		(*i)[m_Columns.addr]     = si.sock_addr;
 	}
-	if(selected.size()>0) {
-		sel->select(selected[0]);
-	}
-	else {
-		if((store->children().size() > 0)) {
-			sel->select(store->children().begin());
+
+	restore_selected();
+}
+
+void gmpmpc_select_server_window::remove_servers(const std::vector<server_info>& removed_server_list) {
+	Glib::RefPtr<Gtk::TreeModel> model = serverlist.get_model();
+	Glib::RefPtr<Gtk::ListStore> store = Glib::RefPtr<Gtk::ListStore>::cast_dynamic(model);
+
+	save_selected();
+
+	BOOST_FOREACH(server_info si, removed_server_list) {
+		for(Gtk::TreeModel::Children::iterator row = store->children().begin(); row != store->children().end(); ++row) {
+			ipv4_socket_addr addr  = (*row)[m_Columns.addr]; //TODO: Fold this into the if statement below
+			if(addr == si.sock_addr) {
+				store->erase(row);
+				break;
+			}
 		}
 	}
+
+	restore_selected();
 }
 
 bool gmpmpc_select_server_window::on_serverlist_double_click(GdkEventButton *event) {
@@ -93,13 +129,13 @@ void gmpmpc_select_server_window::on_connect_button_click() {
 		statusbar.pop();
 		statusbar.push("Connecting...");
 		status_message_signal("Connecting...");
-		connect_signal((*sel->get_selected())[m_Columns.addr]);
+		sig_connect_to_server((*sel->get_selected())[m_Columns.addr]);
 	}
 }
 
 void gmpmpc_select_server_window::on_cancel_button_click() {
 	if(connect_button.sensitive()) {
-		cancel_signal();
+		hide();
 	}
 	else {
 		connect_button.set_sensitive(true);
@@ -108,7 +144,7 @@ void gmpmpc_select_server_window::on_cancel_button_click() {
 	statusbar.pop();
 }
 
-void gmpmpc_select_server_window::connection_accepted() {
+void gmpmpc_select_server_window::connection_accepted(ipv4_socket_addr addr, ClientID id) {
 	connect_button.set_sensitive(true);
 	serverlist.set_sensitive(true);
 	statusbar.pop();
@@ -116,4 +152,5 @@ void gmpmpc_select_server_window::connection_accepted() {
 	if(sel->count_selected_rows() == 1) {
 		status_message_signal(STRFORMAT("Connected to '%s'.", (*sel->get_selected())[m_Columns.name]));
 	}
+	hide();
 }

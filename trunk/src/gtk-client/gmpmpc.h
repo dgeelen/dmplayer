@@ -1,9 +1,11 @@
 #ifndef GMPMPC_H
 	#define GMPMPC_H
 	#include "gmpmpc_trackdb.h"
-	#include "gmpmpc_select_server.h"
-	#include "gmpmpc_connection_handling.h"
 	#include "gmpmpc_playlist.h"
+	#include "gmpmpc_select_server.h"
+	#include "dispatcher_marshaller.h"
+	#include "gmpmpc_connection_handling.h"
+	#include "../middle_end.h"
 	#include "../error-handling.h"
 	#include "../network-handler.h"
 	#include "../playlist_management.h"
@@ -11,7 +13,8 @@
 	#include <iostream>
 	#include <boost/shared_ptr.hpp>
 	#include <boost/signals.hpp>
-	#include <glibmm/dispatcher.h>
+	#include <boost/bind.hpp>
+	#include <boost/function.hpp>
 	#include <gtkmm/box.h>
 	#include <gtkmm/main.h>
 	#include <gtkmm/menu.h>
@@ -27,9 +30,8 @@
 
 	class GtkMpmpClientWindow : public Gtk::Window {
 		public:
-			GtkMpmpClientWindow(network_handler* nh, TrackDataBase* tdb);
+			GtkMpmpClientWindow();
 			~GtkMpmpClientWindow();
-
 		private:
 			/* Helpers */
 			Glib::RefPtr<Gtk::UIManager> m_refUIManager;
@@ -52,12 +54,11 @@
 			void on_menu_file_preferences();
 			void on_menu_file_quit();
 			void on_menu_file_connect();
-			void on_connection_accepted(ClientID id);  // callback from network connection handler
-			void on_select_server_connect(ipv4_socket_addr addr);
-			void on_select_server_cancel();
+// 			void on_connection_accepted(ClientID id);  // callback from network connection handler
+// 			void on_select_server_cancel();
 			void on_playlist_update(message_playlist_update_ref m);
-			void on_request_file(message_request_file_ref m);
-			void on_request_file_result(message_request_file_result_ref m);
+// 			void on_request_file(message_request_file_ref m);
+// 			void on_request_file_result(message_request_file_result_ref m);
 			void on_vote_signal(TrackID id, int type);
 			void on_statusicon_activate();
 			void on_statusicon_popup_menu(guint button, guint32 activate_time);
@@ -71,32 +72,14 @@
 
 
 			/* Variables */
-			TrackDataBase* trackdb;
-			network_handler* networkhandler;
+// 			TrackDataBase*                                    trackdb;
+// 			network_handler*                                  networkhandler;
+			DispatcherMarshaller dispatcher; // Execute a function in the gui thread
+			middle_end                                        middleend;
 			std::map<std::string, boost::signals::connection> connected_signals;
-			gmpmpc_connection_handler connection_handler;
-			sigc::connection clear_statusbar_connection;
-			bool is_iconified;
-
-			/* Threading crap */
-			//on_connection_accepted
-			sigc::connection _on_connection_accepted_dispatcher_connection;
-			Glib::Dispatcher _on_connection_accepted_dispatcher;
-			void _on_connection_accepted();            // actually executes callback in GUI thread
-			ClientID clientid;
-			boost::mutex clientid_mutex;
-
-			//on_request_file
-			boost::mutex _on_request_file_threads_mutex;
-			std::map<TrackID, std::pair<boost::shared_ptr<boost::thread>, boost::shared_ptr<bool> > > _on_request_file_threads;
-			void _on_request_file(message_request_file_ref m, boost::shared_ptr<bool> done);
-
-			//on_playlist_update
-			sigc::connection _on_playlist_update_dispatcher_connection;
-			Glib::Dispatcher _on_playlist_update_dispatcher;
-			void _on_playlist_update();            // actually executes callback in GUI thread
-			std::list<message_playlist_update_ref> _on_playlist_update_messages;
-			boost::mutex _on_playlist_update_mutex;
+			gmpmpc_connection_handler                         connection_handler;
+			sigc::connection                                  clear_statusbar_connection;
+			bool                                              is_iconified;
 	};
 
 #endif
