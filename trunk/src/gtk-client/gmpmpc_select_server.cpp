@@ -38,17 +38,6 @@ gmpmpc_select_server_window::gmpmpc_select_server_window(middle_end& _middleend)
 // 	serverlist.append_column("Ping", m_Columns.ping);
 	serverlist.append_column("Address", m_Columns.addr_str);
 
-	// Since the middle_end is already running, we may have missed some add/remove events for servers.
-	// Therefor we need to get up-to-speed on the current state of events, but without missing any more
-	// events. We do this by running add_servers(get_known_servers()) in the same thread as the regular
-	// add/delete events will be running later on.
-	dispatcher.enqueue(
-		boost::bind( &gmpmpc_select_server_window::add_servers,
-		             this,
-		             boost::bind( &middle_end::get_known_servers, &middleend )
-		           )
-	);
-
 	sig_connect_to_server_success_connection =
 		middleend.sig_connect_to_server_success.connect(
 			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::connection_accepted, this, _1, _2)));
@@ -58,8 +47,7 @@ gmpmpc_select_server_window::gmpmpc_select_server_window(middle_end& _middleend)
 	sig_servers_removed_connection =
 		middleend.sig_servers_removed.connect(
 			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::remove_servers, this, _1)));
-
-	dispatcher();
+	middleend.refresh_server_list();
 
 	set_modal(true);
 }

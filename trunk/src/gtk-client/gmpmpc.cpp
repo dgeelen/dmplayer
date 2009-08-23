@@ -340,6 +340,9 @@ bool GtkMpmpClientWindow::on_delete_event(GdkEventAny* event) {
 }
 
 void GtkMpmpClientWindow::on_menu_file_quit() {
+	hide();
+	select_server_window.hide();
+// 	statusicon->hide();
 	Gtk::Main::quit();
 }
 
@@ -384,8 +387,8 @@ int main_impl(int argc, char **argv ) {
 // 	network_handler nh(listen_port);
 	middle_end middleend;
 	GtkMpmpClientWindow gmpmpc(middleend);
-
 	Gtk::Main::run();
+	gmpmpc.hide();
 	return 0;
 }
 
