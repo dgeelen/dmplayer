@@ -15,7 +15,8 @@
 	class gmpmpc_playlist_widget : public Gtk::Frame {
 		public:
 			gmpmpc_playlist_widget();
-			void update(message_playlist_update_ref m);
+			~gmpmpc_playlist_widget();
+			IPlaylistRef sig_update_playlist_handler();
 			void add_to_wishlist(Track& track);
 
 			boost::signal<void(messageref)> send_message_signal;
@@ -23,11 +24,11 @@
 
 		private:
 			void on_vote_min_button_clicked();
+			IPlaylistRef treeview;
 
 			Gtk::ScrolledWindow scrolledwindow;
 			Gtk::VBox           vbox;
 			Gtk::Button         vote_min_button;
-			gmpmpc_track_treeview   treeview;
 			SyncedPlaylist wish_list;
 	};
 
