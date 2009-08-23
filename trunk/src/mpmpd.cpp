@@ -255,7 +255,7 @@ class Server {
 						boost::recursive_mutex::scoped_lock lock(clients_mutex);
 						std::set<ClientID> votes = vote_min_list[currenttrack.id];
 						if(server_datasource && votes.size() > 0 && (votes.size()*2) > clients.size()) {
-							/* Notify sender to stop sending */
+							/* Notify sender to stop sending */ //FIXME: Does not seem to be honoured by gmpmpc?
 							vector<uint8> empty;
 							message_request_file_result_ref msg(new message_request_file_result(empty, currenttrack.id));
 							networkhandler.send_message(currenttrack.id.first, msg);
