@@ -3,15 +3,15 @@
 
 	#include <vector>
 	#include <boost/signal.hpp>
+	#include <boost/thread.hpp>
 	#include <boost/thread/mutex.hpp>
 	#include <boost/strong_typedef.hpp>
-	#include <boost/thread.hpp>
-	#include "util/thread_group2.h"
 	#include "packet.h"
+	#include "synced_playlist.h"
 	#include "network-handler.h"
+	#include "util/thread_group2.h"
 	#include "playlist_management.h"
 	#include "network/network-core.h"
-	#include "synced_playlist.h"
 
 	BOOST_STRONG_TYPEDEF(uint32, SearchID);
 	BOOST_STRONG_TYPEDEF(uint32, ErrorID);
@@ -23,6 +23,7 @@
 	 *
 	 * @todo this class should provide a way for clients to store/retrieve
 	 *       common configuration options.
+	 * @todo Error handling is very poor atm (on error resume next...)
 	 */
 	class middle_end {
 		public:
@@ -190,6 +191,12 @@
 			 */
 			SearchID search_remote_tracks(const Track query);
 
+
+
+			/*********************************************
+			 ** Operations on the client's own playlist **
+			 *********************************************/
+
 			/**
 			 * Appends track to this client's playlist.
 			 * @param track is a Track (obtain one from the TrackDataBase).
@@ -242,6 +249,36 @@
 			 */
 			void mylist_reorder(std::vector<uint32> fromlist, uint32 to);
 
+
+
+			/**********************************************
+			 ** Operations on the shared/global playlist **
+			 **********************************************/
+
+			/**
+			 * Casts a positive vote for a track already in the (shared/global) playlist.
+			 * @param track is the track that should be voted on.
+			 */
+			void playlist_vote_up(Track track);
+
+			/**
+			 * Casts a positive vote for tracks already in the (shared/global) playlist.
+			 * @param tracklist is a list of Track containing tracks that should be voted on.
+			 */
+			void playlist_vote_up(std::vector<Track> track);
+
+			/**
+			 * Casts a negative vote for a track already in the (shared/global) playlist.
+			 * @param track is the track that should be voted on.
+			 */
+			void playlist_vote_down(Track track);
+
+			/**
+			 * Casts a negative vote for tracks already in the (shared/global) playlist.
+			 * @param tracklist is a list of Track containing tracks that should be voted on.
+			 */
+			void playlist_vote_down(std::vector<Track> track);
+
 			/**
 			 * @return a descriptive message for a given ErrorID
 			 * @param errorid the ErrorID for which the description is desired.
@@ -256,8 +293,17 @@
 
 			/**
 			 * @return the list of currently known servers.
+			 * @note get_known_servers() can be used in stead of sig_servers_added()/sig_servers_removed() to poll for servers.
+			 *       This way it is possible to get a constantly updated reading of for example the Ping time of a server which
+			 *       sig_servers_added()/sig_servers_removed() do not provide.
 			 */
 			std::vector<server_info> get_known_servers();
+
+			/**
+			 * Causes the list of known servers to be refreshed.
+			 * Also invokes sig_servers_removed() for the current list, and sig_servers_added() for the fresh list.
+			 */
+			void refresh_server_list();
 
 			/**
 			 * @return the current ClientID.
@@ -273,8 +319,9 @@
 			void                     handle_sig_server_list_update(const std::vector<server_info>&);
 			void                     handle_received_message(const messageref m);
 			boost::mutex             file_requests_mutex;
-			std::vector<std::pair<std::pair<boost::shared_ptr<bool>, boost::thread::id>, LocalTrackID> > file_requests;
-			void                     handle_message_request_file(const message_request_file_ref request, boost::shared_ptr<bool> done);
+			typedef std::pair<std::pair<bool*, boost::thread::id>, LocalTrackID> file_requests_type;
+			std::vector<file_requests_type> file_requests;
+			void                     handle_message_request_file(const message_request_file_ref request, bool* done);
 			boost::mutex             search_mutex;
 			void                     _search_tracks(SearchID search_id, const Track track);
 			boost::mutex             known_servers_mutex;
