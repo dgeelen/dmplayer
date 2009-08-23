@@ -44,6 +44,7 @@
 			 * @note The callback is provided with the ipv4_socket_addr that was supplied to connect_to_server()
 			 *       and an error code indicating the reason the connection could not be established.
 			 * @see connect_to_server()
+			 * @todo This still requires a lot of work to be implemented as support is needed from the networkhandler.
 			 */
 			boost::signal<void(const ipv4_socket_addr, ErrorID)> sig_connect_to_server_failure;
 
