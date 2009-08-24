@@ -18,7 +18,7 @@ struct AudioFormat {
 	}
 
 	AudioFormat() {
-		SampleRate = -1;
+		SampleRate = uint32(-1);
 		Channels = 2;
 		BitsPerSample = 16;
 		SignedSample = true;

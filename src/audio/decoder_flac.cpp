@@ -8,7 +8,7 @@ FlacDecoder::FlacDecoder(IDataSourceRef ds_)
 {
 	dcerr("New Flac Decoder");
 	try_decode = true;
-	FLAC__StreamDecoderInitStatus stat = init();
+	FLAC__StreamDecoderInitStatus stat = init(); //FIXME: If !stat etc...
 
 	bufptr = NULL;
 
@@ -94,8 +94,8 @@ FLAC__StreamDecoderReadStatus FlacDecoder::read_callback(FLAC__byte buf[],size_t
 FLAC__StreamDecoderWriteStatus FlacDecoder::write_callback(const FLAC__Frame * header,const FLAC__int32 *const data[])
 {
 	for (uint i = 0; i < header->header.blocksize; ++i) {
-		for (int j = 0; j < audioformat.Channels; ++j) {
-			for (int k = 0; k*8 < audioformat.BitsPerSample; ++k) {
+		for (unsigned int j = 0; j < audioformat.Channels; ++j) {
+			for (unsigned int k = 0; k*8 < audioformat.BitsPerSample; ++k) {
 				if (buflen < bufsize)
 					bufptr[buflen++] = ((char*)&data[j][i])[k];
 				else
