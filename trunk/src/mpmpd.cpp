@@ -154,8 +154,6 @@ class Server {
 			: networkhandler(listen_port, server_name)
 			, message_loop_connection(networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2)))
 		{
-			networkhandler.start();
-			dcerr("Started network_handler");
 			server_datasource = boost::shared_ptr<ServerDataSource>((ServerDataSource*)NULL);
 			add_datasource = true;
 			message_loop_running = true;
@@ -172,6 +170,11 @@ class Server {
 			message_loop_thread.swap(tt);
 			ac.playback_finished.connect(boost::bind(&Server::next_song, this, _1));
 			ac.start_playback();
+			#ifdef DEBUG
+				next_query_id = 0; // Intentionally not initialized.
+			#endif
+			networkhandler.start();
+			dcerr("Started network_handler");
 		}
 
 		~Server() {
@@ -341,6 +344,28 @@ class Server {
 				dcerr("(dc)  for " << STRFORMAT("%08x", i->id) << ": " << old << " -> " << i->zero_sum << '\n');
 			}
 
+			{
+				boost::mutex::scoped_lock lock(outstanding_query_result_list_mutex);
+				std::map<uint32, std::pair<std::pair<ClientID, uint32>,  std::set<ClientID> > >::iterator i;
+				std::set<uint32> completed_queries;
+				for(i = outstanding_query_result_list.begin(); i != outstanding_query_result_list.end(); ++i) {
+					std::pair<ClientID, uint32>& query_id = i->second.first;
+					std::set<ClientID>& queried_clients = i->second.second;
+					if(id == query_id.first) {
+						completed_queries.insert(i->first);
+					}
+					std::set<ClientID>::iterator c = queried_clients.find(id);
+					if(c != queried_clients.end()) {
+						queried_clients.erase(c);
+						if(queried_clients.size() == 0) {
+							completed_queries.insert(i->first);
+						}
+					}
+				}
+				for(std::set<uint32>::iterator i = completed_queries.begin(); i != completed_queries.end(); ++i) {
+					outstanding_query_result_list.erase(outstanding_query_result_list.find(*i));
+				}
+			}
 			/* Clear memory used by client */
 // 			clients.erase(clients.find(id)); //boom segfault? Are we erasing something twice? (see a couple of lines up)
 		}
@@ -380,20 +405,39 @@ class Server {
 					}; break;
 					case message::MSG_QUERY_TRACKDB: {
 						dcerr("Received a MSG_QUERY_TRACKDB from " << STRFORMAT("%08x", id));
+						message_query_trackdb_ref msg = boost::static_pointer_cast<message_query_trackdb>(m);
+						boost::mutex::scoped_lock lock(outstanding_query_result_list_mutex);
+						uint32 qid = next_query_id++;
+						std::pair<ClientID, uint32> query_id(id, msg->qid);
+						msg->qid = qid;
+						std::set<ClientID> queried_clients;
+						BOOST_FOREACH(Client_ref cref, clients) {
+							if(cref->id != id) {
+								networkhandler.send_message(cref->id, msg);
+								queried_clients.insert(cref->id);
+							}
+						}
+						std::pair<std::pair<ClientID, uint32>, std::set<ClientID> > outstanding_queries(query_id, queried_clients);
+						outstanding_query_result_list[qid] = outstanding_queries;
 					}; break;
 					case message::MSG_QUERY_TRACKDB_RESULT: {
 						dcerr("Received a MSG_QUERY_TRACKDB_RESULT from " << STRFORMAT("%08x", id));
 						message_query_trackdb_result_ref msg = boost::static_pointer_cast<message_query_trackdb_result>(m);
-						uint32 qid = msg->qid;
-						std::pair<ClientID, TrackID> vote;
-						std::map<uint32, std::pair<ClientID, TrackID> >::iterator finder = query_queue.find(qid);
-						if (finder != query_queue.end()) {
-							if(msg->result.size()==1) {
-								playlist.add(msg->result.front());
+						boost::mutex::scoped_lock lock(outstanding_query_result_list_mutex);
+						std::map<uint32, std::pair<std::pair<ClientID, uint32>,  std::set<ClientID> > >::iterator i;
+						i = outstanding_query_result_list.find(msg->qid);
+						if(i != outstanding_query_result_list.end()) {
+							std::pair<ClientID, uint32>& query_id = i->second.first;
+							std::set<ClientID>& queried_clients = i->second.second;
+							std::set<ClientID>::iterator c = queried_clients.find(id);
+							if(c != queried_clients.end()) {
+								queried_clients.erase(c);
+								msg->qid = query_id.second;
+								networkhandler.send_message(query_id.first, msg);
+								if(queried_clients.size() == 0) {
+									outstanding_query_result_list.erase(i);
+								}
 							}
-							query_queue.erase(finder);
-						} else {
-							dcerr("warning: ignoring query result");
 						}
 					}; break;
 					case message::MSG_REQUEST_FILE: {
@@ -445,7 +489,6 @@ class Server {
 		network_handler networkhandler;
 		AudioController ac;
 		bool message_loop_running;
-		std::map<uint32, std::pair<ClientID, TrackID> > query_queue;
 		typedef boost::multi_index_container<
 			Client_ref,
 			boost::multi_index::indexed_by<
@@ -462,7 +505,11 @@ class Server {
 		boost::signals::connection message_loop_connection;
 		boost::shared_ptr<ServerDataSource> server_datasource;
 
-		/* Some playback related varialbles*/
+		boost::mutex outstanding_query_result_list_mutex;
+		uint32 next_query_id;
+		std::map<uint32, std::pair<std::pair<ClientID, uint32>,  std::set<ClientID> > > outstanding_query_result_list;
+
+		/* Some playback related variables*/
 		bool add_datasource;
 		double average_song_duration;
 
