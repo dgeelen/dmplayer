@@ -18,7 +18,10 @@ static int pa_callback(const void *inputBuffer, void *outputBuffer,
                        PaStreamCallbackFlags statusFlags,
                        void *userData )
 #endif
-{
+{	// FIXME: This callback runs with PRIO_REALTIME, and can potentially
+	//        halt the system if data is not provided at an adequate pace.
+	//        (such as happens for example at the end of the getData()
+	//         chain, which is connected to the network...)
 	AudioController* ac = (AudioController*)userData;
 	char *out = (char*)outputBuffer;
 
