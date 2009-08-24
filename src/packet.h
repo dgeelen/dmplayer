@@ -111,8 +111,10 @@ class packet {
  *  - New in version 3:
  *    + Check for compatible versions of boost::serialize.
  *    + On disconnect tell the client why we disconnected.
+ *  - New in version 4:
+ *    + Revise message_playlist_update wrt handling of lists
  */
-#define NETWORK_PROTOCOL_VERSION 3 // FIXME: Investigate breakage with mixed versions of Boost
+#define NETWORK_PROTOCOL_VERSION 4 // FIXME: Investigate breakage with mixed versions of Boost
 
 
 class message {
@@ -229,35 +231,60 @@ class message_playlist_update : public message {
 	public:
 		enum update_type {
 			UPDATE_CLEAR,
-			UPDATE_MOVE,
-			UPDATE_INSERT,
+			UPDATE_APPEND_ONE,
+			UPDATE_APPEND_MANY,
+			UPDATE_INSERT_ONE,
+			UPDATE_INSERT_MANY,
+			UPDATE_MOVE_ONE,
+			UPDATE_MOVE_MANY,
+			UPDATE_REMOVE_ONE,
+			UPDATE_REMOVE_MANY,
 		};
 	public:
 		message_playlist_update() : message(MSG_PLAYLIST_UPDATE) {
 			utype = UPDATE_CLEAR;
-			data_list.clear();
+			_index  = 0xFFFFFFFF;
+			_index2 = 0xFFFFFFFF;
 		};
 		message_playlist_update(const IPlaylist& playlist) : message(MSG_PLAYLIST_UPDATE) {
-			utype = UPDATE_CLEAR;
-			data_list.clear();
 			BOOST_FOREACH(const Track& track, playlist)
-				data_list.push_back(track);
+				_track_list.push_back(track);
 		};
-		message_playlist_update(Track track, uint32 pos = 0xFFFFFFFF) : message(MSG_PLAYLIST_UPDATE) {
-			utype = UPDATE_INSERT;
-			data_track = track;
-			data_index = pos;
+		message_playlist_update(Track track) : message(MSG_PLAYLIST_UPDATE) {
+			utype = UPDATE_APPEND_ONE;
+			_track = track;
 		};
-		message_playlist_update(std::vector<Track> track, uint32 pos = 0xFFFFFFFF) : message(MSG_PLAYLIST_UPDATE) {
-			utype = UPDATE_INSERT;
-			data_list = track;
-			data_index = pos;
+		message_playlist_update(std::vector<Track> tracklist) : message(MSG_PLAYLIST_UPDATE) {
+			utype = UPDATE_APPEND_MANY;
+			_track_list = tracklist;
 		};
-		message_playlist_update(uint32 from, uint32 to = 0xFFFFFFFF) : message(MSG_PLAYLIST_UPDATE) {
-			utype = UPDATE_MOVE;
-			data_index = from;
-			data_index2 = to;
+		message_playlist_update(Track track, uint32 pos) : message(MSG_PLAYLIST_UPDATE) {
+			utype = UPDATE_INSERT_ONE;
+			_track = track;
+			_index = pos;
 		};
+		message_playlist_update(std::vector<Track> tracklist, uint32 pos) : message(MSG_PLAYLIST_UPDATE) {
+			utype = UPDATE_INSERT_MANY;
+			_track_list = tracklist;
+			_index = pos;
+		};
+		message_playlist_update(uint32 from, uint32 to) : message(MSG_PLAYLIST_UPDATE) {
+			utype = UPDATE_MOVE_ONE;
+			_index = from;
+			_index2 = to;
+		};
+		message_playlist_update(std::vector<std::pair<uint32, uint32> > from_to_list) : message(MSG_PLAYLIST_UPDATE) {
+			utype = UPDATE_MOVE_MANY;
+			_index_pair_list = from_to_list;
+		};
+		message_playlist_update(uint32 which) {
+			utype = UPDATE_REMOVE_ONE;
+			_index = which;
+		}
+		message_playlist_update(std::vector<uint32> which_list) {
+			utype = UPDATE_REMOVE_MANY;
+			_index_list = which_list;
+		}
 
 		update_type get_type() {
 			return utype;
@@ -271,28 +298,41 @@ class message_playlist_update : public message {
 			switch (utype) {
 				case UPDATE_CLEAR: {
 					playlist.clear();
-					BOOST_FOREACH(const Track& t, data_list)
-						playlist.add(t);
+					playlist.append(_track_list);
 				}; break;
-				case UPDATE_INSERT: {
-					if (data_index == 0xFFFFFFFF)
-						playlist.add(data_track);
-					else
-						playlist.insert(data_index, data_track);
+				case UPDATE_APPEND_ONE: {
+					playlist.append(_track);
 				}; break;
-				case UPDATE_MOVE: {
-					if (data_index2 == 0xFFFFFFFF)
-						playlist.remove(data_index);
-					else
-						playlist.move(data_index, data_index2);
+				case UPDATE_APPEND_MANY: {
+					playlist.append(_track_list);
+				}; break;
+				case UPDATE_INSERT_ONE: {
+					playlist.insert(_index, _track);
+				}; break;
+				case UPDATE_INSERT_MANY: {
+					playlist.insert(_index, _track_list);
+				}; break;
+				case UPDATE_MOVE_ONE: {
+					playlist.move(_index, _index2);
+				}; break;
+				case UPDATE_MOVE_MANY: {
+					playlist.move(_index_pair_list);
+				}; break;
+				case UPDATE_REMOVE_ONE: {
+					playlist.remove(_index);
+				}; break;
+				case UPDATE_REMOVE_MANY: {
+					playlist.remove(_index_list);
 				}; break;
 			};
 		}
 	private:
 		update_type utype;
-		std::vector<Track> data_list;
-		Track data_track;
-		uint32 data_index, data_index2;
+		std::vector<Track>  _track_list;
+		std::vector<uint32> _index_list;
+		std::vector<std::pair<uint32, uint32> > _index_pair_list;
+		Track  _track;
+		uint32 _index, _index2;
 
 		friend class boost::serialization::access;
 		template<class Archive>
@@ -301,15 +341,34 @@ class message_playlist_update : public message {
 			ar & utype;
 			switch (utype) {
 				case UPDATE_CLEAR: {
-					ar & data_list;
+					ar & _track_list;
 				}; break;
-				case UPDATE_INSERT: {
-					ar & data_index;
-					ar & data_track;
+				case UPDATE_APPEND_ONE: {
+					ar & _track;
 				}; break;
-				case UPDATE_MOVE: {
-					ar & data_index;
-					ar & data_index2;
+				case UPDATE_APPEND_MANY: {
+					ar & _track_list;
+				}; break;
+				case UPDATE_INSERT_ONE: {
+					ar & _index;
+					ar & _track;
+				}; break;
+				case UPDATE_INSERT_MANY: {
+					ar & _index;
+					ar & _track_list;
+				}; break;
+				case UPDATE_MOVE_ONE: {
+					ar & _index;
+					ar & _index2;
+				}; break;
+				case UPDATE_MOVE_MANY: {
+					ar & _index_pair_list;
+				}; break;
+				case UPDATE_REMOVE_ONE: {
+					ar & _index;
+				}; break;
+				case UPDATE_REMOVE_MANY: {
+					ar & _index_list;
 				}; break;
 			};
 		}
