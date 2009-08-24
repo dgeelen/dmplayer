@@ -97,6 +97,7 @@ MainWindow::MainWindow()
 	tdb.add_directory( "d:\\audio");
 	tdb.add_directory( "d:\\My Documents\\My Music");
 	tdb.add_directory( "/home/dafox/sharedfolder/music/");
+	tdb.add_directory( "F:\\home\\dafox\\sharedfolder\\music" );
 
 	Track mdmt;
 	mdmt.id.second = LocalTrackID(0xffffffff);
@@ -106,7 +107,6 @@ MainWindow::MainWindow()
 		DataBaseWidget->add(tr.getTrack());
 		//dcerr( tr.filename );
 	}
-
 }
 
 void MainWindow::closeEvent(QCloseEvent * evnt)
