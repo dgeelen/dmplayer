@@ -97,6 +97,8 @@ class tcp_socket {
 		tcp_socket( );
 		~tcp_socket( );
 		tcp_socket( SOCKET s, ipv4_socket_addr addr );
+		tcp_socket( const ipv4_socket_addr addr);
+		//tcp_socket( const ipv6_socket_addr addr);
 		tcp_socket( const ipv4_addr addr, const uint16 port );
 		tcp_socket( const ipv6_addr addr, const uint16 port );
 		void connect( const ipv4_addr addr, const uint16 port );
