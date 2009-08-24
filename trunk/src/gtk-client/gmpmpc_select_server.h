@@ -24,12 +24,14 @@
 			void remove_servers(const std::vector<server_info>& si);
 
 			void connection_accepted(ipv4_socket_addr addr, ClientID id);
+			void connection_denied(ipv4_socket_addr addr, std::string reason);
 			boost::signal<void(ipv4_socket_addr)> sig_connect_to_server;
 			boost::signal<void(ipv4_socket_addr)> sig_cancel_connect_to_server;
 			boost::signal<void(std::string)>      status_message_signal;
 
 		private:
 			middle_end& middleend;
+			boost::signals::connection sig_connect_to_server_failure_connection;
 			boost::signals::connection sig_connect_to_server_success_connection;
 			boost::signals::connection sig_servers_added_connection;
 			boost::signals::connection sig_servers_removed_connection;

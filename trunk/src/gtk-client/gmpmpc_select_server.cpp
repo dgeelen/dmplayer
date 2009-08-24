@@ -4,6 +4,7 @@
 #include "../error-handling.h"
 #include <gtkmm/treeselection.h>
 #include <glibmm/main.h>
+#include <gtkmm/messagedialog.h>
 
 gmpmpc_select_server_window::gmpmpc_select_server_window(middle_end& _middleend)
 : middleend(_middleend)
@@ -39,8 +40,11 @@ gmpmpc_select_server_window::gmpmpc_select_server_window(middle_end& _middleend)
 	serverlist.append_column("Address", m_Columns.addr_str);
 
 	sig_connect_to_server_success_connection =
-		middleend.sig_connect_to_server_success.connect(
+		middleend.sig_connect_to_server_success.connect (
 			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::connection_accepted, this, _1, _2)));
+	sig_connect_to_server_failure_connection = 
+		middleend.sig_connect_to_server_failure.connect (
+			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::connection_denied, this, _1, _2)));
 	sig_servers_added_connection =
 		middleend.sig_servers_added.connect(
 			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::add_servers, this, _1)));
@@ -56,6 +60,7 @@ gmpmpc_select_server_window::~gmpmpc_select_server_window() {
 	sig_connect_to_server_success_connection.disconnect();
 	sig_servers_added_connection.disconnect();
 	sig_servers_removed_connection.disconnect();
+	sig_connect_to_server_failure_connection.disconnect();
 }
 
 bool gmpmpc_select_server_window::focus_connect_button(GdkEventWindowState* event) {
@@ -168,13 +173,26 @@ void gmpmpc_select_server_window::on_cancel_button_click() {
 	statusbar.pop();
 }
 
-void gmpmpc_select_server_window::connection_accepted(ipv4_socket_addr addr, ClientID id) {
-	connect_button.set_sensitive(true);
-	serverlist.set_sensitive(true);
-	statusbar.pop();
-	Glib::RefPtr<Gtk::TreeSelection> sel = serverlist.get_selection();
-	if(sel->count_selected_rows() == 1) {
-		status_message_signal(STRFORMAT("Connected to '%s'.", (*sel->get_selected())[m_Columns.name]));
+void gmpmpc_select_server_window::connection_denied(ipv4_socket_addr addr, std::string reason) {
+	if(addr == target_server) {
+		Gtk::MessageDialog dialog("Unable to connect to server.", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+		dialog.set_secondary_text(STRFORMAT("Unable to connect to that server:\n\n\"%s\"\n\nPlease select a different server.", reason));
+		dialog.run();
+		connect_button.set_sensitive(true);
+		serverlist.set_sensitive(true);
+		statusbar.pop();
 	}
-	hide();
+}
+
+void gmpmpc_select_server_window::connection_accepted(ipv4_socket_addr addr, ClientID id) {
+	if(addr == target_server) {
+		connect_button.set_sensitive(true);
+		serverlist.set_sensitive(true);
+		statusbar.pop();
+		Glib::RefPtr<Gtk::TreeSelection> sel = serverlist.get_selection();
+		if(sel->count_selected_rows() == 1) {
+			status_message_signal(STRFORMAT("Connected to '%s'.", (*sel->get_selected())[m_Columns.name]));
+		}
+		hide();
+	}
 }
