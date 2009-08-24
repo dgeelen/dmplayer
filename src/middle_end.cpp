@@ -17,6 +17,11 @@ middle_end::middle_end()
 	trackdb.add_directory("f:\\home\\dafox\\sharedfolder\\music\\");
 	trackdb.add_directory("d:\\music\\");
 	networkhandler.start();
+	sig_search_tracks.connect(boost::bind(&middle_end::handle_msg_query_trackdb_query_result, this, _1, _2));
+
+#ifdef DEBUG
+	next_search_id = 0; // Intentionally not initialized.
+#endif
 }
 
 void middle_end::abort_all_file_transfers() {
@@ -141,7 +146,7 @@ ClientID middle_end::get_client_id() {
 	return client_id;
 }
 
-void middle_end::_search_tracks(SearchID search_id, const Track query) {
+void middle_end::_search_tracks(SearchID search_id, const Track query, boost::shared_ptr<boost::mutex> pm) {
 	mutex::scoped_lock lock(search_mutex); //FIXME: Searching should be possible concurrently
 	std::vector<LocalTrack> local_result = trackdb.search(query);
 	std::vector<Track> result; // FIXME: Needs a vector<pair<SearchID, vector<Track> > > or similar so we can hold network search results
@@ -151,25 +156,54 @@ void middle_end::_search_tracks(SearchID search_id, const Track query) {
 			result.push_back( Track(TrackID( client_id, lt.id), lt.metadata ) );
 		}
 	}
-	sig_search_tracks(search_id, result);
+
+	{
+		mutex::scoped_lock lock(*pm);
+		sig_search_tracks(search_id, result);
+	}
 }
 
-SearchID middle_end::search_tracks(const Track query) {
+shared_ptr<mutex::scoped_lock> middle_end::search_tracks(const Track query, SearchID* id) {
+	return search_tracks(query, false, id);	
+}
+
+shared_ptr<mutex::scoped_lock> middle_end::search_tracks(const Track query, bool local_search_only, SearchID* id) {
 	{
-	mutex::scoped_lock lock(search_id_mutex);
-	++search_id;
+	mutex::scoped_lock lock(next_search_id_mutex);
+	*id = next_search_id++;
 	}
-	try {
-	threads.create_thread(bind(&middle_end::_search_tracks, this, search_id, query));
-	} catch(thread_resource_error e) {
-		// FIXME: Figure out if this is an error which we should be catching or not
-		//        thread_group does not remove a thread object when the thread
-		//        finishes execution, so this may just indicate an out-of-memory-error,
-		//        in which case there may be no sense in waiting for memory to become
-		//        available...
-		return SearchID(-1);
+
+	boost::shared_ptr<boost::mutex> pm(new boost::mutex);
+	shared_ptr<mutex::scoped_lock> plock(new mutex::scoped_lock(*pm));
+	threads.create_thread(bind(&middle_end::_search_tracks, this, *id, query, pm));
+
+	if(!local_search_only) {
+		message_query_trackdb_ref msg(new message_query_trackdb(*id, query));
+		try {
+			networkhandler.send_server_message(msg);
+		}
+		catch(Exception e) {}
 	}
-	return search_id;
+	//try { // create thread
+	//} catch(thread_resource_error e) {
+	//	// FIXME: Figure out if this is an error which we should be catching or not
+	//	//        thread_group does not remove a thread object when the thread
+	//	//        finishes execution, so this may just indicate an out-of-memory-error,
+	//	//        in which case there may be no sense in waiting for memory to become
+	//	//        available...
+	//	return SearchID(-1);
+	//}
+	return plock;
+}
+
+void middle_end::handle_msg_query_trackdb_query_result(const SearchID id, const std::vector<Track>& tracklist) {
+	mutex::scoped_lock lock(trackdb_queries_mutex);
+	std::map<SearchID, uint32>::iterator i = trackdb_queries.find(id);
+	if(i != trackdb_queries.end()) {
+		message_query_trackdb_result_ref msg(new message_query_trackdb_result(i->second, tracklist));
+		networkhandler.send_server_message(msg);
+		trackdb_queries.erase(i);
+	}
 }
 
 void middle_end::mylist_append(Track track) {
@@ -284,7 +318,6 @@ void middle_end::handle_message_request_file(const message_request_file_ref requ
 	try {
 		networkhandler.send_server_message(msg);
 	} catch(Exception e) {}
-	dcerr("Tranfer complete");
 
 	{
 		mutex::scoped_lock lock(file_requests_mutex);
@@ -356,7 +389,6 @@ void middle_end::handle_received_message(const messageref m) {
 
 	switch(message_type) {
 		case message::MSG_ACCEPT: {
-			dcerr("Accepted by server");
 			const message_accept_ref msg = static_pointer_cast<message_accept>(m);
 			{
 				mutex::scoped_lock lock(client_id_mutex);
@@ -372,7 +404,6 @@ void middle_end::handle_received_message(const messageref m) {
 			}
 		}; break;
 		case message::MSG_DISCONNECT: {
-			dcerr("Disconnected from server");
 			mutex::scoped_lock s_lock(dest_server_mutex);
 			mutex::scoped_lock c_lock(client_id_mutex);
 			abort_all_file_transfers();			
@@ -396,17 +427,17 @@ void middle_end::handle_received_message(const messageref m) {
 				msg->apply(playlist);
 			}
 		}; break;
-//		case message::MSG_QUERY_TRACKDB: {
-///*			message_query_trackdb_ref qr = static_pointer_cast<message_query_trackdb>(m);
-//			vector<Track> res;
-//			BOOST_FOREACH(LocalTrack t, trackDB.search(qr->search)) {
-//				Track tr(TrackID(gmpmpc_client_id, t.id), t.metadata);
-//				res.push_back(tr);
-//			}
-//			message_query_trackdb_result_ref result(new message_query_trackdb_result(qr->qid, res));
-//			gmpmpc_network_handler->send_server_message(result);*/
-//		}; break;
-//		//case message::MSG_QUERY_TRACKDB_RESULT: {}; break;
+		case message::MSG_QUERY_TRACKDB: {
+			const message_query_trackdb_ref msg = static_pointer_cast<message_query_trackdb>(m);
+			SearchID id;
+			mutex::scoped_lock lock(trackdb_queries_mutex);
+			shared_ptr<mutex::scoped_lock> plock = search_tracks(msg->search, true, &id);
+			trackdb_queries[id] = msg->qid;
+		}; break;
+		case message::MSG_QUERY_TRACKDB_RESULT: {
+			const message_query_trackdb_result_ref msg = static_pointer_cast<message_query_trackdb_result>(m);
+			sig_search_tracks(SearchID(msg->qid), msg->result);
+		}; break;
 		case message::MSG_REQUEST_FILE: {
 			message_request_file_ref msg = static_pointer_cast<message_request_file>(m);
 			mutex::scoped_lock lock(file_requests_mutex);

@@ -104,7 +104,9 @@ bool gmpmpc_trackdb_widget::search_entry_timeout_handler() {
 	m["FILENAME"] = search_entry.get_text();
 	Track query(TrackID(ClientID(0xffffffff), LocalTrackID(0xffffffff)), m);
 	treeview.clear();
-	search_id = middleend.search_tracks(query);
+	SearchID id;
+	boost::shared_ptr<boost::mutex::scoped_lock> search_id_lock = middleend.search_tracks(query, &id);
+	search_id = id;
 	return false;
 }
 

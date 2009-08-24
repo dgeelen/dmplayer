@@ -58,29 +58,11 @@
 			 * Emitted when a track search completes. Initiate the search with search_tracks().
 			 * @note The callback is provided with the SearchID that search_tracks() returned
 			 *       and a list of tracks that matched the search parameters.
+			 * @note The callback may be called multiple times as results from the network
+			 *       search are received.
 			 * @see search_tracks()
-			 * @todo figure out if this callback may be executed more than once for the same SearchID
 			 */
 			boost::signal<void(const SearchID id, const std::vector<Track>&)> sig_search_tracks;
-
-			/**
-			 * Emitted when a local track search completes. Initiate the search with search_local_tracks().
-			 * @note The callback is provided with the SearchID that search_local_tracks() returned
-			 *       and a list of tracks that matched the search parameters.
-			 * @see search_local_tracks()
-			 * @todo figure out if this should return a list of LocalTrack or Track.
-			 * @deprecated in favor of sig_search_tracks()
-			 */
-			boost::signal<void(const SearchID id, const std::vector<LocalTrack>&)> sig_search_local_tracks;
-
-			/**
-			 * Emitted when a global track search completes. Initiate the search with search_remote_tracks().
-			 * @note The callback is provided with the SearchID that search_remote_tracks() returned
-			 *       and a list of tracks that matched the search parameters.
-			 * @see search_remote_tracks()
-			 * @* @deprecated in favor of sig_search_tracks()
-			 */
-			boost::signal<void(const SearchID id, const std::vector<Track>&)> sig_search_remote_tracks;
 
 			/**
 			 * Emitted when a message from the network is received.
@@ -160,35 +142,15 @@
 			/**
 			 * Initiates both a local and a global search.
 			 * @note the seach is performed in a separate thead, which will call sig_search_tracks() upon
-			 *       completion of the search.
+			 *       completion of the search. sig_search_tracks() will not be called before the returned
+			 *       lock is released, giving the caller time to take the neccessary actions on SearchID.
 			 * @param query contains the search parameters.
-			 * @return a SearchID which can be used by the client to distinguish between different searches.
+			 * @param out id is a pointer to SearchID which will hold the SearchID of the search upon return.
+			 *               This SearchID can be used by the client to distinguish between different searches.
+			 * @return a boost::mutex::scoped_lock which prevents the search thread from calling sig_search_tracks.
 			 * @see sig_search_tracks()
-			 * @todo decide wether to keep the local and global versions of search()
 			 */
-			SearchID search_tracks(const Track query);
-
-			/**
-			 * Initiates a search of the local track database.
-			 * @note the seach is performed in a separate thead, which will call sig_search_local_tracks() upon
-			 *       completion of the search.
-			 * @param query contains the search parameters.
-			 * @return a SearchID which can be used by the client to distinguish between different searches.
-			 * @see sig_search_local_tracks()
-			 * @deprecated in favor of search_tracks()
-			 */
-			SearchID search_local_tracks(const Track query);
-
-			/**
-			 * Initiates a global search for tracks.
-			 * @note the seach is performed in a separate thead, which will call sig_search_remote_tracks() upon
-			 *       completion of the search.
-			 * @param query contains the search parameters.
-			 * @return a SearchID which can be used by the client to distinguish between different searches.
-			 * @see sig_search_remote_tracks()
-			 * @deprecated in favor of search_tracks()
-			 */
-			SearchID search_remote_tracks(const Track query);
+			boost::shared_ptr<boost::mutex::scoped_lock> search_tracks(const Track query, SearchID* id);
 
 
 
@@ -309,28 +271,35 @@
 			 ***************/
 
 		private: //NOTE: Private interfaces are documented in middle_end.cpp
-			void                     handle_sig_server_list_update(const std::vector<server_info>&);
-			void                     handle_received_message(const messageref m);
-			boost::mutex             file_requests_mutex;
+			void                       handle_sig_server_list_update(const std::vector<server_info>&);
+			void                       handle_received_message(const messageref m);
+
+			boost::mutex               file_requests_mutex;
 			typedef std::pair<std::pair<bool*, boost::thread::id>, LocalTrackID> file_requests_type;
 			std::vector<file_requests_type> file_requests;
-			void                     handle_message_request_file(const message_request_file_ref request, bool* done);
-			void                     abort_all_file_transfers();
-			void                     abort_file_transfer(LocalTrackID id);
-			boost::mutex             search_mutex;
-			void                     _search_tracks(SearchID search_id, const Track track);
-			boost::mutex             known_servers_mutex;
-			std::vector<server_info> known_servers;
-			boost::mutex             client_id_mutex;
-			ClientID                 client_id; // Valid *ONLY* when connected to a server (and vice-versa)
-			util::thread_group2      threads;
-			SearchID                 search_id;
-			boost::mutex             search_id_mutex;
-			network_handler          networkhandler;
-			TrackDataBase            trackdb;
-			boost::mutex             dest_server_mutex;
-			ipv4_socket_addr         dest_server;
-			SyncedPlaylist           client_synced_playlist;
+
+			boost::mutex               trackdb_queries_mutex;
+			std::map<SearchID, uint32> trackdb_queries;
+			void                       handle_msg_query_trackdb_query_result(const SearchID id, const std::vector<Track>& tracklist);
+
+			void                       handle_message_request_file(const message_request_file_ref request, bool* done);
+			void                       abort_all_file_transfers();
+			void                       abort_file_transfer(LocalTrackID id);
+			boost::mutex               search_mutex;
+			boost::shared_ptr<boost::mutex::scoped_lock> search_tracks(const Track query, bool local_search_only, SearchID* id);
+			void                       _search_tracks(SearchID search_id, const Track track, boost::shared_ptr<boost::mutex> pm);
+			boost::mutex               known_servers_mutex;
+			std::vector<server_info>   known_servers;
+			boost::mutex               client_id_mutex;
+			ClientID                   client_id; // Valid *ONLY* when connected to a server (and vice-versa)
+			util::thread_group2        threads;
+			SearchID                   next_search_id;
+			boost::mutex               next_search_id_mutex;
+			network_handler            networkhandler;
+			TrackDataBase              trackdb;
+			boost::mutex               dest_server_mutex;
+			ipv4_socket_addr           dest_server;
+			SyncedPlaylist             client_synced_playlist;
 	};
 
 #endif //MIDDLE_END_H
