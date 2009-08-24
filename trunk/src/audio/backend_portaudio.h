@@ -2,7 +2,7 @@
 #define BACKEND_PORTAUDIO_H
 
 #include "backend_interface.h"
-
+#include "audio_controller.h"
 #include "portaudio.h"
 
 // ugh, how ugly is this...

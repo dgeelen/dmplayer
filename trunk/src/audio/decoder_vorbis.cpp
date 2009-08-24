@@ -84,7 +84,7 @@ bool VorbisDecoder::read_vorbis_headers() {
 uint32 VorbisDecoder::getData(uint8* buffer, uint32 len)
 {
 	const int bytes_per_sample = info.channels * sizeof(ogg_int16_t);
-	const int samples_requested = len / bytes_per_sample;
+	const uint32 samples_requested = len / bytes_per_sample;
 	uint32 samples_decoded = 0;
 	bool done = false;
 	while(!done) {
@@ -98,7 +98,7 @@ uint32 VorbisDecoder::getData(uint8* buffer, uint32 len)
 				float *mono_channel=pcm[channel];
 				for(int i=0; i<samples_todo; ++i) {
 					#if 1
-					int val=(int)(mono_channel[i]*32767.f);
+					ogg_int16_t val=(ogg_int16_t)(mono_channel[i]*32767.f);
 					#else /* optional dither */
 					int val=mono_channel[i]*32767.f+drand48()-0.5f;
 					#endif
