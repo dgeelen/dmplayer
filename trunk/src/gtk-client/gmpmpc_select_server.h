@@ -37,6 +37,7 @@
 			boost::signals::connection sig_servers_removed_connection;
 			DispatcherMarshaller dispatcher; // Execute a function in the gui thread
 			ipv4_socket_addr target_server;
+			
 			class ModelColumns : public Gtk::TreeModelColumnRecord {
 				public:
 					ModelColumns() {

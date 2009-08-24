@@ -35,8 +35,6 @@
 			~GtkMpmpClientWindow();
 		private:
 			/* Variables */
-// 			TrackDataBase*                                    trackdb;
-// 			network_handler*                                  networkhandler;
 			DispatcherMarshaller dispatcher; // Execute a function in the gui thread
 			middle_end&                                       middleend;
 			std::map<std::string, boost::signals::connection> connected_signals;
@@ -46,7 +44,7 @@
 
 			/* Helpers */
 			Glib::RefPtr<Gtk::UIManager> m_refUIManager;
-  		Glib::RefPtr<Gtk::ActionGroup> m_refActionGroup;
+			Glib::RefPtr<Gtk::ActionGroup> m_refActionGroup;
 
 			/* Containers (widgets not referenced by code) */
 			Gtk::VBox             main_vbox;
@@ -55,8 +53,8 @@
 			Gtk::ScrolledWindow   playlist_scrolledwindow;
 
 			/* Widgets (referenced by code) */
-			Gtk::Menu*      menubar_ptr; // Menu is created dynamically using UIManager
-			Gtk::Statusbar  statusbar;
+			Gtk::Menu*                    menubar_ptr; // Menu is created dynamically using UIManager
+			Gtk::Statusbar                statusbar;
 			Glib::RefPtr<Gdk::Pixbuf>     statusicon_pixbuf;
 			Glib::RefPtr<Gtk::StatusIcon> statusicon;
 			gmpmpc_trackdb_widget         trackdb_widget;
@@ -67,11 +65,6 @@
 			void on_menu_file_preferences();
 			void on_menu_file_quit();
 			void on_menu_file_connect();
-// 			void on_connection_accepted(ClientID id);  // callback from network connection handler
-// 			void on_select_server_cancel();
-// 			void on_playlist_update(message_playlist_update_ref m);
-// 			void on_request_file(message_request_file_ref m);
-// 			void on_request_file_result(message_request_file_result_ref m);
 			void on_disconnect_signal(const std::string reason);
 			void on_disconnect_signal_dialog_response(int response_id);
 			void on_vote_signal(TrackID id, int type);
