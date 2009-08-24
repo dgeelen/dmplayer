@@ -15,6 +15,7 @@ middle_end::middle_end()
 	networkhandler.client_message_receive_signal.connect(bind(&middle_end::handle_received_message, this, _1));
 	trackdb.add_directory("/home/dafox/sharedfolder/music/");
 	trackdb.add_directory("f:\\home\\dafox\\sharedfolder\\music\\");
+	trackdb.add_directory("d:\\music\\");
 	networkhandler.start();
 }
 
