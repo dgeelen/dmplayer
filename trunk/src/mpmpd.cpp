@@ -309,43 +309,30 @@ class Server {
 		}
 
 		void remove_client(ClientID id) {
-			boost::recursive_mutex::scoped_lock lock(clients_mutex);
+			boost::recursive_mutex::scoped_lock clock(clients_mutex);
+			boost::recursive_mutex::scoped_lock pllock(playlist_mutex);
 			dcerr("Removing client " << STRFORMAT("%08x", id));
 			if (clients.find(id) == clients.end())
 				return;
 			if(currenttrack.id.first == id && server_datasource) { // Client which is serving current file disconnected!
 				server_datasource->set_wait_for_data(false);
 			}
-			Client_ref cr = *clients.find(id);
-			double total = cr->zero_sum;
-			dcerr("total zero sum:" << total << '\n');
-			clients.erase(id);
-
-			if(cr->wish_list.size() > 0 && currenttrack.id == cr->wish_list.get(0).id)
-				server_datasource->stop();
 
 			{
 				boost::mutex::scoped_lock lock(vote_min_list_mutex);
 				std::vector<TrackID> empty_vote_tracks;
 				typedef std::pair<TrackID, std::set<ClientID> > vtype;
-				BOOST_FOREACH(vtype i, vote_min_list) {                       // For each (trackid, {client})
-					if(i.second.find(cr->id) != i.second.end()) {             // If the disconnecting client voted for trackid
-						i.second.erase(i.second.find(cr->id));                // Remove him/her from the list of voters
-						if(i.second.size() == 0) {                            // and if he/she was the last voter
+				BOOST_FOREACH(vtype i, vote_min_list) {           // For each (trackid, {client})
+					if(i.second.find(id) != i.second.end()) {     // If the disconnecting client voted for trackid
+						i.second.erase(i.second.find(id));        // Remove him/her from the list of voters
+						if(i.second.size() == 0) {                // and if he/she was the last voter
 							empty_vote_tracks.push_back(i.first);
 						}
 					}
 				}
 				BOOST_FOREACH(TrackID id, empty_vote_tracks) {
-					vote_min_list.erase(vote_min_list.find(id)); // remove trackid from vote_min_list
+					vote_min_list.erase(vote_min_list.find(id));  // remove trackid from vote_min_list
 				}
-			}
-			if (total == 0) return;
-
-			BOOST_FOREACH(Client_ref i, clients) {
-				double old = i->zero_sum;
-				i->zero_sum += total/clients.size();
-				dcerr("(dc)  for " << STRFORMAT("%08x", i->id) << ": " << old << " -> " << i->zero_sum << '\n');
 			}
 
 			{
@@ -370,8 +357,41 @@ class Server {
 					outstanding_query_result_list.erase(outstanding_query_result_list.find(*i));
 				}
 			}
-			/* Clear memory used by client */
-// 			clients.erase(clients.find(id)); //boom segfault? Are we erasing something twice? (see a couple of lines up)
+
+			Client_ref cr = *clients.find(id);
+			// check if somebody else is still listening.
+			bool has_listeners = false;
+			BOOST_FOREACH(Client_ref c, clients) {
+				if(cr->id != c->id) {
+					for(uint32 i = 0 ; i < c->wish_list.size(); ++i) {
+						if(c->wish_list.get(i).id == currenttrack.id) {
+							has_listeners = true;
+							break;
+						}
+					}
+				}
+				for(unsigned int i=0; i < c->wish_list.size(); ++i) {
+					if(c->wish_list.get(i).id.first == id) { // No way to retrieve this song from this client now...
+						c->wish_list.remove(i);
+						--i;
+					}
+				}
+			}
+			if(!has_listeners) {
+				// Cue next song, also calls next_song which is important since
+				// if has_song becomes empty zero_sum is compromised.
+				ac.stop_playback();
+			}
+
+			double total = cr->zero_sum;
+			dcerr("This clients zero_sum was:" << total << '\n');
+			clients.erase(id);
+			BOOST_FOREACH(Client_ref i, clients) {
+				double old = i->zero_sum;
+				i->zero_sum += total/clients.size();
+				dcerr("(dc)  for " << STRFORMAT("%08x", i->id) << ": " << old << " -> " << i->zero_sum << '\n');
+			}
+			recalculateplaylist();
 		}
 
 		void handle_received_message(const messageref m, ClientID id) {
@@ -393,7 +413,6 @@ class Server {
 					case message::MSG_DISCONNECT: {
 						dcerr("Received a MSG_DISCONNECT from " << STRFORMAT("%08x", id));
 						remove_client(id);
-						recalculateplaylist = true;
 					} break;
 					case message::MSG_PLAYLIST_UPDATE: {
 						dcerr("Received a MSG_PLAYLIST_UPDATE from " << STRFORMAT("%08x", id));
