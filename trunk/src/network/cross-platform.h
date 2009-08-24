@@ -27,6 +27,7 @@
 
 	#define NetGetLastError() WSAGetLastError()
 	#define sipx_family sa_family
+	#define SHUT_RDWR SD_BOTH
 #else
 	#include <netinet/in.h>
 	#include <arpa/inet.h>
