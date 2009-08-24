@@ -225,7 +225,10 @@ class Server {
 			lock.unlock();
 			recalculateplaylist();
 			lock.lock();
-			vote_min_list.erase(currenttrack.id);
+			{
+				boost::mutex::scoped_lock lock(vote_min_list_mutex);
+				vote_min_list.erase(currenttrack.id);
+			}
 			add_datasource = true;
 		}
 
@@ -260,7 +263,11 @@ class Server {
 					}
 					{
 						boost::recursive_mutex::scoped_lock lock(clients_mutex);
-						std::set<ClientID> votes = vote_min_list[currenttrack.id];
+						std::set<ClientID> votes;
+						{
+							boost::mutex::scoped_lock lock(vote_min_list_mutex);
+							votes = vote_min_list[currenttrack.id];
+						}
 						if(server_datasource && votes.size() > 0 && (votes.size()*2) > clients.size()) {
 							/* Notify sender to stop sending */ //FIXME: Does not seem to be honoured by gmpmpc?
 							vector<uint8> empty;
@@ -274,7 +281,10 @@ class Server {
 							server_datasource->stop();
 
 							/* Don't spam sender */
+							{
+							boost::mutex::scoped_lock lock(vote_min_list_mutex);
 							vote_min_list.erase(currenttrack.id);
+							}
 						}
 					}
 					usleep(100*1000);
@@ -297,10 +307,21 @@ class Server {
 			if(cr->wish_list.size() > 0 && currenttrack.id == cr->wish_list.get(0).id)
 				server_datasource->stop();
 
-			typedef std::pair<TrackID, std::set<ClientID> > vtype;
-			BOOST_FOREACH(vtype i, vote_min_list) {
-				if(i.second.find(cr->id) != i.second.end())
-					vote_min_list.erase(vote_min_list.find( i.first ));
+			{
+				boost::mutex::scoped_lock lock(vote_min_list_mutex);
+				std::vector<TrackID> empty_vote_tracks;
+				typedef std::pair<TrackID, std::set<ClientID> > vtype;
+				BOOST_FOREACH(vtype i, vote_min_list) {                       // For each (trackid, {client})
+					if(i.second.find(cr->id) != i.second.end()) {             // If the disconnecting client voted for trackid
+						i.second.erase(i.second.find(cr->id));                // Remove him/her from the list of voters
+						if(i.second.size() == 0) {                            // and if he/she was the last voter
+							empty_vote_tracks.push_back(i.first);
+						}
+					}
+				}
+				BOOST_FOREACH(TrackID id, empty_vote_tracks) {
+					vote_min_list.erase(vote_min_list.find(id)); // remove trackid from vote_min_list
+				}
 			}
 			if (total == 0) return;
 			BOOST_FOREACH(Client_ref i, clients) {
@@ -382,6 +403,7 @@ class Server {
 						dcerr("Received a MSG_VOTE from " << STRFORMAT("%08x", id));
 						message_vote_ref msg = boost::static_pointer_cast<message_vote>(m);
 						if(msg->is_min_vote) {
+							boost::mutex::scoped_lock lock(vote_min_list_mutex);
 							vote_min_list[msg->id].insert(id);
 	// 						* TODO *
 	// 						bool is_in_playlist = false;
@@ -420,6 +442,7 @@ class Server {
 			>
 		> ClientMap;
 		ClientMap clients;
+		boost::mutex vote_min_list_mutex;
 		std::map<TrackID, std::set<ClientID> > vote_min_list;
 		bool vote_min_penalty;
 		boost::recursive_mutex clients_mutex;
