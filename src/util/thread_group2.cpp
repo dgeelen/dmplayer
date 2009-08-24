@@ -50,10 +50,10 @@ void thread_group2::thread_runner(const function0<void>& threadfunc) {
 	} //FIXME: Thread is not *really* exited yet, don't know how bad this is...
 }
 
-thread* thread_group2::create_thread(const function0<void>& threadfunc) {
+boost::shared_ptr<boost::thread> thread_group2::create_thread(const function0<void>& threadfunc) {
 	mutex::scoped_lock c_lock(thread_creation_mutex);
 	mutex::scoped_lock p_lock(public_lock_mutex);
 	shared_ptr<thread> t = shared_ptr<thread>(new thread(bind(&thread_group2::thread_runner, this, threadfunc)));
 	threads.push_back(t);
-	return t.get();
+	return t;
 }
