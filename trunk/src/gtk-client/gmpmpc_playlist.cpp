@@ -30,7 +30,7 @@ IPlaylistRef gmpmpc_playlist_widget::sig_update_playlist_handler() {
 }
 
 void gmpmpc_playlist_widget::add_to_wishlist(Track& track) {
-	wish_list.add(track);
+	wish_list.append(track);
 	messageref msg;
 
 	while (msg = wish_list.pop_msg()) {

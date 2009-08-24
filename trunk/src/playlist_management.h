@@ -163,7 +163,7 @@ class PlaylistVector : public IPlaylist {
 		class iterator : public std::iterator<std::forward_iterator_tag, Track> {
 			public:
 				iterator() : _iterator() {};
-				iterator(std::vector<Track>::iterator& i) : _iterator(i) {};
+				iterator(const std::vector<Track>::iterator& i) : _iterator(i) {};
 				bool operator==(const iterator& that) const {
 					return this->_iterator == that._iterator;
 				};
