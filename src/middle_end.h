@@ -323,12 +323,14 @@
 			typedef std::pair<std::pair<bool*, boost::thread::id>, LocalTrackID> file_requests_type;
 			std::vector<file_requests_type> file_requests;
 			void                     handle_message_request_file(const message_request_file_ref request, bool* done);
+			void                     abort_all_file_transfers();
 			void                     abort_file_transfer(LocalTrackID id);
 			boost::mutex             search_mutex;
 			void                     _search_tracks(SearchID search_id, const Track track);
 			boost::mutex             known_servers_mutex;
 			std::vector<server_info> known_servers;
-			ClientID                 client_id;
+			boost::mutex             client_id_mutex;
+			ClientID                 client_id; // Valid *ONLY* when connected to a server (and vice-versa)
 			util::thread_group2      threads;
 			SearchID                 search_id;
 			boost::mutex             search_id_mutex;

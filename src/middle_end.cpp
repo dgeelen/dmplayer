@@ -19,35 +19,51 @@ middle_end::middle_end()
 	networkhandler.start();
 }
 
-middle_end::~middle_end() {
-	{
-		bool done(false);
-		while(!done) {
-			mutex::scoped_lock lock(file_requests_mutex);
-			vector<file_requests_type>::iterator i = file_requests.begin();
-			if(i != file_requests.end()) {
-				lock.unlock();
-				abort_file_transfer((*i).second);
-			}
-			else {
-				done = true;
-			}
+void middle_end::abort_all_file_transfers() {
+	bool done(false);
+	while(!done) {
+		mutex::scoped_lock lock(file_requests_mutex);
+		vector<file_requests_type>::iterator i = file_requests.begin();
+		if(i != file_requests.end()) {
+			lock.unlock();
+			abort_file_transfer((*i).second);
+		}
+		else {
+			done = true;
 		}
 	}
+}
+
+middle_end::~middle_end() {
+	abort_all_file_transfers();
 	networkhandler.stop();
 	threads.join_all();
 }
 
 void middle_end::connect_to_server(const ipv4_socket_addr address, int timeout) {
-	mutex::scoped_lock lock(dest_server_mutex);
+	{
+		mutex::scoped_lock lock(dest_server_mutex);
+		dest_server = ipv4_socket_addr(); // invalid address
+	}
 	networkhandler.client_disconnect_from_server();
-	dest_server = address;
+	{
+		mutex::scoped_lock lock(client_id_mutex);
+		client_id = ClientID(-1);
+		sig_client_id_changed(client_id);
+	}
+	{
+		mutex::scoped_lock lock(dest_server_mutex);
+		dest_server = address;
+	}
 	networkhandler.client_connect_to_server(address);
 }
 
 void middle_end::cancel_connect_to_server(const ipv4_socket_addr address) {
-	mutex::scoped_lock lock(dest_server_mutex);
-	dest_server = ipv4_socket_addr(); // invalid address
+	mutex::scoped_lock lock(client_id_mutex);
+	if(client_id == ClientID(-1)) { // Not connected
+		mutex::scoped_lock lock(dest_server_mutex);
+		dest_server = ipv4_socket_addr(); // invalid address
+	}
 }
 
 void middle_end::refresh_server_list() {
@@ -121,6 +137,7 @@ void middle_end::handle_sig_server_list_update(const vector<server_info>& server
 }
 
 ClientID middle_end::get_client_id() {
+	mutex::scoped_lock lock(client_id_mutex);
 	return client_id;
 }
 
@@ -128,8 +145,11 @@ void middle_end::_search_tracks(SearchID search_id, const Track query) {
 	mutex::scoped_lock lock(search_mutex); //FIXME: Searching should be possible concurrently
 	std::vector<LocalTrack> local_result = trackdb.search(query);
 	std::vector<Track> result; // FIXME: Needs a vector<pair<SearchID, vector<Track> > > or similar so we can hold network search results
-	BOOST_FOREACH(LocalTrack lt, local_result) {
-		result.push_back( Track(TrackID( client_id, lt.id), lt.metadata ) );
+	{
+		mutex::scoped_lock lock(client_id_mutex);
+		BOOST_FOREACH(LocalTrack lt, local_result) {
+			result.push_back( Track(TrackID( client_id, lt.id), lt.metadata ) );
+		}
 	}
 	sig_search_tracks(search_id, result);
 }
@@ -335,11 +355,14 @@ void middle_end::handle_received_message(const messageref m) {
 		dcerr("Received a " << message_names[message_type]);
 
 	switch(message_type) {
-		case message::MSG_CONNECT: { } break;
 		case message::MSG_ACCEPT: {
+			dcerr("Accepted by server");
 			const message_accept_ref msg = static_pointer_cast<message_accept>(m);
-			client_id = msg->cid;
-			sig_client_id_changed(client_id);
+			{
+				mutex::scoped_lock lock(client_id_mutex);
+				client_id = msg->cid;
+				sig_client_id_changed(client_id);
+			}
 			mutex::scoped_lock lock(dest_server_mutex);
 			if((dest_server == networkhandler.get_target_server_address()) && (dest_server != ipv4_socket_addr())) {
 				sig_connect_to_server_success(dest_server, msg->cid);
@@ -349,9 +372,13 @@ void middle_end::handle_received_message(const messageref m) {
 			}
 		}; break;
 		case message::MSG_DISCONNECT: {
-			if((dest_server == networkhandler.get_target_server_address()) && (dest_server != ipv4_socket_addr())) {
+			dcerr("Disconnected from server");
+			mutex::scoped_lock s_lock(dest_server_mutex);
+			mutex::scoped_lock c_lock(client_id_mutex);
+			if((dest_server == networkhandler.get_target_server_address()) && (dest_server != ipv4_socket_addr()) && client_id != ClientID(-1)) {
 				const message_disconnect_ref msg = static_pointer_cast<message_disconnect>(m);
 				client_id = ClientID(-1);
+				abort_all_file_transfers();
 				sig_client_id_changed(client_id);
 				sig_disconnected(msg->get_reason());
 			}
@@ -363,17 +390,17 @@ void middle_end::handle_received_message(const messageref m) {
 				msg->apply(playlist);
 			}
 		}; break;
-		case message::MSG_QUERY_TRACKDB: {
-/*			message_query_trackdb_ref qr = static_pointer_cast<message_query_trackdb>(m);
-			vector<Track> res;
-			BOOST_FOREACH(LocalTrack t, trackDB.search(qr->search)) {
-				Track tr(TrackID(gmpmpc_client_id, t.id), t.metadata);
-				res.push_back(tr);
-			}
-			message_query_trackdb_result_ref result(new message_query_trackdb_result(qr->qid, res));
-			gmpmpc_network_handler->send_server_message(result);*/
-		}; break;
-		case message::MSG_QUERY_TRACKDB_RESULT: {}; break;
+//		case message::MSG_QUERY_TRACKDB: {
+///*			message_query_trackdb_ref qr = static_pointer_cast<message_query_trackdb>(m);
+//			vector<Track> res;
+//			BOOST_FOREACH(LocalTrack t, trackDB.search(qr->search)) {
+//				Track tr(TrackID(gmpmpc_client_id, t.id), t.metadata);
+//				res.push_back(tr);
+//			}
+//			message_query_trackdb_result_ref result(new message_query_trackdb_result(qr->qid, res));
+//			gmpmpc_network_handler->send_server_message(result);*/
+//		}; break;
+//		//case message::MSG_QUERY_TRACKDB_RESULT: {}; break;
 		case message::MSG_REQUEST_FILE: {
 			message_request_file_ref msg = static_pointer_cast<message_request_file>(m);
 			mutex::scoped_lock lock(file_requests_mutex);
@@ -383,12 +410,13 @@ void middle_end::handle_received_message(const messageref m) {
 		}; break;
 		case message::MSG_REQUEST_FILE_RESULT: {
 			message_request_file_result_ref msg = static_pointer_cast<message_request_file_result>(m);
+			mutex::scoped_lock lock(client_id_mutex);
 			if(msg->id.first == client_id) {
 				abort_file_transfer(msg->id.second);
 			}
 		}; break;
 		default: {
-			dcerr("Ignoring unknown message of type " << m->get_type());
+			dcerr("Not handling message of type " << m->get_type());
 		} break;
 	}
 }
