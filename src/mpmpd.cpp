@@ -187,6 +187,8 @@ class Server {
 			message_loop_connection.disconnect();
 			message_loop_thread.join();
 			dcerr("shut down");
+			ac.stop_playback();
+			ac.playback_finished.disconnect(boost::bind(&Server::next_song, this, _1));
 		}
 
 		void next_song(uint64 playtime_secs) {
@@ -292,7 +294,7 @@ class Server {
 							vote_min_penalty = true;
 
 							/* Cue next song */
-							server_datasource->stop();
+							ac.stop_playback();
 
 							/* Don't spam sender */
 							{
@@ -318,6 +320,7 @@ class Server {
 			double total = cr->zero_sum;
 			dcerr("total zero sum:" << total << '\n');
 			clients.erase(id);
+
 			if(cr->wish_list.size() > 0 && currenttrack.id == cr->wish_list.get(0).id)
 				server_datasource->stop();
 
@@ -338,6 +341,7 @@ class Server {
 				}
 			}
 			if (total == 0) return;
+
 			BOOST_FOREACH(Client_ref i, clients) {
 				double old = i->zero_sum;
 				i->zero_sum += total/clients.size();

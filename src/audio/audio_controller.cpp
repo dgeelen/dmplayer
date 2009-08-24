@@ -169,6 +169,12 @@ void AudioController::stop_playback()
 {
 	dcerr("Stopping backend");
 	backend->stop_output();
+	{
+	boost::mutex::scoped_lock lock(update_decoder_mutex);
+	playback_finished(bytes_played / backend->getAudioFormat().getBytesPerSecond()); //FIXME: Low resolution!
+	bytes_played = 0;
+	curdecoder.reset();
+	}
 }
 
 void AudioController::start_playback()
