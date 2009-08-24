@@ -9,3 +9,4 @@ Makefile
 build/*
 build_release/*
 extralibs/*
+extralibs_devel/*
