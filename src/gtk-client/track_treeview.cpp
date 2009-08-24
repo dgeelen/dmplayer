@@ -6,6 +6,7 @@
 gmpmpc_track_treeview::gmpmpc_track_treeview() {
 	Glib::RefPtr<Gtk::ListStore> refListStore = Gtk::ListStore::create(m_Columns);
 	set_model(refListStore);
+	//FIXME: Appending columns appears to cause HEAP corruption in release mode?! (on exit)
 	append_column("TrackID", m_Columns.trackid);
 	append_column("Filename", m_Columns.filename);
 	get_selection()->set_mode(Gtk::SELECTION_MULTIPLE);

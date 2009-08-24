@@ -35,6 +35,7 @@ gmpmpc_select_server_window::gmpmpc_select_server_window(middle_end& _middleend)
 
 	Glib::RefPtr<Gtk::ListStore> refListStore = Gtk::ListStore::create(m_Columns);
 	serverlist.set_model(refListStore);
+	//FIXME: Appending columns appears to cause HEAP corruption in release mode?! (on exit)
 	serverlist.append_column("Name", m_Columns.name);
 // 	serverlist.append_column("Ping", m_Columns.ping);
 	serverlist.append_column("Address", m_Columns.addr_str);
@@ -95,8 +96,8 @@ void gmpmpc_select_server_window::add_servers(const std::vector<server_info>& ad
 
 	save_selected();
 
-	if(store->children().size() == 0) {                       // If the server list was empty
-		if(added_server_list.size() > 0) {                      // And there now is a server present
+	if(store->children().size() == 0) {                           // If the server list was empty
+		if(added_server_list.size() > 0) {                        // And there now is a server present
 			selected_addr = added_server_list.begin()->sock_addr; // Select a server by default
 		}
 	}
@@ -165,7 +166,6 @@ void gmpmpc_select_server_window::on_cancel_button_click() {
 		hide();
 	}
 	else {
-// 		sig_cancel_connect_to_server(target_server);
 		middleend.cancel_connect_to_server(target_server);
 		connect_button.set_sensitive(true);
 		serverlist.set_sensitive(true);
