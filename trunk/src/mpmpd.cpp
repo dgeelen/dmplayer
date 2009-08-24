@@ -31,10 +31,8 @@ class Client {
 		}
 
 		~Client() {
-			dcerr("shutting down");
 			id = -1;
 			zero_sum = -1.0;
-			dcerr("shut down");
 		}
 
 		ClientID id;
@@ -392,7 +390,7 @@ class Server {
 						remove_client(id);
 					} break;
 					case message::MSG_PLAYLIST_UPDATE: {
-						dcerr("Received a MSG_PLAYLIST_UPDATE from " << STRFORMAT("%08x", id));
+						//dcerr("Received a MSG_PLAYLIST_UPDATE from " << STRFORMAT("%08x", id));
 						message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
 						PlaylistVector& pl = ((*cmi)->wish_list);
 						if((pl.size() < 100)
@@ -408,7 +406,7 @@ class Server {
 						}
 					}; break;
 					case message::MSG_QUERY_TRACKDB: {
-						dcerr("Received a MSG_QUERY_TRACKDB from " << STRFORMAT("%08x", id));
+						//dcerr("Received a MSG_QUERY_TRACKDB from " << STRFORMAT("%08x", id));
 						message_query_trackdb_ref msg = boost::static_pointer_cast<message_query_trackdb>(m);
 						boost::mutex::scoped_lock lock(outstanding_query_result_list_mutex);
 						uint32 qid = next_query_id++;
@@ -425,7 +423,7 @@ class Server {
 						outstanding_query_result_list[qid] = outstanding_queries;
 					}; break;
 					case message::MSG_QUERY_TRACKDB_RESULT: {
-						dcerr("Received a MSG_QUERY_TRACKDB_RESULT from " << STRFORMAT("%08x", id));
+						//dcerr("Received a MSG_QUERY_TRACKDB_RESULT from " << STRFORMAT("%08x", id));
 						message_query_trackdb_result_ref msg = boost::static_pointer_cast<message_query_trackdb_result>(m);
 						boost::mutex::scoped_lock lock(outstanding_query_result_list_mutex);
 						std::map<uint32, std::pair<std::pair<ClientID, uint32>,  std::set<ClientID> > >::iterator i;
@@ -448,7 +446,7 @@ class Server {
 						dcerr("Received a MSG_REQUEST_FILE from " << STRFORMAT("%08x", id));
 					}; break;
 					case message::MSG_REQUEST_FILE_RESULT: {
-						dcerr("Received a MSG_REQUEST_FILE_RESULT from " << STRFORMAT("%08x", id));
+						//dcerr("Received a MSG_REQUEST_FILE_RESULT from " << STRFORMAT("%08x", id));
 						message_request_file_result_ref msg = boost::static_pointer_cast<message_request_file_result>(m);
 						if(currenttrack.id != msg->id) break;
 						if(msg->data.size()) {
