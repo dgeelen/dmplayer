@@ -46,6 +46,11 @@ tcp_socket::tcp_socket( SOCKET s, ipv4_socket_addr addr) {
 	peer = addr;
 }
 
+tcp_socket::tcp_socket( const ipv4_socket_addr addr) {
+	sock = INVALID_SOCKET;
+	this->connect(addr.first, addr.second);
+}
+
 tcp_socket::tcp_socket( const ipv4_addr addr, const uint16 port )
 {
 	sock = INVALID_SOCKET;
