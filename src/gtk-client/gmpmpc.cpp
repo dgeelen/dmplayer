@@ -401,6 +401,19 @@ int main_impl(int argc, char **argv ) {
 	return 0;
 }
 
+#ifndef DEBUG
+#ifdef WIN32
+#include <windows.h>
+int APIENTRY WinMain(HINSTANCE hInstance,
+                     HINSTANCE hPrevInstance,
+                     LPSTR     lpCmdLine,
+					 int       nCmdShow)
+{
+	return makeErrorHandler(boost::bind(&main_impl, nCmdShow, &lpCmdLine))();
+}
+#endif
+#endif
+
 int main(int argc, char* argv[]) {
 	return makeErrorHandler(boost::bind(&main_impl, argc, argv))();
 }
