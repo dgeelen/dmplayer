@@ -23,29 +23,6 @@
 namespace po = boost::program_options;
 using namespace std;
 
-class ServerPlaylistReceiver: public PlaylistVector {
-	public:
-	virtual void add(const Track& track)
-	{
-		PlaylistVector::add(track);
-	}
-
-	virtual void remove(uint32 pos)
-	{
-		PlaylistVector::remove(pos);
-	}
-
-	virtual void insert(uint32 pos, const Track& track)
-	{
-		PlaylistVector::insert(pos, track);
-	}
-
-	virtual void clear()
-	{
-		PlaylistVector::clear();
-	}
-};
-
 class Client {
 	public:
 		Client(ClientID id_) {
@@ -62,7 +39,7 @@ class Client {
 
 		ClientID id;
 		double zero_sum;
-		ServerPlaylistReceiver wish_list;
+		PlaylistVector wish_list;
 };
 typedef boost::shared_ptr<Client> Client_ref;
 
