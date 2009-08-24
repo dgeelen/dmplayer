@@ -88,10 +88,9 @@
 			udp_socket udp_qsock;
 
 
-			boost::weak_ptr<tcp_socket> serversockweakref;
-
 			/* Client connection with server */
-			void client_tcp_connection(tcp_socket_ref sock);
+			void client_tcp_connection(ipv4_socket_addr addr);
+			boost::weak_ptr<tcp_socket> serversockweakref;
 			bool client_tcp_connection_running;
 
 			/* Server connection with client */

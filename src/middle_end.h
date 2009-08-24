@@ -14,7 +14,6 @@
 	#include "network/network-core.h"
 
 	BOOST_STRONG_TYPEDEF(uint32, SearchID);
-	BOOST_STRONG_TYPEDEF(uint32, ErrorID);
 
 	/**
 	 * The purpose of the middle end is to provide a convenient wrapper for
@@ -42,11 +41,10 @@
 			 * Emitted when a connection with a server could not be established.
 			 * Initiate the connection with connect_to_server().
 			 * @note The callback is provided with the ipv4_socket_addr that was supplied to connect_to_server()
-			 *       and an error code indicating the reason the connection could not be established.
+			 *       and a std::string indicating the reason the connection could not be established.
 			 * @see connect_to_server()
-			 * @todo This still requires a lot of work to be implemented as support is needed from the networkhandler.
 			 */
-			boost::signal<void(const ipv4_socket_addr, ErrorID)> sig_connect_to_server_failure;
+			boost::signal<void(const ipv4_socket_addr, std::string reason)> sig_connect_to_server_failure;
 
 			/**
 			 * Emitted when the client is disconnected by the server.
@@ -279,12 +277,6 @@
 			 * @param tracklist is a list of Track containing tracks that should be voted on.
 			 */
 			void playlist_vote_down(std::vector<Track> track);
-
-			/**
-			 * @return a descriptive message for a given ErrorID
-			 * @param errorid the ErrorID for which the description is desired.
-			 */
-			std::string get_error_description(ErrorID errorid);
 
 			/**
 			 * Sends a message to the server.

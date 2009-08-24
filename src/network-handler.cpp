@@ -98,9 +98,20 @@ void network_handler::server_tcp_connection_listener() { // Listens for incoming
 	dcerr("bye!");
 }
 
-void network_handler::client_tcp_connection(tcp_socket_ref sock) { // Initiates a connection to the server (Client)
-	messageref msg(new message_connect());
+void network_handler::client_tcp_connection(ipv4_socket_addr addr) { // Initiates a connection to the server (Client)
+	tcp_socket_ref sock;
+	try {
+		sock = tcp_socket_ref(new tcp_socket(addr));
+	}
+	catch(std::runtime_error e) {
+		message_disconnect_ref msg(new message_disconnect(e.what()));
+		client_message_receive_signal(msg);
+		sock.reset();
+		return;
+	}
+	serversockweakref = sock; //FIXME: No mutex required?
 
+	messageref msg(new message_connect());
 	*sock << msg;
 
 	// TODO: rest of function, protocol implementation
@@ -202,7 +213,9 @@ void network_handler::send_message(ClientID id, messageref msg) {
 
 ipv4_socket_addr network_handler::get_target_server_address() {
 	tcp_socket_ref servsock = serversockweakref.lock();
-	return servsock->get_ipv4_socket_addr();
+	if(servsock)
+		return servsock->get_ipv4_socket_addr();
+	return ipv4_socket_addr();
 }
 
 void network_handler::send_server_message(messageref msg) {
@@ -353,13 +366,11 @@ void network_handler::client_connect_to_server( ipv4_socket_addr dest ) {
 	dcerr(dest);
 	client_disconnect_from_server();
 	client_tcp_connection_running = true;
-	tcp_socket_ref serversock(new tcp_socket(dest.first, dest.second)); //FIXME: Connecting should be doe in the new thread (connecting to a non-existant address may take a while to time-out). Also, we should catch the error somewhere in that case
-	serversockweakref = serversock;
 	dcerr("Starting thread_client_tcp_connection");
-	thread_client_tcp_connection = boost::shared_ptr<boost::thread>(new boost::thread(makeErrorHandler(boost::bind(&network_handler::client_tcp_connection, this, serversock))));
+	thread_client_tcp_connection = boost::shared_ptr<boost::thread>(new boost::thread(makeErrorHandler(boost::bind(&network_handler::client_tcp_connection, this, dest))));
 }
 
-void network_handler::client_disconnect_from_server(  ) {
+void network_handler::client_disconnect_from_server() {
 	client_tcp_connection_running = false;
 	tcp_socket_ref servsock = serversockweakref.lock();
 	if(servsock) servsock->disconnect();
