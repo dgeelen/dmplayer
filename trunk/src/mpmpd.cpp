@@ -25,6 +25,7 @@ using namespace std;
 
 class Client {
 	public:
+		Client() : id(ClientID(-1)), zero_sum(0.0) {}
 		Client(ClientID id_) {
 			id = id_;
 			zero_sum = 0.0;
@@ -515,39 +516,109 @@ class Server {
 		bool add_datasource;
 		double average_song_duration;
 
-		/* note: struct sorthelper is (only) used in recalculateplaylist() */
-		struct sorthelper {
-			bool operator()(const std::pair<Client_ref, uint32>& l, const std::pair<Client_ref, uint32>& r) const {
-				return l.first->zero_sum > r.first->zero_sum;
+		struct track_priority_properties {
+			int    number_of_occurrences; // How many people have this track in their wishlist
+			float  avg_wishlist_position; // What is the average index of this track in the wishlist's of those people
+			double total_zero_sum;        // What is the total zero_sum of those people
+			Track  track;                 // The track to which these properties apply
+			bool operator<(const track_priority_properties& that) const {
+				return (this->number_of_occurrences <  that.number_of_occurrences)  ||
+				      ((this->number_of_occurrences == that.number_of_occurrences)  &&
+					   (this->avg_wishlist_position >  that.avg_wishlist_position)) ||
+					  ((this->avg_wishlist_position == that.avg_wishlist_position)  &&
+					   (this->total_zero_sum        <  that.total_zero_sum));
+			};
+		};
+
+		struct sort_by_zero_sum_increasing {
+			bool operator()(const Client& l, const Client& r) const {
+				return l.zero_sum < r.zero_sum;
+			}
+			bool operator()(const Client_ref& l, const Client_ref& r) const {
+				return l->zero_sum < r->zero_sum;
 			}
 		};
 
 		void recalculateplaylist() {
 			boost::recursive_mutex::scoped_lock locka(clients_mutex);
 			boost::recursive_mutex::scoped_lock lockb(playlist_mutex);
-			playlist.clear();
-			std::vector<std::pair<Client_ref, uint32> > client_list;
-			uint32 maxsize = 0;
-			BOOST_FOREACH(Client_ref c, clients) {
-				if (c->wish_list.size() > 0)
-					client_list.push_back(std::pair<Client_ref, uint32>(c, 0));
-				if(c->wish_list.size() > maxsize)
-					maxsize = c->wish_list.size();
+
+			// Sort clients by zero_sum
+			// FIXME: Figure out how to do this to clients (the boost::multi_index_container)
+			std::vector<Client> _clients;
+			BOOST_FOREACH(Client_ref cr, clients) {
+				_clients.push_back(*cr);
 			}
+			std::sort(_clients.begin(), _clients.end(), sort_by_zero_sum_increasing());
 
-			std::sort(client_list.begin(), client_list.end(), sorthelper() );
+			std::vector<track_priority_properties> shared_tracks;
+			std::vector<std::vector<Track> >  custom_tracks(_clients.size());
+			int current_client = 0;
+			BOOST_FOREACH(Client& c, _clients) { // NOTE: Destroys contents of _clients
+				int track_position = 0;
+				BOOST_FOREACH(Track& track, c.wish_list) {
+					track_priority_properties tpp;
+					tpp.number_of_occurrences = 1;
+					tpp.avg_wishlist_position = (float)track_position;
+					tpp.total_zero_sum        = c.zero_sum;
+					tpp.track                 = track;
+					BOOST_FOREACH(Client& oc, _clients) {
+						int otrack_position = 0;
+						if(oc.id != c.id) {
+							BOOST_FOREACH(Track& otrack, oc.wish_list) {
+								if(otrack == track) {								
+									oc.wish_list.remove(otrack_position);
+									tpp.number_of_occurrences += 1;
+									tpp.avg_wishlist_position += otrack_position;
+									tpp.total_zero_sum        += oc.zero_sum;
+									break;
+								}
+								otrack_position++;
+							}
+						}
+					}
+					if(tpp.number_of_occurrences > 1) {
+						tpp.avg_wishlist_position /= (float)tpp.number_of_occurrences;
+						shared_tracks.push_back(tpp);
+					}
+					else {
+						// NOTE: we are processing clients in order of increasing zero_sum
+						//       so the clients are ordered in that order in custom_tracks too.
+						custom_tracks[current_client].push_back(track);
+					}
+					track_position++;
+				}				
+				current_client++;
+			}
+			std::sort(shared_tracks.begin(), shared_tracks.end());
 
+			std::vector<Track> new_playlist;
+			BOOST_REVERSE_FOREACH(track_priority_properties& tpp, shared_tracks) {
+				new_playlist.push_back(tpp.track);
+			}
 			bool done = false;
+			unsigned int index = 0;
 			while (!done) {
 				done = true;
-				typedef std::pair<Client_ref, uint32> vt;
-				BOOST_FOREACH(vt& i, client_list) {
-					if (i.second < i.first->wish_list.size()) {
-						playlist.append(i.first->wish_list.get(i.second++));
+				BOOST_REVERSE_FOREACH(std::vector<Track>& v, custom_tracks) {
+					if(v.size() > index) {
 						done = false;
+						new_playlist.push_back(v[index]);
 					}
 				}
+				++index;
 			}
+
+			// Finally ensure that currenttrack is always on top
+			for(unsigned int i = 0; i < new_playlist.size(); ++i) {
+				if(new_playlist[i] == currenttrack) {
+					new_playlist.erase(new_playlist.begin() + i);
+					new_playlist.insert(new_playlist.begin(), currenttrack);
+				}
+			}
+
+			playlist.clear();
+			playlist.append(new_playlist);
 		}
 };
 
