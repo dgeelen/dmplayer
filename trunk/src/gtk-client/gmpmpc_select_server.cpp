@@ -124,6 +124,7 @@ void gmpmpc_select_server_window::remove_servers(const std::vector<server_info>&
 	}
 
 	restore_selected();
+	return;
 }
 
 bool gmpmpc_select_server_window::on_serverlist_double_click(GdkEventButton *event) {
