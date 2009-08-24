@@ -1,5 +1,6 @@
 #include "track_treeview.h"
 #include "../util/StrFormat.h"
+#include "../error-handling.h"
 #include <boost/bind.hpp>
 
 gmpmpc_track_treeview::gmpmpc_track_treeview() {
@@ -52,9 +53,23 @@ void gmpmpc_track_treeview::_add(const Track& t) {
 }
 
 void gmpmpc_track_treeview::_batch_add(const std::vector<Track> tracklist) {
-	BOOST_FOREACH(const Track& track, tracklist) { // FIXME: Optimize this (disconnect store, update, reconnect)
-		add(track);
+	// This is a trick to improve performance:
+	// We disconnect the treeview's data-store while we're
+	// updating the data in the store so that the tree will not
+	// try to keep up to date. This helps when adding a large number of
+	// rows to the store.
+	// FIXME: Test actual benefit over _add().
+	Glib::RefPtr<Gtk::TreeModel> _model = get_model();
+	Glib::RefPtr<Gtk::ListStore> _store = Glib::RefPtr<Gtk::ListStore>::cast_dynamic(_model);
+	set_model(Glib::RefPtr<Gtk::TreeModel>());
+	BOOST_FOREACH(Track t, tracklist) {
+		PlaylistVector::add(t);
+		Gtk::TreeModel::iterator i = _store->append();
+		(*i)[m_Columns.trackid]    = STRFORMAT("%08x:%08x", t.id.first, t.id.second);
+		(*i)[m_Columns.filename]   = (*t.metadata.find("FILENAME")).second;
+		(*i)[m_Columns.track]      = t;
 	}
+	set_model(_model); /* Re-attach model to view */
 }
 
 void gmpmpc_track_treeview::_remove(uint32 pos) {
