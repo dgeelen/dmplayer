@@ -14,6 +14,7 @@ middle_end::middle_end()
 	networkhandler.server_list_update_signal.connect(bind(&middle_end::handle_sig_server_list_update, this, _1));
 	networkhandler.client_message_receive_signal.connect(bind(&middle_end::handle_received_message, this, _1));
 	trackdb.add_directory("/home/dafox/sharedfolder/music/");
+	trackdb.add_directory("f:\\home\\dafox\\sharedfolder\\music\\");
 	networkhandler.start();
 }
 
@@ -277,15 +278,18 @@ void middle_end::handle_message_request_file(const message_request_file_ref requ
 }
 
 void middle_end::abort_file_transfer(LocalTrackID id) {
-	mutex::scoped_lock lock(file_requests_mutex);
+	mutex::scoped_lock fr_lock(file_requests_mutex);
+	mutex::scoped_lock t_lock(threads.lock());
 	for(vector<file_requests_type>::iterator i = file_requests.begin(); i != file_requests.end(); ++i) {
 		if((*i).second == id) {
 			*(*i).first.first = true;
-			BOOST_FOREACH(thread& t, threads) {
-				if(t.get_id() == (*i).first.second) {
-					lock.unlock();
-					t.interrupt();
-					t.join(); // Should not take long ...
+			for(int t = 0 ; t < threads.size(); ++t) {
+				shared_ptr<thread> pthread = threads[t];
+				if(pthread->get_id() == (*i).first.second) {
+					fr_lock.unlock();
+					t_lock.unlock();
+					pthread->interrupt();
+					pthread->join(); // Should not take long ...
 					break;
 				}
 			}
