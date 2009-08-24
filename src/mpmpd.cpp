@@ -93,19 +93,30 @@ class ServerDataSource : public IDataSource {
 		}
 
 		virtual uint32 getData(uint8* buffer, uint32 len) {
-			boost::mutex::scoped_lock lock(data_buffer_mutex);
 			size_t n = 0;
-			size_t avail = size_t(data_buffer.size() - position);
+			size_t avail;
+			{
+			boost::mutex::scoped_lock lock(data_buffer_mutex);
+			avail = size_t(data_buffer.size() - position);
 			if (!finished)
 				n = std::min(size_t(len), avail);
 			if (n>0)
 				memcpy(buffer, &data_buffer[position], n);
+			}
 			position += n;
 			avail    -= n;
 			if(avail==0) {
 				data_exhausted = true;
-				if(wait_for_data)
-					boost::thread::yield();
+				if(wait_for_data) {
+					//FIXME: Seems like a long time to sleep, but needed
+					//       otherwise the portaudio callback with PRIO_REALTIME
+					//       still takes over the system :-(
+					//std::cout << "Waiting for data... ZZZzzz" << std::endl;
+					boost::this_thread::sleep(boost::posix_time::seconds(1));
+					//std::cout << "Huh what?" << std::endl;
+					boost::this_thread::yield();
+					//std::cout << "meh" << std::endl;
+				}
 			}
 			return n;
 		}
