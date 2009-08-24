@@ -116,7 +116,7 @@ bool gmpmpc_trackdb_widget::search_entry_timeout_handler() {
 
 void gmpmpc_trackdb_widget::sig_search_tracks_handler(const SearchID id, const std::vector<Track>& tracklist) {
 	if(id == search_id) {
-		treeview.batch_add(tracklist);
+		treeview.append(tracklist);
 	}
 }
 

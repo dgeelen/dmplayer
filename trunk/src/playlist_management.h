@@ -99,30 +99,41 @@ class TrackDataBase {
 
 class IPlaylist {
 	public:
-		/// adds given track to the end of the playlist
-		virtual void add(const Track& track) = 0;
-
-		/// appends a list of tracks at once to the playlist
-		/// (can be used to increase performance incase add() is a slow operation)
-		virtual void batch_add(const std::vector<Track> tracklist) = 0;
-
-		/// removes track at given position from the playlist
-		virtual void remove(uint32 pos) = 0;
-
-		/// inserts given track at given position in the playlist
-		virtual void insert(uint32 pos, const Track& track) = 0;
-
-		/// moves track from a given position to another one
-		virtual void move(uint32 from, uint32 to) = 0;
-
 		/// clears all tracks from the playlist
 		virtual void clear() = 0;
 
-		/// returns the number of tracks in the playlist
-		virtual uint32 size() const = 0;
+		/// adds given track to the end of the playlist
+		virtual void append(const Track& track) = 0;
+
+		/// appends a list of tracks at once to the playlist
+		virtual void append(const std::vector<Track>& tracklist) = 0;
+
+		/// inserts given track at given position in the playlist
+		virtual void insert(const uint32 pos, const Track& track) = 0;
+
+		/// inserts given tracks at given position in the playlist
+		virtual void insert(const uint32 pos, const std::vector<Track>& track) = 0;
+
+		/// moves track from a given position to another one
+		virtual void move(const uint32 from, const uint32 to) = 0;
+
+		/// moves tracks from given positions to other positions
+		virtual void move(const std::vector<std::pair<uint32, uint32> >& from_to_list) = 0;
+
+		/// removes track at given position from the playlist
+		virtual void remove(const uint32 pos) = 0;
+
+		/// removes tracks at given positions from the playlist
+		virtual void remove(const std::vector<uint32>& poslist) = 0;
 
 		/// returns the track at the given position
-		virtual const Track& get(uint32 pos) const = 0;
+		virtual const Track& get(const uint32 pos) const = 0;
+
+		/// returns the tracks at the given positions
+		virtual const std::vector<Track> get(const std::vector<uint32>& positions) const = 0;
+
+		/// returns the number of tracks in the playlist
+		virtual uint32 size() const = 0;
 
 		/// here comes iterator magix
 		struct const_iterator {
@@ -172,25 +183,32 @@ class PlaylistVector : public IPlaylist {
 		iterator begin() { return iterator(data.begin()); }
 		iterator end() { return iterator(data.end()); }
 
-		virtual void add(const Track& track) {
+		virtual void clear() {
+			data.clear();
+		}
+
+		virtual void append(const Track& track) {
 			data.push_back(track);
 		}
 
-		virtual void batch_add(const std::vector<Track> tracklist) {
-			BOOST_FOREACH(const Track& track, tracklist) {
-				data.push_back(track);
-			}
+		virtual void append(const std::vector<Track>& tracklist) {
+			data.insert(data.end(), tracklist.begin(), tracklist.end());
+			////FIXME: Proper append to data
+			//BOOST_FOREACH(const Track& track, tracklist) {
+				//data.push_back(track);
+			//}
 		}
 
-		virtual void remove(uint32 pos) {
-			data.erase(data.begin()+pos);
-		}
-
-		virtual void insert(uint32 pos, const Track& track) {
+		virtual void insert(const uint32 pos, const Track& track) {
 			data.insert(data.begin()+pos, track);
 		}
 
-		virtual void move(uint32 from, uint32 to) {
+		virtual void insert(const uint32 pos, const std::vector<Track>& tracklist) {
+			assert(false); // FIXME: To be implemented.
+			//data.insert(data.begin()+pos, track);
+		}
+
+		virtual void move(const uint32 from, const uint32 to) {
 			Track t = get(from);
 			if (from <= to) {
 				insert(to, t);
@@ -201,16 +219,30 @@ class PlaylistVector : public IPlaylist {
 			}
 		}
 
-		virtual void clear() {
-			data.clear();
+		virtual void move(const std::vector<std::pair<uint32, uint32> >& to_from_list) {
+			assert(false); // FIXME: To be implemented.
+		}
+
+		virtual void remove(const uint32 pos) {
+			data.erase(data.begin()+pos);
+		}
+
+		virtual void remove(const std::vector<uint32>& poslist) {
+			assert(false); // FIXME: To be implemented.
+		}
+
+		virtual const Track& get(const uint32 pos) const {
+			return data[pos];
+		}
+
+		virtual const std::vector<Track> get(const std::vector<uint32>& poslist) const {
+			assert(false); // FIXME: To be implemented.
+			std::vector<Track> list;
+			return list;
 		}
 
 		virtual uint32 size() const {
 			return data.size();
-		}
-
-		virtual const Track& get(uint32 pos) const {
-			return data[pos];
 		}
 };
 

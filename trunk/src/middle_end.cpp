@@ -208,7 +208,7 @@ void middle_end::handle_msg_query_trackdb_query_result(const SearchID id, const 
 }
 
 void middle_end::mylist_append(Track track) {
-	client_synced_playlist.add(track);
+	client_synced_playlist.append(track);
 
 	filesystem::ofstream f;
 
