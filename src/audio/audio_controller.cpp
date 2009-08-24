@@ -117,7 +117,9 @@ void AudioController::set_data_source(const IDataSourceRef ds) {
 		}
 	}
 
+#ifndef DEBUG // Uses too much CPU to do any usefull debugging, so leave it disabled unless needed
 	newdecoder = IAudioSourceRef( new NormalizeFilter( newdecoder, backend->getAudioFormat()) );
+#endif
 
 	if(newdecoder->getAudioFormat() != backend->getAudioFormat())
 		newdecoder = IAudioSourceRef(new ReformatFilter(newdecoder, backend->getAudioFormat()));
