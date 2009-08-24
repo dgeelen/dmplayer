@@ -149,7 +149,13 @@ class Server {
 			add_datasource = true;
 			message_loop_running = true;
 			vote_min_penalty = false;
-			average_song_duration = 231; // Obtained by scanning personal music library (xxx files)
+			// The following constant was obtained by scanning my personal music library,
+			// counting only songs with a duration greater than 00:01:30 and less than
+			// 00:10:00. This yielded a total duration of 3 days, 14 hours, 14 minutes and 
+			// 2 seconds, or 310442 seconds, for a total of 1461 songs. Thus on average
+			// a song lasted 212.486~ seconds, or just over 3.5 minutes. For esthetic reasons
+			// I thus chose 210 (exactly 3.5 minutes) as a safe default.
+			average_song_duration = 210;
 			dcerr("Starting message_loop_thread");
 			boost::thread tt(makeErrorHandler(boost::bind(&Server::message_loop, this)));
 			message_loop_thread.swap(tt);
