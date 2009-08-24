@@ -10,6 +10,7 @@
 	#include "../network-handler.h"
 	#include "../playlist_management.h"
 	#include "../packet.h"
+	#include "../util/UPXFix.h"
 	#include <iostream>
 	#include <boost/shared_ptr.hpp>
 	#include <boost/signals.hpp>
