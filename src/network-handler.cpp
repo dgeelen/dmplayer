@@ -23,12 +23,17 @@ using namespace std;
 /** Begin class network_handler **/
 bool singleton = true;
 
-/*NOTE: Enabling the next line will make is possible to run
- *			more than one client per machine, making it trivially
- *			possible to spam the playlist, so be sure to leave
- *			this _OFF_ in any build not exclusively used by a dev!
- */
-//#define ALLOW_MULTIPLE_CLIENTS
+#ifdef DEBUG
+	/*NOTE: Enabling the next line will make it possible to run
+	 *			more than one client per machine, making it trivially
+	 *			possible to spam the playlist, so be sure to leave
+	 *			this _OFF_ in any build not exclusively used by a dev!
+	 */
+	#define ALLOW_MULTIPLE_CLIENTS
+#else
+	// Explicitly turn off ALLOW_MULTIPLE_CLIENTS
+	#undef ALLOW_MULTIPLE_CLIENTS
+#endif
 
 network_handler::network_handler(uint16 tcp_port_number, string server_name) {
 	this->server_name = server_name;
