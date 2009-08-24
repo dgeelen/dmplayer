@@ -3,6 +3,7 @@
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp> // FIXME: should this not be included by <boost/filesystem.hpp> ?
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 using namespace std;
 using namespace boost;
@@ -209,7 +210,7 @@ void middle_end::handle_msg_query_trackdb_query_result(const SearchID id, const 
 void middle_end::mylist_append(Track track) {
 	client_synced_playlist.add(track);
 
-	boost::filesystem::ofstream f;
+	filesystem::ofstream f;
 
 	//FIXME: If this is going to take a while (e.g. slow connection / lots of tracks)
 	//       then we should do this in a separate thread rather than force the client
@@ -234,17 +235,20 @@ void middle_end::handle_message_request_file(const message_request_file_ref requ
 	if(s.size() == 1) {
 		if(filesystem::exists(s[0].filename)) {
 			filesystem::ifstream f( s[0].filename, std::ios_base::in | std::ios_base::binary );
-			std::vector<uint8> data;
-			data.resize(1024*40); // 320bpbs
+
+			const int BYTES_TO_SEND(1024*8);
+			std::vector<uint8> data(BYTES_TO_SEND);
+			uint32 sleeptime = 0;
+			uint32 bytes_sent = 0;
 			while(!tl_done) {
-				f.read((char*)&data[0], 1024*40);
+				posix_time::ptime start_time(posix_time::microsec_clock::universal_time());
+				f.read((char*)&data[0], BYTES_TO_SEND);
 				uint32 read = f.gcount();
 				if(read) {
 					std::vector<uint8> vdata;
 					std::vector<uint8>::iterator from = data.begin();
 					std::vector<uint8>::iterator to = from + read;
 					vdata.insert(vdata.begin(), from, to);
-					//FIXME: it is impossible to detect if the server is still listening (or even alive)
 					message_request_file_result_ref msg(new message_request_file_result(vdata, request->id));
 					try {
 						networkhandler.send_server_message(msg);
@@ -252,8 +256,36 @@ void middle_end::handle_message_request_file(const message_request_file_ref requ
 					catch(Exception e) {
 						tl_done = true;
 					}
-					//FIXME: this does not take network latency into account (LAN APP!)
-					usleep(750000);
+
+					// Common WAV formats:
+					// 8KHz 8bit 1-channel        ~= 7.8125 kb/s
+					// 22.05KHz 16bit 2-channels  ~= 86.1328125 kb/s
+					// 44.1KHz 16bit 2-channels   ~= 172.265625 kb/s
+					// 48khz 16bit 2-channels     ~= 187.5 kb/s
+					// Uncommon WAV formats:
+					// 48kHz 24bit 2-channels     ~= 281.25 kb/s
+					// 48kHz 32bit 2-channels     ~= 375 kb/s
+					// 96kHz 32bit 2-channels     ~= 750 kb/s
+					//
+					// So choose 200kb/s as a target transfer speed.
+					// This is 200*8/320 = 5 times higher than the highest
+					// officially supported MP3 bitrate.
+					posix_time::ptime now(posix_time::microsec_clock::universal_time());
+					bytes_sent += read;
+					posix_time::time_duration time_elapsed = now - start_time;
+					if(bytes_sent > 1024 * 128) { // After 128k we start slowing down
+						double avg_rate = bytes_sent / double( time_elapsed.total_microseconds() );
+						posix_time::time_duration chunk_time = posix_time::microseconds(int64(0.5 + (avg_rate / double(BYTES_TO_SEND))));
+						posix_time::time_duration max_wait(posix_time::microseconds(int64(0.5 + (1000000.0 / ((200*1024) / double(BYTES_TO_SEND))))));
+						posix_time::time_duration sleep_time = max_wait - chunk_time;
+						if(sleep_time > posix_time::microseconds(0)) {
+							try {
+								this_thread::sleep(sleep_time);
+							}
+							catch(boost::thread_interrupted e) {}
+						}
+					}
+
 					{
 						mutex::scoped_lock lock(file_requests_mutex);
 						tl_done = *done;
