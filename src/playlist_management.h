@@ -149,6 +149,29 @@ class PlaylistVector : public IPlaylist {
 	private:
 		std::vector<Track> data;
 	public:
+		class iterator : public std::iterator<std::forward_iterator_tag, Track> {
+			public:
+				iterator() : _iterator() {};
+				iterator(std::vector<Track>::iterator& i) : _iterator(i) {};
+				bool operator==(const iterator& that) const {
+					return this->_iterator == that._iterator;
+				};
+				bool operator!=(const iterator& that) const {
+					return this->_iterator != that._iterator;
+				};
+				iterator operator++() {
+					this->_iterator++;
+					return *this;
+				}
+				Track& operator*() {
+					return *_iterator;
+				}
+			private:
+				std::vector<Track>::iterator _iterator;
+		};
+		iterator begin() { return iterator(data.begin()); }
+		iterator end() { return iterator(data.end()); }
+
 		virtual void add(const Track& track) {
 			data.push_back(track);
 		}
