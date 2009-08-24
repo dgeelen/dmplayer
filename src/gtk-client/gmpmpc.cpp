@@ -25,34 +25,14 @@ GtkMpmpClientWindow::GtkMpmpClientWindow(middle_end& _middleend)
 {
 	construct_gui();
 
-	guint8* data = new guint8[gmpmpc_icon_data.width * gmpmpc_icon_data.height * gmpmpc_icon_data.bytes_per_pixel];
-	GIMP_IMAGE_RUN_LENGTH_DECODE(data,
-	                             gmpmpc_icon_data.rle_pixel_data,
-	                             gmpmpc_icon_data.width * gmpmpc_icon_data.height,
-	                             gmpmpc_icon_data.bytes_per_pixel);
-
-	statusicon_pixbuf = Gdk::Pixbuf::create_from_data(data,
-	                                                  Gdk::COLORSPACE_RGB,
-	                                                  true,
-	                                                  8,
-	                                                  256,
-	                                                  256,
-	                                                  256*4
-	                                                  );
-	statusicon = Gtk::StatusIcon::create(statusicon_pixbuf);
-	statusicon->set_tooltip("gmpmpc\nA GTK+ Client for MPMP");
-	statusicon->set_visible(true);
-
 	statusicon->signal_activate().connect(
 		boost::bind(&GtkMpmpClientWindow::on_statusicon_activate, this));
+
 	statusicon->signal_popup_menu().connect(
 		sigc::mem_fun(*this, &GtkMpmpClientWindow::on_statusicon_popup_menu));
 
 	this->signal_delete_event().connect(
 		sigc::mem_fun(*this, &GtkMpmpClientWindow::on_delete_event));
-
-	set_icon(statusicon_pixbuf);
-	select_server_window.set_icon(statusicon_pixbuf);
 
 // 	connected_signals["enqueue_track_signal"] =
 // 		trackdb_widget->enqueue_track_signal.connect(
@@ -270,6 +250,35 @@ void GtkMpmpClientWindow::construct_gui() {
 	set_title("gmpmpc");
 	set_default_size(1024, 640);
 	set_position(Gtk::WIN_POS_CENTER);
+
+	guint8* data = new guint8[gmpmpc_icon_data.width * gmpmpc_icon_data.height * gmpmpc_icon_data.bytes_per_pixel];
+	GIMP_IMAGE_RUN_LENGTH_DECODE(data,
+	                             gmpmpc_icon_data.rle_pixel_data,
+	                             gmpmpc_icon_data.width * gmpmpc_icon_data.height,
+	                             gmpmpc_icon_data.bytes_per_pixel);
+
+	statusicon_pixbuf = Gdk::Pixbuf::create_from_data(data,
+	                                                  Gdk::COLORSPACE_RGB,
+	                                                  true,
+	                                                  8,
+	                                                  256,
+	                                                  256,
+	                                                  256*4
+	                                                  );
+	statusicon = Gtk::StatusIcon::create(statusicon_pixbuf);
+
+#ifdef WIN32
+	std::vector<Glib::RefPtr<Gdk::Pixbuf> > icon_list;
+	icon_list.push_back( statusicon_pixbuf->scale_simple(16, 16, Gdk::INTERP_HYPER) );
+	icon_list.push_back( statusicon_pixbuf->scale_simple(32, 32, Gdk::INTERP_HYPER) );
+	icon_list.push_back( statusicon_pixbuf                                          );
+	set_default_icon_list(icon_list);
+#else
+	set_default_icon(statusicon_pixbuf);
+#endif
+
+	statusicon->set_tooltip("gmpmpc\nA GTK+ Client for MPMP");
+	statusicon->set_visible(true);
 
 	/* Create actions */
 	m_refActionGroup = Gtk::ActionGroup::create();
