@@ -47,7 +47,10 @@ network_handler::network_handler(uint16 tcp_port_number) {
 void network_handler::init() {
 	are_we_done = false;
 	#ifdef DEBUG
+	{
+	boost::mutex::scoped_lock lock(next_client_id_mutex);
 	next_client_id = 0; //Intentionally not initialized
+	}
 	#endif
 	dcerr("network_handler(): Initializing...");
 	thread_send_packet_handler.reset();
@@ -129,7 +132,14 @@ void network_handler::client_tcp_connection(tcp_socket_ref sock) { // Initiates 
 }
 
 void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // One thread per client (Server)
-	ClientID cid(next_client_id++);
+	ClientID cid(-1);
+	{
+	boost::mutex::scoped_lock lock(next_client_id_mutex);
+	if((++next_client_id) == ClientID(-1)) {
+		next_client_id++;
+	}
+	cid = next_client_id;
+	}
 	bool active = true;
 	while(!are_we_done && active) {
 		uint32 sockstat = doselect(*sock, 1000, SELECT_READ|SELECT_ERROR);

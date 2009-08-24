@@ -97,6 +97,7 @@
 			/* Server connection with client */
 			void server_tcp_connection_handler(tcp_socket_ref sock);
 			void server_tcp_connection_listener();
+			boost::mutex next_client_id_mutex;
 			ClientID next_client_id;
 			std::map<ClientID, boost::shared_ptr<tcp_socket> > clients;
 			boost::mutex clients_mutex;
