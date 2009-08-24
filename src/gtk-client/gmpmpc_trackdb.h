@@ -25,8 +25,9 @@
 			boost::signal<void(Track&)>      enqueue_track_signal;
 			boost::signal<void(std::string)> status_message_signal;
 		private:
-// 			bool focus_add_to_wishlist_button();
-// 			bool on_treeview_clicked(GdkEventButton *event);
+ 			bool focus_add_to_wishlist_button();
+ 			bool on_treeview_clicked(GdkEventButton *event);
+			bool on_treeview_double_clicked(GdkEventButton *event);
 			void on_search_entry_changed();
 			void on_add_to_wishlist_button_clicked();
 			void on_drag_data_received_signal(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, const
