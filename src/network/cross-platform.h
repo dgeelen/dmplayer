@@ -1,5 +1,8 @@
 #ifndef NETWORK_CROSS_PLATFORM_H
 #define NETWORK_CROSS_PLATFORM_H
+//FIXME: Do we really need 2 cross-platform.h,
+//       the main cross-platform.h allready seems
+//       to define most of this stuff...
 
 // TODO: properly figure network stuff out (in conjunction with cmake)
 // ??: http://www.cmake.org/pipermail/cmake-commits/2007-March/001026.html
