@@ -15,7 +15,7 @@ IF(AUTODETECT_GTK_GUI)
 					MESSAGE(STATUS "NOTE: You will still need to manually set GTKMM24_INCLUDE_DIRS and")
 					MESSAGE(STATUS "GTHREAD_INCLUDE_DIRS, since pkg-config is broken on WIN32: it will A) generate")
 					MESSAGE(STATUS "CFLAGS only for gnu-tools; and B) can not handle path's with spaces in them")
-					MESSAGE(STATUS "(e.g. gtkmm's default installation path ``c:\progam files\gtkmm\'' will cause")
+					MESSAGE(STATUS "(e.g. gtkmm's default installation path ``c:\\progam files\\gtkmm\\'' will cause")
 					MESSAGE(STATUS "build failures due to bogus include directives like ``-IC:/Program'').")
 					MESSAGE(STATUS "If you are using MSVC there are some Property Sheets in gtkmm's ``MSVC''")
 					MESSAGE(STATUS "directory that you may find usefull.")
@@ -82,5 +82,11 @@ IF(ENABLE_GTK_GUI)
 #	                      mpmp_audio
 	                      mpmp_util
 	)
+
+	IF(WIN32)
+		TARGET_LINK_LIBRARIES(gmpmpc
+			ws2_32
+		)
+	ENDIF(WIN32)
 
 ENDIF(ENABLE_GTK_GUI)
