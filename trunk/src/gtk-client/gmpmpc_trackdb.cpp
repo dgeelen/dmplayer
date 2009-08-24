@@ -35,12 +35,13 @@ gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(middle_end& m)
 	listTargets.push_back( Gtk::TargetEntry("STRING"       , Gtk::TARGET_OTHER_APP, 1) );
 
 	treeview.drag_dest_set(listTargets); // Should use defaults, DEST_DEFAULT_ALL, Gdk::ACTION_COPY);
+	treeview.set_headers_clickable(true);
 
 	search_entry.signal_changed().connect(boost::bind(&gmpmpc_trackdb_widget::on_search_entry_changed, this));
 	add_to_wishlist_button.signal_clicked().connect(boost::bind(&gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked, this));
 	treeview.signal_drag_data_received().connect(sigc::mem_fun(*this, &gmpmpc_trackdb_widget::on_drag_data_received_signal));
-// 	treeview.add_events(Gdk::BUTTON_PRESS_MASK);
-// 	treeview.signal_button_press_event().connect(sigc::mem_fun(*this, &gmpmpc_trackdb_widget::on_treeview_clicked), false);
+ 	treeview.add_events(Gdk::BUTTON_PRESS_MASK);
+ 	treeview.signal_button_press_event().connect(sigc::mem_fun(*this, &gmpmpc_trackdb_widget::on_treeview_clicked), false);
 
 	sig_search_tracks_connection =
 		middleend.sig_search_tracks.connect(
@@ -67,15 +68,18 @@ void gmpmpc_trackdb_widget::set_clientid(ClientID id) {
 	update_treeview();
 }
 
-// bool gmpmpc_trackdb_widget::focus_add_to_wishlist_button() {
-// 	add_to_wishlist_button.grab_focus();
-// 	return false;
-// }
+bool gmpmpc_trackdb_widget::focus_add_to_wishlist_button() {
+	add_to_wishlist_button.grab_focus();
+	return false;
+}
 
-// bool gmpmpc_trackdb_widget::on_treeview_clicked(GdkEventButton *event) {
-// 	Glib::signal_idle().connect(sigc::mem_fun(*this, &gmpmpc_trackdb_widget::focus_add_to_wishlist_button));
-// 	return false;
-// }
+bool gmpmpc_trackdb_widget::on_treeview_clicked(GdkEventButton *event) {
+	if(event->type == Gdk::DOUBLE_BUTTON_PRESS) {
+		on_add_to_wishlist_button_clicked();
+	}
+ 	Glib::signal_idle().connect(sigc::mem_fun(*this, &gmpmpc_trackdb_widget::focus_add_to_wishlist_button));
+ 	return false;
+}
 
 void gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked() {
 	Glib::RefPtr<Gtk::TreeModel> model = treeview.get_model();
