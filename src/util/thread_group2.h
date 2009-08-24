@@ -58,24 +58,22 @@ class thread_group2 : private boost::noncopyable {
 		/**
 		 * Returns the number of threads currently in the threadpool.
 		 */
-		int size() const;
+		int size();
 
 		/**
 		 * Locks this instance of thread_group2. No new threads can start and
 		 * no existing threads can exit until the lock is released.
 		 * @return a boost::mutex::scoped_lock.
 		 */
-		boost::mutex::scoped_lock lock() {
-			return boost::mutex::scoped_lock(threads_mutex);
-		};
-		
+		boost::mutex::scoped_lock lock();
+
 		/**
 		 * Returns a reference to the i'th thread in the threadpool.
 		 * @param pos is a valid index ino the thread pool.
 		 * @note valid indices are <i>( i : 0 &leq; i < this->size() )</i>.
-		 * @return a a reference to a boost::thread object.
+		 * @return a boost::shared_ptr to a boost::thread object.
 		 */
-		boost::thread& operator[](int pos) const { return *threads[pos]; };
+		boost::shared_ptr<boost::thread> operator[](int pos) const { return threads[pos]; };
 
 		/**
 		 * This may not be possible because begin() and end() can not be
@@ -111,7 +109,8 @@ class thread_group2 : private boost::noncopyable {
 	private:
 		//bool done;
 		boost::mutex thread_creation_mutex;
-		boost::mutex threads_mutex;
+		boost::mutex thread_exit_mutex;
+		boost::mutex public_lock_mutex;
 		std::vector<boost::shared_ptr<boost::thread> > threads;
 // 		boost::shared_ptr<boost::thread> thread_manager_thread;
 // 		boost::condition thread_manager_condition;
