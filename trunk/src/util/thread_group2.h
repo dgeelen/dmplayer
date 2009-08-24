@@ -30,7 +30,7 @@ class thread_group2 : private boost::noncopyable {
 		 * this thread_group2.
 		 * @return a pointer to the newly created thread.
 		 */
-		boost::thread* create_thread(const boost::function0<void>& threadfunc);
+		boost::shared_ptr<boost::thread> create_thread(const boost::function0<void>& threadfunc);
 
 		/**
 		 * Add an existing thread to the threadpool managed by this thread_group2.
