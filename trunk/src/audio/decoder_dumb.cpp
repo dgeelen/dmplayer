@@ -1,18 +1,26 @@
 #include "decoder_dumb.h"
 
+#include <boost/pointer_cast.hpp>
 #include "../error-handling.h"
 #define BUFSIZE 8192
 
+/**
+ * FIXME: Uplink/Pink Noise.xm (and possibly others) has a long period of
+ *        silence at the end. It is at this time unknown if this is intended
+ *        or not. The official dumb2wav tool supplied with libdumb also
+ *        has this period of silence, foo_dumb however does not.
+ */
+
 int DUMBDecoder::DUMBFS_skip(void* f, long n) {
-	return static_cast<DUMBDecoder*>(f)->DUMBFS_skip(n);
+	return boost::static_pointer_cast<DUMBDecoder>(f)->DUMBFS_skip(n);
 }
 
 int DUMBDecoder::DUMBFS_getc(void* f) {
-	return static_cast<DUMBDecoder*>(f)->DUMBFS_getc();
+	return boost::static_pointer_cast<DUMBDecoder>(f)->DUMBFS_getc();
 }
 
 long DUMBDecoder::DUMBFS_getnc(char* ptr, long n, void* f) {
-	return static_cast<DUMBDecoder*>(f)->DUMBFS_getnc(ptr, n);
+	return boost::static_pointer_cast<DUMBDecoder>(f)->DUMBFS_getnc(ptr, n);
 }
 
 int DUMBDecoder::DUMBFS_skip(long n) {
@@ -101,6 +109,7 @@ DUMBDecoder::DUMBDecoder(IDataSourceRef ds_, DUMB_TYPE filetype)
 	}
 
 	if(!duh) {
+		dumb_exit();
 		throw Exception("Error while intializing DUH");
 	}
 
@@ -113,10 +122,13 @@ DUMBDecoder::DUMBDecoder(IDataSourceRef ds_, DUMB_TYPE filetype)
 
 	duh_sigrenderer = duh_start_sigrenderer(duh, 0, audioformat.Channels, 0);
 	if(!duh_sigrenderer) {
+		unload_duh(duh);
+		dumb_exit();
 		throw Exception("Error initializing DUH Renderer");
 	}
 
 	dumb_it_set_loop_callback(duh_get_it_sigrenderer(duh_sigrenderer), &DUMBDecoder::loop_callback, this);
+	dumb_it_set_xm_speed_zero_callback(duh_get_it_sigrenderer(duh_sigrenderer), &dumb_it_callback_terminate, NULL);
 	n_loops = 0;
 	duration = 0;
 	is_exhausted = false;
@@ -124,6 +136,7 @@ DUMBDecoder::DUMBDecoder(IDataSourceRef ds_, DUMB_TYPE filetype)
 
 DUMBDecoder::~DUMBDecoder() {
 	duh_end_sigrenderer(duh_sigrenderer);
+	unload_duh(duh);
 	dumb_exit();
 }
 
@@ -205,7 +218,7 @@ int DUMBDecoder::loop_callback() {
 	dcerr("Loop! count="<<n_loops);
 	long pos = duh_sigrenderer_get_position(duh_sigrenderer);
 	if(!duration) duration = pos;
-	if(pos + duration <= 65536 * (3*60 + 20) + (duration >> 3)) // FIXME: (duration >> 3): Is this what we want?
+	if(pos + duration <= 65536 * (3*60 + 30) + (duration >> 3)) // FIXME: (duration >> 3): Is this what we want?
 		return 0;
 	else
 		return -1;
@@ -216,8 +229,8 @@ bool DUMBDecoder::exhausted() {
 }
 
 uint32 DUMBDecoder::getData(unsigned char* buf, unsigned long len) {
-	uint32 bytes_per_frame = audioformat.Channels * sizeof(int16);
-	uint32 nframes         = len / bytes_per_frame;
+	long bytes_per_frame = audioformat.Channels * sizeof(int16);
+	long nframes         = len / bytes_per_frame;
 	float delta = 65536.0f / (float)audioformat.SampleRate;
 	long result = duh_render(duh_sigrenderer, audioformat.BitsPerSample, !audioformat.SignedSample, 1.0f, delta, nframes, buf);
 	is_exhausted = (result != nframes);
