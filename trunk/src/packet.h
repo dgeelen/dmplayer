@@ -241,50 +241,75 @@ class message_playlist_update : public message {
 			UPDATE_REMOVE_MANY,
 		};
 	public:
-		message_playlist_update() : message(MSG_PLAYLIST_UPDATE) {
-			utype = UPDATE_CLEAR;
-			_index  = 0xFFFFFFFF;
-			_index2 = 0xFFFFFFFF;
-		};
-		message_playlist_update(const IPlaylist& playlist) : message(MSG_PLAYLIST_UPDATE) {
+		message_playlist_update()
+		: message(MSG_PLAYLIST_UPDATE)
+		, utype(UPDATE_CLEAR)
+		, _index(0xFFFFFFFF)
+		, _index2(0xFFFFFFFF)
+		{};
+		message_playlist_update(const IPlaylist& playlist)
+		: message(MSG_PLAYLIST_UPDATE)
+		, utype(UPDATE_CLEAR)
+		, _index(0xFFFFFFFF)
+		, _index2(0xFFFFFFFF)
+		{
 			BOOST_FOREACH(const Track& track, playlist)
 				_track_list.push_back(track);
 		};
-		message_playlist_update(Track track) : message(MSG_PLAYLIST_UPDATE) {
-			utype = UPDATE_APPEND_ONE;
-			_track = track;
-		};
-		message_playlist_update(std::vector<Track> tracklist) : message(MSG_PLAYLIST_UPDATE) {
-			utype = UPDATE_APPEND_MANY;
-			_track_list = tracklist;
-		};
-		message_playlist_update(Track track, uint32 pos) : message(MSG_PLAYLIST_UPDATE) {
-			utype = UPDATE_INSERT_ONE;
-			_track = track;
-			_index = pos;
-		};
-		message_playlist_update(std::vector<Track> tracklist, uint32 pos) : message(MSG_PLAYLIST_UPDATE) {
-			utype = UPDATE_INSERT_MANY;
-			_track_list = tracklist;
-			_index = pos;
-		};
-		message_playlist_update(uint32 from, uint32 to) : message(MSG_PLAYLIST_UPDATE) {
-			utype = UPDATE_MOVE_ONE;
-			_index = from;
-			_index2 = to;
-		};
-		message_playlist_update(std::vector<std::pair<uint32, uint32> > from_to_list) : message(MSG_PLAYLIST_UPDATE) {
-			utype = UPDATE_MOVE_MANY;
-			_index_pair_list = from_to_list;
-		};
-		message_playlist_update(uint32 which) {
-			utype = UPDATE_REMOVE_ONE;
-			_index = which;
-		}
-		message_playlist_update(std::vector<uint32> which_list) {
-			utype = UPDATE_REMOVE_MANY;
-			_index_list = which_list;
-		}
+		message_playlist_update(Track track)
+		: message(MSG_PLAYLIST_UPDATE)
+		, utype(UPDATE_APPEND_ONE)
+		, _index(0xFFFFFFFF)
+		, _index2(0xFFFFFFFF)
+		, _track(track)
+		{};
+		message_playlist_update(std::vector<Track> tracklist)
+		: message(MSG_PLAYLIST_UPDATE)
+		, utype(UPDATE_APPEND_MANY)
+		, _index(0xFFFFFFFF)
+		, _index2(0xFFFFFFFF)
+		, _track_list(tracklist)
+		{};
+		message_playlist_update(Track track, uint32 pos)
+		: message(MSG_PLAYLIST_UPDATE)
+		, utype(UPDATE_INSERT_ONE)
+		, _index(pos)
+		, _index2(0xFFFFFFFF)
+		, _track(track)
+		{};
+		message_playlist_update(std::vector<Track> tracklist, uint32 pos)
+		: message(MSG_PLAYLIST_UPDATE)
+		, utype(UPDATE_INSERT_MANY)
+		, _index(pos)
+		, _index2(0xFFFFFFFF)
+		, _track_list(tracklist)
+		{};
+		message_playlist_update(uint32 from, uint32 to)
+		: message(MSG_PLAYLIST_UPDATE)
+		, utype(UPDATE_MOVE_ONE)
+		, _index(from)
+		, _index2(to)
+		{};
+		message_playlist_update(std::vector<std::pair<uint32, uint32> > from_to_list)
+		: message(MSG_PLAYLIST_UPDATE)
+		, utype(UPDATE_MOVE_MANY)
+		, _index(0xFFFFFFFF)
+		, _index2(0xFFFFFFFF)
+		, _index_pair_list(from_to_list)
+		{};
+		message_playlist_update(uint32 which)
+		: message(MSG_PLAYLIST_UPDATE)
+		, utype(UPDATE_REMOVE_ONE)
+		, _index(which)
+		, _index2(0xFFFFFFFF)
+		{}
+		message_playlist_update(std::vector<uint32> which_list)
+		: message(MSG_PLAYLIST_UPDATE)
+		, utype(UPDATE_REMOVE_MANY)
+		, _index(0xFFFFFFFF)
+		, _index2(0xFFFFFFFF)
+		, _index_list(which_list)
+		{}
 
 		update_type get_type() {
 			return utype;
