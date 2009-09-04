@@ -519,6 +519,8 @@ class Server {
 		double average_song_duration;
 
 		struct track_priority_properties {
+			// FIXME: Is it correct to take number_of_occurrences into account, or should we rely on zero_sum only?
+			//       What if everybody wants to hear a song (eg zero_sum == 0)
 			int    number_of_occurrences; // How many people have this track in their wishlist
 			float  avg_wishlist_position; // What is the average index of this track in the wishlist's of those people
 			double total_zero_sum;        // What is the total zero_sum of those people
