@@ -394,11 +394,13 @@ class Server {
 						//dcerr("Received a MSG_PLAYLIST_UPDATE from " << STRFORMAT("%08x", id));
 						message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
 						PlaylistVector& pl = ((*cmi)->wish_list);
-						if((pl.size() < 100)
-							|| (msg->get_type()!=message_playlist_update::UPDATE_APPEND_ONE)
-							|| (msg->get_type()!=message_playlist_update::UPDATE_APPEND_MANY)
-							|| (msg->get_type()!=message_playlist_update::UPDATE_INSERT_ONE)
-							|| (msg->get_type()!=message_playlist_update::UPDATE_INSERT_MANY)) {
+						if((pl.size() < 100) ||
+							(    (msg->get_type()!=message_playlist_update::UPDATE_APPEND_ONE)
+							  && (msg->get_type()!=message_playlist_update::UPDATE_APPEND_MANY)
+							  && (msg->get_type()!=message_playlist_update::UPDATE_INSERT_ONE)
+							  && (msg->get_type()!=message_playlist_update::UPDATE_INSERT_MANY))
+							)
+						{
 							msg->apply(pl);
 							recalculateplaylist = true;
 						}
