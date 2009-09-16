@@ -90,46 +90,48 @@ uint32 AudioController::getData(uint8* buf, uint32 len)
 }
 
 void AudioController::set_data_source(const IDataSourceRef ds) {
-	IAudioSourceRef newdecoder = IDecoder::findDecoder(ds);
-	if (!newdecoder) {
-		try {
-			ds->reset();
-			vector<uint8> svec;
-			svec.resize(4096);
-			int read = ds->getData(&svec[0], 4096);
-			string s;
-			s.resize(read);
-			for(int i = 0; i<read; ++i) {
-				s[i] = svec[i];
+	IAudioSourceRef newdecoder;
+	if(ds) {
+		newdecoder = IDecoder::findDecoder(ds);
+		if (!newdecoder) {
+			try {
+				ds->reset();
+				vector<uint8> svec;
+				svec.resize(4096);
+				int read = ds->getData(&svec[0], 4096);
+				string s;
+				s.resize(read);
+				for(int i = 0; i<read; ++i) {
+					s[i] = svec[i];
+				}
+				IDataSourceRef httpdatasource = IDataSourceRef(new HTTPStreamDataSource(s));
+				newdecoder = IDecoder::findDecoder(httpdatasource);
 			}
-			IDataSourceRef httpdatasource = IDataSourceRef(new HTTPStreamDataSource(s));
-			newdecoder = IDecoder::findDecoder(httpdatasource);
+			catch (Exception& e) {
+				VAR_UNUSED(e); // in debug mode
+				dcerr("Error message: " << e.what());
+				ds->reset();
+			}
+			if(!newdecoder) {
+				dcerr("Cannot find decoder!");
+				playback_finished(0); //FIXME: Low resolution!
+				return;
+			}
 		}
-		catch (Exception& e) {
-			VAR_UNUSED(e); // in debug mode
-			dcerr("Error message: " << e.what());
-			ds->reset();
-		}
-		if(!newdecoder) {
-			dcerr("Cannot find decoder!");
-			playback_finished(0); //FIXME: Low resolution!
-			return;
-		}
+
+		#ifndef DEBUG // Uses too much CPU to do any usefull debugging, so leave it disabled unless needed
+		newdecoder = IAudioSourceRef( new NormalizeFilter( newdecoder, backend->getAudioFormat()) );
+		#endif
+
+		if(newdecoder->getAudioFormat() != backend->getAudioFormat())
+			newdecoder = IAudioSourceRef(new ReformatFilter(newdecoder, backend->getAudioFormat()));
+		if(!newdecoder) dcerr("All decoders failed!");
 	}
-
-#ifndef DEBUG // Uses too much CPU to do any usefull debugging, so leave it disabled unless needed
-	newdecoder = IAudioSourceRef( new NormalizeFilter( newdecoder, backend->getAudioFormat()) );
-#endif
-
-	if(newdecoder->getAudioFormat() != backend->getAudioFormat())
-		newdecoder = IAudioSourceRef(new ReformatFilter(newdecoder, backend->getAudioFormat()));
-	if(!newdecoder) dcerr("All decoders failed!");
 
 	{
 		boost::mutex::scoped_lock lock(update_decoder_mutex);
 		update_decoder_flag = true;
 		update_decoder_source = newdecoder;
-		newdecoder.reset();
 	}
 }
 
