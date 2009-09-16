@@ -75,6 +75,7 @@ WAVWriterBackend::~WAVWriterBackend() {
 	done = true;
 	if(outputter_thread) {
 		outputter_thread->join();
+		delete outputter_thread;
 		outputter_thread = NULL;
 	}
 	delete outputter_thread;
