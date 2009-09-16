@@ -8,13 +8,15 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/identity.hpp>
 #include <boost/multi_index/member.hpp>
+#include <boost/thread/condition.hpp>
+#include <boost/thread/barrier.hpp>
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 #include "audio/audio_controller.h"
 #include "playlist_management.h"
 #include "boost/filesystem.hpp"
 #include "playlist_management.h"
-#include <boost/thread/recursive_mutex.hpp>
+#include <boost/thread/mutex.hpp>
 #include "synced_playlist.h"
 #include "util/StrFormat.h"
 #include "util/UPXFix.h"
@@ -42,10 +44,9 @@ class Client {
 };
 typedef boost::shared_ptr<Client> Client_ref;
 
-class Server;
 class ServerDataSource : public IDataSource {
 	public:
-		ServerDataSource(Server& _server) : server(_server) {
+		ServerDataSource() {
 			position = 0;
 			data_exhausted = false;
 			wait_for_data = true;
@@ -116,7 +117,6 @@ class ServerDataSource : public IDataSource {
 
 	private:
 		boost::mutex data_buffer_mutex;
-		Server& server;
 		std::vector<uint8> data_buffer;
 		bool data_exhausted;
 		bool wait_for_data;
@@ -128,11 +128,13 @@ class Server {
 	public:
 		Server(int listen_port, string server_name)
 			: networkhandler(listen_port, server_name)
-			, message_loop_connection(networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2)))
+			, server_message_receive_signal_connection(networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2)))
+			, data_source_renewed_barrier(2)
+			, server_thread_start_barrier(2)
 		{
-			server_datasource = boost::shared_ptr<ServerDataSource>((ServerDataSource*)NULL);
-			add_datasource = true;
-			message_loop_running = true;
+			//server_datasource = boost::shared_ptr<ServerDataSource>((ServerDataSource*)NULL);
+			//add_datasource = false;
+			playlist_sync_loop_running = true;
 			vote_min_penalty = false;
 			// The following constant was obtained by scanning my personal music library,
 			// counting only songs with a duration greater than 00:01:30 and less than
@@ -141,30 +143,43 @@ class Server {
 			// a song lasted 212.486~ seconds, or just over 3.5 minutes. For esthetic reasons
 			// I thus chose 210 (exactly 3.5 minutes) as a safe default.
 			average_song_duration = 210;
-			dcerr("Starting message_loop_thread");
-			boost::thread tt(makeErrorHandler(boost::bind(&Server::message_loop, this)));
-			message_loop_thread.swap(tt);
 			ac.playback_finished.connect(boost::bind(&Server::next_song, this, _1));
-			ac.start_playback();
 			#ifdef DEBUG
 				next_query_id = 0; // Intentionally not initialized.
 			#endif
+			//ac.start_playback();
+			dcerr("Starting playlist_sync_loop_thread");
+			boost::thread t1(makeErrorHandler(boost::bind(&Server::playlist_sync_loop, this)));
+			playlist_sync_loop_thread.swap(t1);
+			dcerr("Starting network_handler");
 			networkhandler.start();
-			dcerr("Started network_handler");
+			dcerr("Server initialized");
+			server_thread_start_barrier.wait(); // FIXME: perhaps do this on_exit()?
 		}
 
 		~Server() {
 			dcerr("shutting down");
-			message_loop_running = false;
 			dcerr("stopping networkhandler");
 			networkhandler.send_message_allclients(messageref(new message_disconnect("Server is shutting down.")));
 			networkhandler.stop();
-			dcerr("Joining message_loop_thread");
-			message_loop_connection.disconnect();
-			message_loop_thread.join();
-			dcerr("shut down");
-			ac.stop_playback();
+			dcerr("Joining playlist_sync_loop_thread");
+			server_message_receive_signal_connection.disconnect();
+			playlist_sync_loop_running = false;
+			playlist_sync_loop_thread.join();
+			dcerr("Stopping playback");
 			ac.playback_finished.disconnect(boost::bind(&Server::next_song, this, _1));
+			ac.stop_playback();
+			dcerr("Joining add_datasource_thread");
+			{
+				boost::mutex::scoped_lock add_datasource_thread_lock(add_datasource_thread_mutex);
+				boost::mutex::scoped_lock server_datasource_lock(server_datasource_mutex);
+				if(server_datasource) {
+					server_datasource->set_wait_for_data(false);
+					server_datasource->stop();
+				}
+				add_datasource_thread.join();
+			}
+			dcerr("shut down");
 		}
 
 		void next_song(uint64 playtime_secs) {
@@ -173,17 +188,31 @@ class Server {
 				cout << "issueing a penalty of " << uint32(average_song_duration) << " seconds" << endl;
 				playtime_secs += uint32(average_song_duration);
 			}
+
 			if(!vote_min_penalty) { // Update rolling average of last 16 songs
 				average_song_duration = (average_song_duration * 15.0 + double(playtime_secs)) / 16.0;
 				cout << "average song duration now at " << uint32(average_song_duration) << " seconds" << endl;
 			}
 			vote_min_penalty = false;
 
+			{
+				boost::mutex::scoped_lock current_track_lock(current_track_mutex);
+				boost::mutex::scoped_lock vote_min_list_lock(vote_min_list_mutex);
+				vote_min_list.erase(current_track.id);
+			}
+
+			update_zero_sum(playtime_secs);
+			recalculateplaylist();
+			cue_next_track();
+		}
+
+		void update_zero_sum(uint64 playtime_secs) {
+			boost::mutex::scoped_lock clients_lock(clients_mutex);
+			boost::mutex::scoped_lock current_track_lock(current_track_mutex);
+
 			vector<ClientID> has_song;
 			vector<ClientID> does_not_have_song;
-
-			boost::recursive_mutex::scoped_lock lock(clients_mutex);
-			Track t = currenttrack;
+			Track t = current_track;
 			BOOST_FOREACH(Client_ref c, clients) {
 				uint32 pos = 0;
 				for (;pos < c->wish_list.size(); ++pos)
@@ -213,85 +242,69 @@ class Server {
 				(*clients.find(id))->zero_sum += avg_plus;
 				cout << "(plus) for " << STRFORMAT("%08x", id) << ": " << old << " -> " << (*clients.find(id))->zero_sum << endl;
 			}
-
-			lock.unlock();
-			recalculateplaylist();
-			lock.lock();
-			{
-				boost::mutex::scoped_lock lock(vote_min_list_mutex);
-				vote_min_list.erase(currenttrack.id);
-			}
-			add_datasource = true;
 		}
 
-		void message_loop() {
-			while(message_loop_running) {
+		void playlist_sync_loop() {
+			server_thread_start_barrier.wait();
+			while(playlist_sync_loop_running) {
 				messageref m;
-				{
-					boost::recursive_mutex::scoped_lock lock(playlist_mutex);
+				do {
+					boost::mutex::scoped_lock lock(playlist_mutex);
 					m = playlist.pop_msg();
-				}
-				if(m) {
-					networkhandler.send_message_allclients(m);
-				}
-				else { // meh
-					{
-						boost::recursive_mutex::scoped_lock lock(playlist_mutex);
-						if(add_datasource && (playlist.size()!=0)) {
-							currenttrack = playlist.get(0);
-							lock.unlock();
-							message_request_file_ref msg(new message_request_file(currenttrack.id));
-							server_datasource = boost::shared_ptr<ServerDataSource>(new ServerDataSource(*this));
-							dcerr("requesting " << STRFORMAT("%08x:%08x", currenttrack.id.first, currenttrack.id.second));
-							add_datasource = false;
-							networkhandler.send_message(currenttrack.id.first, msg);
-							/* FIXME: Possible DoS exploit:
-							 * enqueue a file, then when asked for data never provide it.
-							 * Will halt communication with server indefinitely
-							 */
-							ac.set_data_source(server_datasource);
-							ac.start_playback();
-						}
-					}
-					{
-						boost::recursive_mutex::scoped_lock lock(clients_mutex);
-						std::set<ClientID> votes;
-						{
-							boost::mutex::scoped_lock lock(vote_min_list_mutex);
-							votes = vote_min_list[currenttrack.id];
-						}
-						if(server_datasource && votes.size() > 0 && (votes.size()*2) > clients.size()) {
-							/* Notify sender to stop sending */ //FIXME: Does not seem to be honoured by gmpmpc?
-							vector<uint8> empty;
-							message_request_file_result_ref msg(new message_request_file_result(empty, currenttrack.id));
-							networkhandler.send_message(currenttrack.id.first, msg);
-
-							/* Current song will incur a penalty */
-							vote_min_penalty = true;
-
-							/* Cue next song */
-							ac.stop_playback();
-
-							/* Don't spam sender */
-							{
-							boost::mutex::scoped_lock lock(vote_min_list_mutex);
-							vote_min_list.erase(currenttrack.id);
-							}
-						}
-					}
-					usleep(100*1000);
-				}
+					if(m)
+						networkhandler.send_message_allclients(m);						
+				} while(m);
+				usleep(100*1000);
 			}
+		}
+
+		boost::barrier data_source_renewed_barrier;
+		void cue_next_track() {
+			boost::mutex::scoped_lock lock(add_datasource_thread_mutex);
+			if(add_datasource_thread.get_id() != boost::this_thread::get_id())
+				add_datasource_thread.join();
+			boost::thread t(boost::bind(&Server::add_datasource, this));
+			add_datasource_thread.swap(t);
+			data_source_renewed_barrier.wait();
+		}
+
+		void add_datasource() {
+			// Starting playback of a new song is done in a separate thread since 
+			// set_data_source() may take a while.
+			// FIXME: "a while" == potentially forever, in which case no new song
+			//        can be started. ever.
+			boost::shared_ptr<ServerDataSource> ds;
+			{
+				boost::mutex::scoped_lock playlist_lock(playlist_mutex);
+				boost::mutex::scoped_lock server_datasource_lock(server_datasource_mutex);
+				if(playlist.size() != 0) {
+					server_datasource = boost::shared_ptr<ServerDataSource>(new ServerDataSource());
+					current_track = playlist.get(0);
+					message_request_file_ref msg(new message_request_file(current_track.id));
+					dcerr("requesting " << STRFORMAT("%08x:%08x", current_track.id.first, current_track.id.second));
+					networkhandler.send_message(current_track.id.first, msg);
+				}
+				else {
+					current_track = Track();
+					server_datasource.reset();
+				}
+				ds = server_datasource;
+			}
+			data_source_renewed_barrier.wait();
+			ac.set_data_source(ds);
+			ac.start_playback(); // FIXME: do this here?
 		}
 
 		void remove_client(ClientID id) {
-			boost::recursive_mutex::scoped_lock clock(clients_mutex);
-			boost::recursive_mutex::scoped_lock pllock(playlist_mutex);
+			boost::mutex::scoped_lock clock(clients_mutex);
 			dcerr("Removing client " << STRFORMAT("%08x", id));
 			if (clients.find(id) == clients.end())
 				return;
-			if(currenttrack.id.first == id && server_datasource) { // Client which is serving current file disconnected!
-				server_datasource->set_wait_for_data(false);
+			{
+				boost::mutex::scoped_lock lock(server_datasource_mutex);
+				if(current_track.id.first == id && server_datasource) { // Client which is serving current file disconnected!
+					server_datasource->set_wait_for_data(false);
+				}
 			}
 
 			{
@@ -340,7 +353,7 @@ class Server {
 			BOOST_FOREACH(Client_ref c, clients) {
 				if(cr->id != c->id) {
 					for(uint32 i = 0 ; i < c->wish_list.size(); ++i) {
-						if(c->wish_list.get(i).id == currenttrack.id) {
+						if(c->wish_list.get(i).id == current_track.id) {
 							has_listeners = true;
 							break;
 						}
@@ -353,11 +366,6 @@ class Server {
 					}
 				}
 			}
-			if(!has_listeners) {
-				// Cue next song, also calls next_song which is important since
-				// if has_song becomes empty zero_sum is compromised.
-				ac.stop_playback();
-			}
 
 			double total = cr->zero_sum;
 			dcerr("This clients zero_sum was:" << total << '\n');
@@ -367,20 +375,33 @@ class Server {
 				i->zero_sum += total/clients.size();
 				dcerr("(dc)  for " << STRFORMAT("%08x", i->id) << ": " << old << " -> " << i->zero_sum << '\n');
 			}
+
+			clock.unlock(); // make sure we don't hold any locks when we start calling other functions
+
+			if(!has_listeners) {
+				// Cue next song, also calls next_song which is important since
+				// if has_song becomes empty zero_sum is compromised.
+				ac.stop_playback();
+			}
 			recalculateplaylist();
 		}
 
 		void handle_received_message(const messageref m, ClientID id) {
 			bool recalculateplaylist = false;
+			bool is_known_client = false;
 			{
-			boost::recursive_mutex::scoped_lock lock_clients(clients_mutex);
-			boost::recursive_mutex::scoped_lock lock_playlist(playlist_mutex);
-			ClientMap::iterator cmi = clients.find(id);                              // Ensure that we know this client,
-			if((m->get_type() ==  message::MSG_CONNECT) || (cmi != clients.end())) { // unless it is a genuine request.
+				boost::mutex::scoped_lock lock_clients(clients_mutex);
+				is_known_client = (clients.find(id) != clients.end());  // Ensure that we know this client,
+			}
+			if((m->get_type() ==  message::MSG_CONNECT) || is_known_client) { // unless it is a genuine request.
 				switch(m->get_type()) {
 					case message::MSG_CONNECT: {
 						dcerr("Received a MSG_CONNECT from " << STRFORMAT("%08x", id));
-						clients.insert(Client_ref(new Client(id)));
+						{
+							boost::mutex::scoped_lock lock_clients(clients_mutex);
+							clients.insert(Client_ref(new Client(id)));
+						}
+						boost::mutex::scoped_lock lock_playlist(playlist_mutex);
 						networkhandler.send_message(id, messageref(new message_playlist_update(playlist)));
 					} break;
 					case message::MSG_ACCEPT: {
@@ -393,7 +414,8 @@ class Server {
 					case message::MSG_PLAYLIST_UPDATE: {
 						//dcerr("Received a MSG_PLAYLIST_UPDATE from " << STRFORMAT("%08x", id));
 						message_playlist_update_ref msg = boost::static_pointer_cast<message_playlist_update>(m);
-						PlaylistVector& pl = ((*cmi)->wish_list);
+						boost::mutex::scoped_lock lock_clients(clients_mutex);
+						PlaylistVector& pl = ((*clients.find(id))->wish_list);
 						if((pl.size() < 100) ||
 							(    (msg->get_type()!=message_playlist_update::UPDATE_APPEND_ONE)
 							  && (msg->get_type()!=message_playlist_update::UPDATE_APPEND_MANY)
@@ -451,20 +473,66 @@ class Server {
 					case message::MSG_REQUEST_FILE_RESULT: {
 						//dcerr("Received a MSG_REQUEST_FILE_RESULT from " << STRFORMAT("%08x", id));
 						message_request_file_result_ref msg = boost::static_pointer_cast<message_request_file_result>(m);
-						if(currenttrack.id != msg->id) break;
+						if(current_track.id != msg->id) break;
 						if(msg->data.size()) {
-							server_datasource->appendData(msg->data);
+							boost::mutex::scoped_lock lock(server_datasource_mutex);
+							if(server_datasource)
+								server_datasource->appendData(msg->data);
 						}
 						else { // This was the last message, we have received the full file.
-							server_datasource->set_wait_for_data(false);
+							boost::mutex::scoped_lock lock(server_datasource_mutex);
+							if(server_datasource)
+								server_datasource->set_wait_for_data(false);
 						}
 					}; break;
 					case message::MSG_VOTE: {
 						dcerr("Received a MSG_VOTE from " << STRFORMAT("%08x", id));
 						message_vote_ref msg = boost::static_pointer_cast<message_vote>(m);
 						if(msg->is_min_vote) {
-							boost::mutex::scoped_lock lock(vote_min_list_mutex);
+							boost::mutex::scoped_lock clients_lock(clients_mutex);
+							boost::mutex::scoped_lock vote_min_list_lock(vote_min_list_mutex);
 							vote_min_list[msg->id].insert(id);
+							if((current_track.id==msg->id) && (vote_min_list[msg->id].size()*2) > clients.size()) {
+								boost::mutex::scoped_lock server_datasource_lock(server_datasource_mutex);
+								if(server_datasource) {
+									/* Notify sender to stop sending */
+									vector<uint8> empty;
+									message_request_file_result_ref msg(new message_request_file_result(empty, current_track.id));
+									networkhandler.send_message(current_track.id.first, msg);
+									vote_min_list.erase(current_track.id); // Don't spam sender
+									vote_min_penalty = true; // Current song will incur a penalty
+									clients_lock.unlock();
+									vote_min_list_lock.unlock();
+									server_datasource_lock.unlock();
+									ac.stop_playback();      // calls next_song
+								}
+							}
+
+
+							//		current_track = Track();
+							//		server_datasource.reset();
+							//		ac.set_data_source(server_datasource);
+
+
+							//boost::mutex::scoped_lock lock(vote_min_list_mutex);
+							//vote_min_list[msg->id].insert(id);
+							//boost::mutex::scoped_lock clients_lock(clients_mutex);
+							//if((current_track.id==msg->id) && (vote_min_list[msg->id].size()*2) > clients.size())
+							//	recalculateplaylist=true;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	// 						* TODO *
 	// 						bool is_in_playlist = false;
 	// 						BOOST_FOREACH( , playlist) {
@@ -482,18 +550,25 @@ class Server {
 			else {
 				networkhandler.send_message(id, messageref(new message_disconnect("You are not connected! Go away.")));
 			}
-			} // release locks on playlist and clientlist
 			if(recalculateplaylist) {
 				this->recalculateplaylist();
+				boost::shared_ptr<ServerDataSource> ds;
+				{
+					boost::mutex::scoped_lock lock(server_datasource_mutex);
+					ds = server_datasource;
+				}
+				if(!ds)
+					cue_next_track();
 			}
 		}
 	private:
 		SyncedPlaylist playlist;
-		boost::recursive_mutex playlist_mutex;
-		Track currenttrack;
+		boost::barrier server_thread_start_barrier;
+		boost::mutex playlist_mutex;
+		boost::mutex current_track_mutex;
+		Track current_track;
 		network_handler networkhandler;
 		AudioController ac;
-		bool message_loop_running;
 		typedef boost::multi_index_container<
 			Client_ref,
 			boost::multi_index::indexed_by<
@@ -504,10 +579,14 @@ class Server {
 		boost::mutex vote_min_list_mutex;
 		std::map<TrackID, std::set<ClientID> > vote_min_list;
 		bool vote_min_penalty;
-		boost::recursive_mutex clients_mutex;
+		boost::mutex clients_mutex;
 
-		boost::thread message_loop_thread;
-		boost::signals::connection message_loop_connection;
+		bool playlist_sync_loop_running;
+		boost::thread                       playlist_sync_loop_thread;
+		boost::mutex              add_datasource_thread_mutex;
+		boost::thread                       add_datasource_thread;
+		boost::signals::connection          server_message_receive_signal_connection;
+		boost::mutex              server_datasource_mutex;
 		boost::shared_ptr<ServerDataSource> server_datasource;
 
 		boost::mutex outstanding_query_result_list_mutex;
@@ -515,114 +594,52 @@ class Server {
 		std::map<uint32, std::pair<std::pair<ClientID, uint32>,  std::set<ClientID> > > outstanding_query_result_list;
 
 		/* Some playback related variables*/
-		bool add_datasource;
+		//bool add_datasource;
 		double average_song_duration;
 
-		struct track_priority_properties {
-			// FIXME: Is it correct to take number_of_occurrences into account, or should we rely on zero_sum only?
-			//       What if everybody wants to hear a song (eg zero_sum == 0)
-			int    number_of_occurrences; // How many people have this track in their wishlist
-			float  avg_wishlist_position; // What is the average index of this track in the wishlist's of those people
-			double total_zero_sum;        // What is the total zero_sum of those people
-			Track  track;                 // The track to which these properties apply
-			bool operator<(const track_priority_properties& that) const {
-				return (this->number_of_occurrences <  that.number_of_occurrences)  ||
-				      ((this->number_of_occurrences == that.number_of_occurrences)  &&
-					   (this->avg_wishlist_position >  that.avg_wishlist_position)) ||
-					  ((this->avg_wishlist_position == that.avg_wishlist_position)  &&
-					   (this->total_zero_sum        <  that.total_zero_sum));
-			};
-		};
-
-		struct sort_by_zero_sum_increasing {
-			bool operator()(const Client& l, const Client& r) const {
-				return l.zero_sum < r.zero_sum;
-			}
-			bool operator()(const Client_ref& l, const Client_ref& r) const {
-				return l->zero_sum < r->zero_sum;
+		struct sort_by_zero_sum_decreasing {
+			bool operator()(const std::pair<Client_ref, uint32>& l, const std::pair<Client_ref, uint32>& r) const {
+				return l.first->zero_sum > r.first->zero_sum;
 			}
 		};
 
 		void recalculateplaylist() {
-			boost::recursive_mutex::scoped_lock locka(clients_mutex);
-			boost::recursive_mutex::scoped_lock lockb(playlist_mutex);
-
-			// Sort clients by zero_sum
-			// FIXME: Figure out how to do this to clients (the boost::multi_index_container)
-			std::vector<Client> _clients;
-			BOOST_FOREACH(Client_ref cr, clients) {
-				_clients.push_back(*cr);
-			}
-			std::sort(_clients.begin(), _clients.end(), sort_by_zero_sum_increasing());
-
-			std::vector<track_priority_properties> shared_tracks;
-			std::vector<std::vector<Track> >  custom_tracks(_clients.size());
-			int current_client = 0;
-			BOOST_FOREACH(Client& c, _clients) { // NOTE: Destroys contents of _clients
-				int track_position = 0;
-				BOOST_FOREACH(Track& track, c.wish_list) {
-					track_priority_properties tpp;
-					tpp.number_of_occurrences = 1;
-					tpp.avg_wishlist_position = (float)track_position;
-					tpp.total_zero_sum        = c.zero_sum;
-					tpp.track                 = track;
-					BOOST_FOREACH(Client& oc, _clients) {
-						int otrack_position = 0;
-						if(oc.id != c.id) {
-							BOOST_FOREACH(Track& otrack, oc.wish_list) {
-								if(otrack == track) {								
-									oc.wish_list.remove(otrack_position);
-									tpp.number_of_occurrences += 1;
-									tpp.avg_wishlist_position += otrack_position;
-									tpp.total_zero_sum        += oc.zero_sum;
-									break;
-								}
-								otrack_position++;
-							}
-						}
-					}
-					if(tpp.number_of_occurrences > 1) {
-						tpp.avg_wishlist_position /= (float)tpp.number_of_occurrences;
-						shared_tracks.push_back(tpp);
-					}
-					else {
-						// NOTE: we are processing clients in order of increasing zero_sum
-						//       so the clients are ordered in that order in custom_tracks too.
-						custom_tracks[current_client].push_back(track);
-					}
-					track_position++;
-				}				
-				current_client++;
-			}
-			std::sort(shared_tracks.begin(), shared_tracks.end());
-
 			std::vector<Track> new_playlist;
-			BOOST_REVERSE_FOREACH(track_priority_properties& tpp, shared_tracks) {
-				new_playlist.push_back(tpp.track);
+			{
+			boost::mutex::scoped_lock clients_lock(clients_mutex);
+			boost::mutex::scoped_lock vote_min_list_lock(vote_min_list_mutex);
+
+			std::vector<std::pair<Client_ref, uint32> > client_list;
+			uint32 maxsize = 0;
+			BOOST_FOREACH(Client_ref c, clients) {
+				if (c->wish_list.size() > 0)
+					client_list.push_back(std::pair<Client_ref, uint32>(c, 0));
+				if(c->wish_list.size() > maxsize)
+					maxsize = c->wish_list.size();
 			}
+
+			std::sort(client_list.begin(), client_list.end(), sort_by_zero_sum_decreasing() );
 			bool done = false;
-			unsigned int index = 0;
 			while (!done) {
 				done = true;
-				BOOST_REVERSE_FOREACH(std::vector<Track>& v, custom_tracks) {
-					if(v.size() > index) {
+				typedef std::pair<Client_ref, uint32> vt;
+				BOOST_FOREACH(vt& i, client_list) {
+					if (i.second < i.first->wish_list.size()) {
 						done = false;
-						new_playlist.push_back(v[index]);
+						const Track& t(i.first->wish_list.get(i.second++));
+						new_playlist.push_back(t);							
 					}
 				}
-				++index;
+			}
 			}
 
-			// Finally ensure that currenttrack is always on top
-			for(unsigned int i = 0; i < new_playlist.size(); ++i) {
-				if(new_playlist[i] == currenttrack) {
-					new_playlist.erase(new_playlist.begin() + i);
-					new_playlist.insert(new_playlist.begin(), currenttrack);
-				}
-			}
-
+			{
+			boost::mutex::scoped_lock playlist_lock(playlist_mutex);
 			playlist.clear();
 			playlist.append(new_playlist);
+			}
+
+			playlist.sync();
 		}
 };
 
