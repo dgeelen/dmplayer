@@ -56,12 +56,14 @@ namespace { namespace ns_reghelper {
 IDecoderRef IDecoder::findDecoder(IDataSourceRef ds)
 {
 	IDecoderRef decoder;
-	for (unsigned int i = 0; i < ns_reghelper::decoderlist.size(); ++i) {
-		ds->reset();
-		decoder = ns_reghelper::decoderlist[i](ds);
-		if (decoder) {
-			dcerr("Found a decoder: " << ns_reghelper::decodernamelist[i]);
-			break;
+	if(ds) {
+		for (unsigned int i = 0; i < ns_reghelper::decoderlist.size(); ++i) {
+			ds->reset();
+			decoder = ns_reghelper::decoderlist[i](ds);
+			if (decoder) {
+				dcerr("Found a decoder: " << ns_reghelper::decodernamelist[i]);
+				break;
+			}
 		}
 	}
 	return decoder;
