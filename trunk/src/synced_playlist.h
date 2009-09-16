@@ -2,12 +2,15 @@
 #define SYNCED_PLAYLIST_H
 
 #include "packet.h"
+#include <boost/thread.hpp>
+#include <boost/thread/condition.hpp>
 
 class SyncedPlaylist : public IPlaylist {
 	private:
 		std::deque<message_playlist_update_ref> msgque;
 		PlaylistVector data;
-		mutable boost::mutex internal_mutex;
+		mutable boost::mutex     internal_mutex;
+		boost::condition sync_condition;
 		//virtual void vote(TrackID id) { Playlist::vote(id); };
 		//virtual void add(Track track)  { Playlist::add(track); };
 		//virtual void clear()  { Playlist::clear(); };
@@ -86,6 +89,14 @@ class SyncedPlaylist : public IPlaylist {
 			return data.size();
 		}
 
+		/// Guarantee that all queued messages have been processed
+		void sync() {
+			boost::mutex::scoped_lock lock(internal_mutex);
+			while(!msgque.empty()) {
+				sync_condition.wait(lock);
+			}
+		}
+
 		messageref pop_msg() {
 			boost::mutex::scoped_lock lock(internal_mutex);
 			message_playlist_update_ref ret;
@@ -95,6 +106,8 @@ class SyncedPlaylist : public IPlaylist {
 				msgque.pop_front();
 			}
 
+			if(msgque.empty())
+				sync_condition.notify_one();
 			return ret;
 		}
 };
