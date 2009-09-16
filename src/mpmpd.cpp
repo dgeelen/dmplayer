@@ -262,7 +262,7 @@ class Server {
 		void cue_next_track() {
 			boost::mutex::scoped_lock lock(add_datasource_thread_mutex);
 			if(add_datasource_thread.get_id() != boost::this_thread::get_id())
-				add_datasource_thread.join();
+				add_datasource_thread.join(); //FIXME: probably ac.set_data_source() should throw an exception
 			boost::thread t(boost::bind(&Server::add_datasource, this));
 			add_datasource_thread.swap(t);
 			data_source_renewed_barrier.wait();
