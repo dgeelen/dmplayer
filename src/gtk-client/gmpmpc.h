@@ -4,7 +4,6 @@
 	#include "gmpmpc_playlist.h"
 	#include "gmpmpc_select_server.h"
 	#include "dispatcher_marshaller.h"
-	#include "gmpmpc_connection_handling.h"
 	#include "../middle_end.h"
 	#include "../error-handling.h"
 	#include "../network-handler.h"
@@ -38,7 +37,6 @@
 			DispatcherMarshaller dispatcher; // Execute a function in the gui thread
 			middle_end&                                       middleend;
 			std::map<std::string, boost::signals::connection> connected_signals;
-			gmpmpc_connection_handler                         connection_handler;
 			sigc::connection                                  clear_statusbar_connection;
 			bool                                              is_iconified;
 
