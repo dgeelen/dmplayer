@@ -440,18 +440,18 @@ void middle_end::handle_received_message(const messageref m) {
 		case message::MSG_DISCONNECT: {
 			mutex::scoped_lock s_lock(dest_server_mutex);
 			mutex::scoped_lock c_lock(client_id_mutex);
-			abort_all_file_transfers();			
-			if((dest_server == networkhandler.get_target_server_address()) && (dest_server != ipv4_socket_addr()) && client_id != ClientID(-1)) {
-				// We are connected to this particular server
+			abort_all_file_transfers();
+			if(dest_server != ipv4_socket_addr()) {
+				// We have at least tried to connect to a server.
 				const message_disconnect_ref msg = static_pointer_cast<message_disconnect>(m);
-				client_id = ClientID(-1);
-				sig_client_id_changed(client_id);
-				sig_disconnected(msg->get_reason());
-			}
-			else if((client_id == ClientID(-1)) && (networkhandler.get_target_server_address()) == ipv4_socket_addr() && (dest_server != ipv4_socket_addr())) {
-				// We're not connected to any server. (and possibly an attempt to connect just failed)
-				const message_disconnect_ref msg = static_pointer_cast<message_disconnect>(m);
-				sig_connect_to_server_failure(dest_server, msg->get_reason());
+				if(client_id != ClientID(-1) && (dest_server == networkhandler.get_target_server_address())) { // We are connected to this particular server
+					client_id = ClientID(-1);
+					sig_client_id_changed(client_id);
+					sig_disconnected(msg->get_reason());
+				}
+				else { // We're not connected to any server. (and possibly an attempt to connect just failed)
+					sig_connect_to_server_failure(dest_server, msg->get_reason());
+				}
 			}
 		} break;
 		case message::MSG_PLAYLIST_UPDATE: {
