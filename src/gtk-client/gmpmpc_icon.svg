@@ -633,18 +633,4 @@
          style="fill:url(#radialGradient4294);fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:6.4000001;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;display:inline" />
     </g>
   </g>
-  <g
-     id="layer1"
-     inkscape:label="Layer 1"
-     inkscape:groupmode="layer"
-     style="display:none">
-    <image
-       y="4.1461339"
-       x="-0.49425355"
-       id="image2432"
-       height="248.78876"
-       width="256.07928"
-       sodipodi:absref="/home/dafox/Desktop/mp3.jpg"
-       xlink:href="/home/dafox/Desktop/mp3.jpg" />
-  </g>
 </svg>
