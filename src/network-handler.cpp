@@ -178,7 +178,7 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 						std::cout << "Client tried to connect with wrong version" << std::endl;
 						std::cout << "Client protocol version " << msg->get_version() << ", expected " << NETWORK_PROTOCOL_VERSION << std::endl;
 						std::cout << "Boost version " << msg->get_boost_version() << ", expected " << BOOST_VERSION << std::endl;
-						(*sock) << messageref(new message_disconnect(STRFORMAT("Protocol mismatch, you tried to connect with protocol v%i and Boost version %i while this server expects protocol v%i and boost version %i.",msg->get_version(), msg->get_boost_version(), NETWORK_PROTOCOL_VERSION,BOOST_VERSION)));
+						(*sock) << messageref(new message_disconnect(STRFORMAT("Protocol mismatch, you tried to connect with protocol v%i and Boost version %i, but this server expects protocol v%i and boost version %i.",msg->get_version(), msg->get_boost_version(), NETWORK_PROTOCOL_VERSION,BOOST_VERSION)));
 						active = false;
 					}
 				}; break;
