@@ -98,7 +98,6 @@ IF(ENABLE_GTK_GUI)
 	               gmpmpc.cpp                     gmpmpc.h
 	               gmpmpc_trackdb.cpp             gmpmpc_trackdb.h
 	               gmpmpc_select_server.cpp       gmpmpc_select_server.h
-	               gmpmpc_connection_handling.cpp gmpmpc_connection_handling.h
 	               track_treeview.cpp             track_treeview.h
 	               gmpmpc_playlist.cpp            gmpmpc_playlist.h
 	               gmpmpc_icon.h
