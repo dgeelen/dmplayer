@@ -89,6 +89,9 @@ void GtkMpmpClientWindow::construct_gui() {
 	set_default_size(1024, 640);
 	set_position(Gtk::WIN_POS_CENTER);
 
+	select_server_window.set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
+	select_server_window.set_transient_for(*this);
+
 	guint8* data = new guint8[gmpmpc_icon_data.width * gmpmpc_icon_data.height * gmpmpc_icon_data.bytes_per_pixel];
 	GIMP_IMAGE_RUN_LENGTH_DECODE(data,
 	                             gmpmpc_icon_data.rle_pixel_data,
