@@ -98,6 +98,8 @@
 			void server_tcp_connection_listener();
 			boost::mutex next_client_id_mutex;
 			ClientID next_client_id;
+			std::map<ipv4_addr, ClientID> known_clients;
+			boost::mutex known_clients_mutex;
 			std::map<ClientID, boost::shared_ptr<tcp_socket> > clients;
 			boost::mutex clients_mutex;
 		};
