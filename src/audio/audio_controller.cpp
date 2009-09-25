@@ -173,7 +173,10 @@ void AudioController::stop_playback()
 	backend->stop_output();
 	{
 	boost::mutex::scoped_lock lock(update_decoder_mutex);
-	playback_finished(bytes_played / backend->getAudioFormat().getBytesPerSecond()); //FIXME: Low resolution!
+	if(curdecoder || update_decoder_flag) { // if no curdecoder we already called playback_finished. FIXME: could probably use a mutex
+		dcerr("curdecoder || update_decoder_flag");
+		playback_finished(bytes_played / backend->getAudioFormat().getBytesPerSecond()); //FIXME: Low resolution!
+	}
 	bytes_played = 0;
 	curdecoder.reset();
 	}
