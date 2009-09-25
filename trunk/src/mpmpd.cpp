@@ -133,7 +133,7 @@ class Server {
 			vote_min_penalty = false;
 			// The following constant was obtained by scanning my personal music library,
 			// counting only songs with a duration greater than 00:01:30 and less than
-			// 00:10:00. This yielded a total duration of 3 days, 14 hours, 14 minutes and 
+			// 00:10:00. This yielded a total duration of 3 days, 14 hours, 14 minutes and
 			// 2 seconds, or 310442 seconds, for a total of 1461 songs. Thus on average
 			// a song lasted 212.486~ seconds, or just over 3.5 minutes. For esthetic reasons
 			// I thus chose 210 (exactly 3.5 minutes) as a safe default.
@@ -252,7 +252,7 @@ class Server {
 					boost::mutex::scoped_lock lock(playlist_mutex);
 					m = playlist.pop_msg();
 					if(m)
-						networkhandler.send_message_allclients(m);						
+						networkhandler.send_message_allclients(m);
 				} while(m);
 				usleep(100*1000);
 			}
@@ -269,7 +269,7 @@ class Server {
 		}
 
 		void add_datasource() {
-			// Starting playback of a new song is done in a separate thread since 
+			// Starting playback of a new song is done in a separate thread since
 			// set_data_source() may take a while.
 			// FIXME: "a while" == potentially forever, in which case no new song
 			//        can be started. ever.
@@ -664,7 +664,7 @@ class Server {
 					if (i.second < i.first->wish_list.size()) {
 						done = false;
 						const Track& t(i.first->wish_list.get(i.second++));
-						new_playlist.push_back(t);							
+						new_playlist.push_back(t);
 					}
 				}
 			}
