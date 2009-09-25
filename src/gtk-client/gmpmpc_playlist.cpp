@@ -12,7 +12,8 @@ gmpmpc_playlist_widget::gmpmpc_playlist_widget(middle_end& m)
 	Gtk::Frame::add(vbox);
 	set_label("Playlist:");
 	vote_down_button.set_border_width(3);
-	vote_down_button.set_label("Vote DOWN");
+	vote_down_button.set_use_underline(true);
+	vote_down_button.set_label("Vote _DOWN");
 	vote_down_button.signal_clicked().connect(boost::bind(&gmpmpc_playlist_widget::on_vote_down_button_clicked, this));
 
 	sig_update_playlist_connection =

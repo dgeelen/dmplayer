@@ -34,9 +34,11 @@ gmpmpc_select_server_window::gmpmpc_select_server_window(middle_end& _middleend)
 	manual_ip_entry.set_text("131.155.99.208");
 	#endif
 	vbox.add(selection_type_notebook);
-	cancel_button.set_label("Cancel");
+	cancel_button.set_label("C_ancel");
+	cancel_button.set_use_underline(true);
 	hbox.add(cancel_button);
-	connect_button.set_label("Connect");
+	connect_button.set_label("_Connect");
+	connect_button.set_use_underline(true);
 	hbox.add(connect_button);
 	vbox.pack_start(hbox, Gtk::PACK_SHRINK);
 	vbox.pack_start(statusbar, Gtk::PACK_SHRINK);
@@ -63,7 +65,7 @@ gmpmpc_select_server_window::gmpmpc_select_server_window(middle_end& _middleend)
 	sig_connect_to_server_success_connection =
 		middleend.sig_connect_to_server_success.connect (
 			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::connection_accepted, this, _1, _2)));
-	sig_connect_to_server_failure_connection = 
+	sig_connect_to_server_failure_connection =
 		middleend.sig_connect_to_server_failure.connect (
 			dispatcher.wrap(boost::bind(&gmpmpc_select_server_window::connection_denied, this, _1, _2)));
 	sig_servers_added_connection =
@@ -85,7 +87,7 @@ gmpmpc_select_server_window::~gmpmpc_select_server_window() {
 }
 
 void gmpmpc_select_server_window::on_selection_type_notebook_switch_page(GtkNotebookPage* page, guint page_num) {
-	if(page_num == 1) 
+	if(page_num == 1)
 		manual_ip_entry.grab_focus();
 }
 
