@@ -80,8 +80,6 @@ uint16 network_handler::get_port_number() {
 	return tcp_port_number;
 }
 
-
-
 void network_handler::server_tcp_connection_listener() { // Listens for incoming connections (Server)
 	ipv4_addr addr;
 	addr.full = INADDR_ANY;
@@ -150,11 +148,22 @@ void network_handler::client_tcp_connection(ipv4_socket_addr addr) { // Initiate
 void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // One thread per client (Server)
 	ClientID cid(-1);
 	{
-	boost::mutex::scoped_lock lock(next_client_id_mutex);
-	if((++next_client_id) == ClientID(-1)) {
-		next_client_id++;
-	}
-	cid = next_client_id;
+		boost::mutex::scoped_lock lock(known_clients_mutex);
+		ipv4_addr addr = sock->get_ipv4_socket_addr().first;
+		std::map<ipv4_addr, ClientID>::iterator c = known_clients.find(addr);
+		if(c == known_clients.end()) {
+			boost::mutex::scoped_lock lock(next_client_id_mutex);
+			if((++next_client_id) == ClientID(-1)) {
+				next_client_id++;
+			}
+			cid = next_client_id;
+			#ifndef ALLOW_MULTIPLE_CLIENTS
+			known_clients[addr] = cid;
+			#endif
+		}
+		else {
+			cid = c->second;
+		}
 	}
 	bool active = true;
 	while(!are_we_done && active) {
