@@ -227,8 +227,8 @@ class Server {
 			double avg_min  = double(playtime_secs)/has_song.size();
 			double avg_plus = double(playtime_secs)/clients.size();
 			if((has_song.size() == 0) || (clients.size() == 0)) { // Should only happen if we're (just have) removing a client
-				dcerr("WARNING: Division by zero, ZeroSum compromised!!");
-				dcerr("has_song.size()==" << has_song.size() << " clients.size()==" << clients.size() << " avg_min==" << avg_min << " avg_plus==" << avg_plus);
+				cout << "WARNING: Division by zero, ZeroSum compromised!!";
+				cout << "has_song.size()==" << has_song.size() << " clients.size()==" << clients.size() << " avg_min==" << avg_min << " avg_plus==" << avg_plus;
 				avg_plus = avg_min = 0.0; //FIXME : ugly hax
 			}
 			BOOST_FOREACH(ClientID& id, has_song) {
