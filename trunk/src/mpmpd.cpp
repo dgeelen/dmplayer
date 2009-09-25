@@ -275,11 +275,38 @@ class Server {
 			//        can be started. ever.
 			boost::shared_ptr<ServerDataSource> ds;
 			{
+				boost::mutex::scoped_lock clients_lock(clients_mutex);
 				boost::mutex::scoped_lock playlist_lock(playlist_mutex);
 				boost::mutex::scoped_lock server_datasource_lock(server_datasource_mutex);
-				if(playlist.size() != 0) {
+				boost::mutex::scoped_lock vote_min_list_lock(vote_min_list_mutex);
+
+				bool found_track = false;
+				uint32 t_index = 0;
+				while(!found_track && (t_index < playlist.size())) {
+					std::map<TrackID, std::set<ClientID> >::iterator i = vote_min_list.find(playlist.get(t_index).id);
+					// if more than half of all clients voted for this song
+					if((i != vote_min_list.end()) && ((i->second.size() * 2) > clients.size())) {
+						// remove track playlist[t_index] from all wish_lists
+						// FIXME: Assumes recalculateplaylist() merges multiple entries into a single entry.
+						BOOST_FOREACH(Client_ref c, clients) {
+							for(uint32 i=0; i < c->wish_list.size(); ++i) {
+								if(c->wish_list.get(i).id == playlist.get(t_index).id) {
+									c->wish_list.remove(i);
+									break;
+								}
+							}
+						}
+						vote_min_list.erase(vote_min_list.find(playlist.get(t_index).id)); // no longer in any wish_list, remove also from vote_min_list
+					}
+					else {
+						found_track = true;
+						break;
+					}
+					++t_index;
+				}
+				if(t_index < playlist.size()) {
 					server_datasource = boost::shared_ptr<ServerDataSource>(new ServerDataSource());
-					current_track = playlist.get(0);
+					current_track = playlist.get(t_index);
 					message_request_file_ref msg(new message_request_file(current_track.id));
 					dcerr("requesting " << STRFORMAT("%08x:%08x", current_track.id.first, current_track.id.second));
 					networkhandler.send_message(current_track.id.first, msg);
@@ -290,6 +317,7 @@ class Server {
 				}
 				ds = server_datasource;
 			}
+			recalculateplaylist();
 			data_source_renewed_barrier.wait();
 			ac.set_data_source(ds);
 			ac.start_playback(); // FIXME: do this here?
@@ -592,8 +620,9 @@ class Server {
 					boost::mutex::scoped_lock lock(server_datasource_mutex);
 					ds = server_datasource;
 				}
-				if(!ds)
+				if(!ds) {
 					cue_next_track();
+				}
 			}
 		}
 	private:
@@ -620,10 +649,10 @@ class Server {
 
 		bool playlist_sync_loop_running;
 		boost::thread                       playlist_sync_loop_thread;
-		boost::mutex              add_datasource_thread_mutex;
+		boost::mutex                        add_datasource_thread_mutex;
 		boost::thread                       add_datasource_thread;
 		boost::signals::connection          server_message_receive_signal_connection;
-		boost::mutex              server_datasource_mutex;
+		boost::mutex                        server_datasource_mutex;
 		boost::shared_ptr<ServerDataSource> server_datasource;
 
 		boost::mutex outstanding_query_result_list_mutex;
