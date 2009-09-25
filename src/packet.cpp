@@ -22,7 +22,7 @@ void operator<<(tcp_socket& sock, const messagecref msg)
 	boost::mutex::scoped_lock lock(sock.send_mutex);
 	#endif
 	stringstream ss;
-	boost::archive::text_oarchive oa(ss);
+	boost::archive::binary_oarchive oa(ss);
 	oa << msg;
 	long l = htonl((long)ss.str().size() + 1);
 	sock.send((const uint8*)(&l), sizeof(long));
@@ -45,8 +45,8 @@ void operator>>(tcp_socket& sock,       messageref& msg)
 		rnum = sock.receive(a.get(),l);
 		if (rnum != l)
 			throw NetworkException("receive failed");
-		stringstream ss((char*)a.get());
-		boost::archive::text_iarchive ia(ss);
+		stringstream ss(string((char*)a.get(), (char*)a.get() + l));
+		boost::archive::binary_iarchive ia(ss);
 		ia >> msg;
 	} catch (std::exception& e) {
 		msg = messageref(new message_disconnect(STRFORMAT("Exception while reading from socket: %s", e.what())));
