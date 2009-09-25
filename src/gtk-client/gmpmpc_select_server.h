@@ -60,7 +60,7 @@
 			void on_cancel_button_click();
 			void on_connect_button_click();
 			bool on_serverlist_double_click(GdkEventButton *event);
-			void gmpmpc_select_server_window::on_selection_type_notebook_switch_page(GtkNotebookPage* page, guint page_num);
+			void on_selection_type_notebook_switch_page(GtkNotebookPage* page, guint page_num);
 			bool update_focus(GdkEventWindowState* event);
 			Gtk::Entry          manual_ip_entry;
 			Gtk::TreeView       serverlist;
