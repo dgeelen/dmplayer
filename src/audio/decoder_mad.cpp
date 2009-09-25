@@ -84,19 +84,19 @@ IDecoderRef MadDecoder::tryDecode(IDataSourceRef ds)
 	// TODO: Improve this very simple ID3 tag skip
 	// see http://www.gigamonkeys.com/book/practical-an-id3-parser.html
 	// and http://www.id3.org/id3v2.4.0-structure
-	for(int i=0; i<9; ++i)
-		dcerr("input_buffer[" << i << "]" << " = " << (int)(input_buffer[i]));
+// 	for(int i=0; i<9; ++i)
+// 		dcerr("input_buffer[" << i << "]" << " = " << (int)(input_buffer[i]));
 	if((input_buffer[0] == 'I') && (input_buffer[1] == 'D') && (input_buffer[2] == '3')) {
-		dcerr("id3");
+// 		dcerr("id3");
 		// input_buffer[3,4]     == version
 		if((input_buffer[3]!=0xff) && (input_buffer[4]!=0xff)) {
-			dcerr("version");
+// 			dcerr("version");
 		// input_buffer[5]       == flags
 			if((input_buffer[5]&0x0f)==0) {
-				dcerr("flags");
+// 				dcerr("flags");
 			// input_buffer[6,7,8,9] == size
 				if(((input_buffer[6]&0x80)|(input_buffer[7]&0x80)|(input_buffer[8]&0x80)|(input_buffer[9]&0x80))==0) {
-					dcerr("size");
+// 					dcerr("size");
 					uint32 length = (input_buffer[6] << (24-3)) | (input_buffer[7] << (16-2)) | (input_buffer[8] << (8-1)) | (input_buffer[9] << (0-0));
 					while(length>0 && !ds->exhausted()) {
 						if(length>BytesInInput) {
