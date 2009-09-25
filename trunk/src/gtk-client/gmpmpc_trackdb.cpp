@@ -25,7 +25,8 @@ gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(middle_end& m)
 	set_label("TrackDB:");
 	search_label.set_label("Filter:");
 	add_to_wishlist_button.set_border_width(3);
-	add_to_wishlist_button.set_label("Enqueue selected");
+	add_to_wishlist_button.set_use_underline(true);
+	add_to_wishlist_button.set_label("_Enqueue selected");
 // 	focus_add_to_wishlist_button();
 	add_to_wishlist_button.grab_focus();
 
