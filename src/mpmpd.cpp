@@ -33,11 +33,6 @@ class Client {
 			zero_sum = 0.0;
 		}
 
-		~Client() {
-			id = -1;
-			zero_sum = -1.0;
-		}
-
 		ClientID id;
 		double zero_sum;
 		PlaylistVector wish_list;
@@ -231,6 +226,11 @@ class Server {
 			// TODO: do something with weights and playtime_secs
 			double avg_min  = double(playtime_secs)/has_song.size();
 			double avg_plus = double(playtime_secs)/clients.size();
+			if((has_song.size() == 0) || (clients.size() == 0)) { // Should only happen if we're (just have) removing a client
+				dcerr("WARNING: Division by zero, ZeroSum compromised!!");
+				dcerr("has_song.size()==" << has_song.size() << " clients.size()==" << clients.size() << " avg_min==" << avg_min << " avg_plus==" << avg_plus);
+				avg_plus = avg_min = 0.0; //FIXME : ugly hax
+			}
 			BOOST_FOREACH(ClientID& id, has_song) {
 				double old = (*clients.find(id))->zero_sum;
 				(*clients.find(id))->zero_sum -= avg_min;
@@ -297,7 +297,7 @@ class Server {
 
 		void remove_client(ClientID id) {
 			boost::mutex::scoped_lock clock(clients_mutex);
-			dcerr("Removing client " << STRFORMAT("%08x", id));
+			cout << "Removing client " << STRFORMAT("%08x", id) << std::endl;
 			if (clients.find(id) == clients.end())
 				return;
 			{
@@ -367,22 +367,37 @@ class Server {
 				}
 			}
 
-			double total = cr->zero_sum;
-			dcerr("This clients zero_sum was:" << total << '\n');
+			// Do some magic with 'ghost' clients to prevent zero_sum from becoming corrupt
+			// due to this client now leaving. (Might cause 'has_song' to become an empty set)
+			ClientID invalid_cid(-1);
+			ClientMap::iterator ghost = clients.insert(Client_ref(new Client(invalid_cid))).first;
+			(*ghost)->zero_sum = cr->zero_sum;
+			(*ghost)->wish_list.append(current_track);
 			clients.erase(id);
+			disconnected_clients[id] = cr;
+			if(!has_listeners) { // Cue next song since no-one wants to hear this now
+				// NOTE:
+				//  * Also calls next_song which is important since if has_song becomes empty
+				//    zero_sum is compromised.
+				//  * Will not try to enque a song from this client since we just removed all
+				//    his songs from all wish_lists.
+				//  * Will not race msg_playlist_update because of the ghost client we just added.
+				clock.unlock(); // make sure we don't hold any locks when we start calling other functions
+				ac.stop_playback();
+				clock.lock();
+				ghost = clients.find(invalid_cid); // iterator may have become invalid, refresh it
+			}
+			cr->zero_sum = (*ghost)->zero_sum;
+			clients.erase(ghost);
+
+			double total = cr->zero_sum;
+			cout << "This clients zero_sum was:" << total << std::endl;
 			BOOST_FOREACH(Client_ref i, clients) {
 				double old = i->zero_sum;
 				i->zero_sum += total/clients.size();
-				dcerr("(dc)  for " << STRFORMAT("%08x", i->id) << ": " << old << " -> " << i->zero_sum << '\n');
+				cout << "(dc)  for " << STRFORMAT("%08x", i->id) << ": " << old << " -> " << i->zero_sum << std::endl;
 			}
-
-			clock.unlock(); // make sure we don't hold any locks when we start calling other functions
-
-			if(!has_listeners) {
-				// Cue next song, also calls next_song which is important since
-				// if has_song becomes empty zero_sum is compromised.
-				ac.stop_playback();
-			}
+			clock.unlock();
 			recalculateplaylist();
 		}
 
@@ -399,7 +414,27 @@ class Server {
 						dcerr("Received a MSG_CONNECT from " << STRFORMAT("%08x", id));
 						{
 							boost::mutex::scoped_lock lock_clients(clients_mutex);
-							clients.insert(Client_ref(new Client(id)));
+							std::map<ClientID, Client_ref>::iterator i = disconnected_clients.find(id);
+							bool is_reconnect = true;
+							if(i == disconnected_clients.end()) {
+								disconnected_clients[id] = Client_ref(new Client(id));
+								i = disconnected_clients.find(id);
+								is_reconnect = false;
+							}
+							Client_ref cr = i->second;
+							disconnected_clients.erase(i);
+							double total = cr->zero_sum;
+							string str("Client ");
+							if(is_reconnect)
+								str += "re-";
+							str += STRFORMAT("connect detected for %i, zero_sum: %i\n", id, total);
+							cout << str;
+							BOOST_FOREACH(Client_ref i, clients) {
+								double old = i->zero_sum;
+								i->zero_sum -= total/clients.size();
+								cout << "(dc)  for " << STRFORMAT("%08x", i->id) << ": " << old << " -> " << i->zero_sum << std::endl;
+							}
+							clients.insert(cr);
 						}
 						boost::mutex::scoped_lock lock_playlist(playlist_mutex);
 						networkhandler.send_message(id, messageref(new message_playlist_update(playlist)));
@@ -572,10 +607,12 @@ class Server {
 		typedef boost::multi_index_container<
 			Client_ref,
 			boost::multi_index::indexed_by<
-				boost::multi_index::ordered_unique<boost::multi_index::member<Client, ClientID, &Client::id> >
+				// non_unique because we need to insert multiple clients with an invalid id at times
+				boost::multi_index::ordered_non_unique<boost::multi_index::member<Client, ClientID, &Client::id> >
 			>
 		> ClientMap;
 		ClientMap clients;
+		std::map<ClientID, Client_ref> disconnected_clients;
 		boost::mutex vote_min_list_mutex;
 		std::map<TrackID, std::set<ClientID> > vote_min_list;
 		bool vote_min_penalty;
