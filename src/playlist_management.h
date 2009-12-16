@@ -63,6 +63,10 @@ public:
 	bool operator!=(const Track& that) const {
 		return this->id != that.id;
 	}
+
+	bool operator<(const Track& that) const { // Needed for insertion into std::map
+		return this->id < that.id;
+	}
 private:
 	friend class boost::serialization::access;
 	template<class Archive>
