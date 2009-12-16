@@ -37,6 +37,7 @@ void serialize(
 }
 
 typedef std::pair<ClientID, LocalTrackID> TrackID;
+std::ostream& operator<<(std::ostream& os, const TrackID& trackid);
 
 typedef std::map<std::string, std::string> MetaDataMap;
 
