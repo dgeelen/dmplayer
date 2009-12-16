@@ -177,7 +177,7 @@ class Server {
 			dcerr("shut down");
 		}
 
-		void next_song(uint64 playtime_secs) {
+		void next_song(uint32 playtime_secs) {
 			cout << "Next song, playtime was " << playtime_secs << " seconds" << endl;
 			if((vote_min_penalty && playtime_secs < average_song_duration * 0.2) || (playtime_secs < 15)) {
 				cout << "issueing a penalty of " << uint32(average_song_duration) << " seconds" << endl;
@@ -196,22 +196,27 @@ class Server {
 				vote_min_list.erase(current_track.id);
 			}
 
-			update_zero_sum(playtime_secs);
+			Track t;
+			{
+				boost::mutex::scoped_lock current_track_lock(current_track_mutex);
+				t = current_track;
+			}
+			{
+			boost::mutex::scoped_lock clients_lock(clients_mutex);
+			update_zero_sum(t, playtime_secs, clients_lock);
+			}
 			recalculateplaylist();
 			cue_next_track();
 		}
 
-		void update_zero_sum(uint64 playtime_secs) {
-			boost::mutex::scoped_lock clients_lock(clients_mutex);
-			boost::mutex::scoped_lock current_track_lock(current_track_mutex);
-
+		void update_zero_sum(const Track& target_track, const uint32 playtime_secs, boost::mutex::scoped_lock& clients_lock) {
 			vector<ClientID> has_song;
 			vector<ClientID> does_not_have_song;
-			Track t = current_track;
+// 			Track t = current_track;
 			BOOST_FOREACH(Client_ref c, clients) {
 				uint32 pos = 0;
 				for (;pos < c->wish_list.size(); ++pos)
-					if (c->wish_list.get(pos).id == t.id)
+					if (c->wish_list.get(pos).id == target_track.id)
 						break;
 				if (pos != c->wish_list.size()) {
 					c->wish_list.remove(pos);
@@ -275,28 +280,21 @@ class Server {
 			//        can be started. ever.
 			boost::shared_ptr<ServerDataSource> ds;
 			{
+				std::map<Track, uint32> penalty_list;
 				boost::mutex::scoped_lock clients_lock(clients_mutex);
 				boost::mutex::scoped_lock playlist_lock(playlist_mutex);
 				boost::mutex::scoped_lock server_datasource_lock(server_datasource_mutex);
 				boost::mutex::scoped_lock vote_min_list_lock(vote_min_list_mutex);
-
 				bool found_track = false;
 				uint32 t_index = 0;
+				dcerr("While");
 				while(!found_track && (t_index < playlist.size())) {
 					std::map<TrackID, std::set<ClientID> >::iterator i = vote_min_list.find(playlist.get(t_index).id);
 					// if more than half of all clients voted for this song
 					if((i != vote_min_list.end()) && ((i->second.size() * 2) > clients.size())) {
-						// remove track playlist[t_index] from all wish_lists
-						// FIXME: Assumes recalculateplaylist() merges multiple entries into a single entry.
-						BOOST_FOREACH(Client_ref c, clients) {
-							for(uint32 i=0; i < c->wish_list.size(); ++i) {
-								if(c->wish_list.get(i).id == playlist.get(t_index).id) {
-									c->wish_list.remove(i);
-									break;
-								}
-							}
-						}
-						vote_min_list.erase(vote_min_list.find(playlist.get(t_index).id)); // no longer in any wish_list, remove also from vote_min_list
+						// mark track playlist[t_index] for removal from all wish_lists
+						// FIXME: average song duration does not have a mutex yet (does it need one?)
+						penalty_list[playlist.get(t_index)] += average_song_duration;
 					}
 					else {
 						found_track = true;
@@ -304,6 +302,25 @@ class Server {
 					}
 					++t_index;
 				}
+
+				dcerr("foreach");
+				typedef std::pair<Track, uint32> vtype;
+				BOOST_FOREACH(vtype p, penalty_list) {
+					update_zero_sum(p.first, p.second, clients_lock);
+					// remove track playlist[t_index] from all wish_lists
+					// FIXME: Assumes recalculateplaylist() merges multiple entries into a single entry.
+					BOOST_FOREACH(Client_ref c, clients) {
+						for(uint32 i=0; i < c->wish_list.size(); ++i) {
+							if(c->wish_list.get(i).id == p.first.id) {
+								c->wish_list.remove(i);
+								break;
+							}
+						}
+					}
+					vote_min_list.erase(vote_min_list.find(p.first.id)); // no longer in any wish_list, remove also from vote_min_list
+				}
+
+				dcerr("final");
 				if(t_index < playlist.size()) {
 					server_datasource = boost::shared_ptr<ServerDataSource>(new ServerDataSource());
 					current_track = playlist.get(t_index);
