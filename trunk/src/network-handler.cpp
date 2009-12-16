@@ -163,6 +163,7 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 		}
 		else {
 			cid = c->second;
+			server_message_receive_signal(message_disconnect_ref(new message_disconnect("Reconnection")), cid);
 		}
 	}
 	bool active = true;
