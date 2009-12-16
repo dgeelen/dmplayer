@@ -19,6 +19,7 @@ middle_end::middle_end()
 	trackdb.add_directory("d:\\music\\");
 	trackdb.add_directory("d:\\stuff\\music\\");
 	trackdb.add_directory("d:\\mp3\\");
+	trackdb.add_directory("d:\\My Documents\\My Music\\");
 	networkhandler.start();
 	sig_search_tracks.connect(boost::bind(&middle_end::handle_msg_query_trackdb_query_result, this, _1, _2));
 
