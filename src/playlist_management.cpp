@@ -10,6 +10,10 @@ namespace fs = boost::filesystem;
 namespace ba = boost::algorithm;
 using namespace std;
 
+std::ostream& operator<<(std::ostream& os, const TrackID& trackid) {
+	return os << STRFORMAT("%08x:%08x", trackid.first, trackid.second);
+}
+
 /* Class LocalTrack */
 LocalTrack::LocalTrack(LocalTrackID id_, fspath filename_, MetaDataMap metadata_)
 :	id(id_)
