@@ -455,7 +455,7 @@ class Server {
 							string str("Client ");
 							if(is_reconnect)
 								str += "re-";
-							str += STRFORMAT("connect detected for %i, zero_sum: %i\n", id, total);
+							str += STRFORMAT("connect detected for %x, zero_sum: %i\n", id, total);
 							cout << str;
 							BOOST_FOREACH(Client_ref i, clients) {
 								double old = i->zero_sum;
