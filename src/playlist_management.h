@@ -14,6 +14,7 @@
 
 //NOTE: Using an average of 5MB per song (reasonable for good quality MP3)
 //      a uint32 should suffice to hold 20 pebibytes worth of music (2^32*(5*1024^2)/1024^5)
+//      or just over 29000 (twenty-nine-thousand) *jears* of music at 192kbps.
 
 BOOST_STRONG_TYPEDEF(uint32, ClientID);
 BOOST_STRONG_TYPEDEF(uint32, LocalTrackID);
