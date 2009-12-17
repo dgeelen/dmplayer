@@ -165,49 +165,69 @@ class Server {
 			dcerr("shut down");
 		}
 
+		void remove_from_wish_lists(const TrackID tid, boost::mutex::scoped_lock& clients_lock) {
+			BOOST_FOREACH(Client_ref c, clients) {
+				for(uint32 i=0; i < c->wish_list.size(); ++i) {
+					if(c->wish_list.get(i).id == tid) {
+						c->wish_list.remove(i);
+						--i;
+// 						break; // No spamming of the playlist plz
+					}
+				}
+			}
+		}
+
+		uint32 vote_min_count(TrackID tid, boost::mutex::scoped_lock& vote_min_list_lock) {
+			std::map<TrackID, std::set<ClientID> >::iterator i = vote_min_list.find(tid);
+			if(i != vote_min_list.end())
+				return i->second.size();
+			return 0;
+		}
+
+		// True if more than half of all clients voted for this song
+		bool is_down_voted(TrackID tid, boost::mutex::scoped_lock& vote_min_list_lock, boost::mutex::scoped_lock& clients_lock) {
+			if(vote_min_count(tid, vote_min_list_lock) * 2 > clients.size())
+				return true;
+			return false;
+		}
+
 		void next_song(uint32 playtime_secs) {
+			{
+			boost::mutex::scoped_lock clients_lock(clients_mutex);
+			boost::mutex::scoped_lock current_track_lock(current_track_mutex);
+			boost::mutex::scoped_lock playlist_lock(playlist_mutex);
+			boost::mutex::scoped_lock vote_min_list_lock(vote_min_list_mutex);
+
 			cout << "Next song, playtime was " << playtime_secs << " seconds" << endl;
+			bool vote_min_penalty = is_down_voted(current_track.id, vote_min_list_lock, clients_lock);
 			if((vote_min_penalty && playtime_secs < average_song_duration * 0.2) || (playtime_secs < 15)) {
 				cout << "issueing a penalty of " << uint32(average_song_duration) << " seconds" << endl;
 				playtime_secs += uint32(average_song_duration);
 			}
-
 			if(!vote_min_penalty) { // Update rolling average of last 16 songs
 				average_song_duration = (average_song_duration * 15.0 + double(playtime_secs)) / 16.0;
 				cout << "average song duration now at " << uint32(average_song_duration) << " seconds" << endl;
 			}
-			vote_min_penalty = false;
-
-			{
-				boost::mutex::scoped_lock current_track_lock(current_track_mutex);
-				boost::mutex::scoped_lock vote_min_list_lock(vote_min_list_mutex);
-				vote_min_list.erase(current_track.id);
+			dcerr("current_track: "<<current_track.id);
+			update_zero_sum(current_track.id, playtime_secs, clients_lock);
+			vote_min_list.erase(current_track.id);
+			remove_from_wish_lists(current_track.id, clients_lock);
+			current_track = Track();
+			recalculateplaylist(clients_lock, current_track_lock, vote_min_list_lock, playlist_lock);
 			}
-
-			Track t;
-			{
-				boost::mutex::scoped_lock current_track_lock(current_track_mutex);
-				t = current_track;
-			}
-			{
-			boost::mutex::scoped_lock clients_lock(clients_mutex);
-			update_zero_sum(t, playtime_secs, clients_lock);
-			}
-			recalculateplaylist();
 			cue_next_track();
 		}
 
-		void update_zero_sum(const Track& target_track, const uint32 playtime_secs, boost::mutex::scoped_lock& clients_lock) {
+		void update_zero_sum(const TrackID target_track, const uint32 playtime_secs, boost::mutex::scoped_lock& clients_lock) {
 			vector<ClientID> has_song;
 			vector<ClientID> does_not_have_song;
-// 			Track t = current_track;
+
 			BOOST_FOREACH(Client_ref c, clients) {
 				uint32 pos = 0;
 				for (;pos < c->wish_list.size(); ++pos)
-					if (c->wish_list.get(pos).id == target_track.id)
+					if (c->wish_list.get(pos).id == target_track)
 						break;
 				if (pos != c->wish_list.size()) {
-					c->wish_list.remove(pos);
 					has_song.push_back(c->id);
 					// TODO: do something with weights!
 				}
@@ -220,9 +240,9 @@ class Server {
 			double avg_min  = double(playtime_secs)/has_song.size();
 			double avg_plus = double(playtime_secs)/clients.size();
 			if((has_song.size() == 0) || (clients.size() == 0)) { // Should only happen if we're (just have) removing a client
-				cout << "WARNING: Division by zero, ZeroSum compromised!!";
-				cout << "has_song.size()==" << has_song.size() << " clients.size()==" << clients.size() << " avg_min==" << avg_min << " avg_plus==" << avg_plus;
-				avg_plus = avg_min = 0.0; //FIXME : ugly hax
+				cout << "WARNING: Division by zero, ZeroSum compromised!!" << endl;
+				cout << "has_song.size()==" << has_song.size() << " clients.size()==" << clients.size() << " avg_min==" << avg_min << " avg_plus==" << avg_plus << endl;
+				avg_plus = avg_min = 0.0; //FIXME : ugly hax //TODO: Check if this can still happen
 			}
 			BOOST_FOREACH(ClientID& id, has_song) {
 				double old = (*clients.find(id))->zero_sum;
@@ -234,20 +254,6 @@ class Server {
 				double old = (*clients.find(id))->zero_sum;
 				(*clients.find(id))->zero_sum += avg_plus;
 				cout << "(plus) for " << STRFORMAT("%08x", id) << ": " << old << " -> " << (*clients.find(id))->zero_sum << endl;
-			}
-		}
-
-		void playlist_sync_loop() {
-			server_thread_start_barrier.wait();
-			while(playlist_sync_loop_running) {
-				messageref m;
-				do {
-					boost::mutex::scoped_lock lock(playlist_mutex);
-					m = playlist.pop_msg();
-					if(m)
-						networkhandler.send_message_allclients(m);
-				} while(m);
-				usleep(100*1000);
 			}
 		}
 
@@ -267,69 +273,58 @@ class Server {
 			// FIXME: "a while" == potentially forever, in which case no new song
 			//        can be started. ever.
 			boost::shared_ptr<ServerDataSource> ds;
-			{
-				std::map<Track, uint32> penalty_list;
+			{ // NOTE: Since we need to start songs 'instantly' (without the playlist/wish_lists changing)
+			  //       we need to do penalties here if we still want to skip as many downvoted songs
+			  //       as possible each round.
 				boost::mutex::scoped_lock clients_lock(clients_mutex);
+				boost::mutex::scoped_lock current_track_lock(current_track_mutex);
 				boost::mutex::scoped_lock playlist_lock(playlist_mutex);
 				boost::mutex::scoped_lock server_datasource_lock(server_datasource_mutex);
 				boost::mutex::scoped_lock vote_min_list_lock(vote_min_list_mutex);
 				bool found_track = false;
-				uint32 t_index = 0;
-				dcerr("While");
-				while(!found_track && (t_index < playlist.size())) {
-					std::map<TrackID, std::set<ClientID> >::iterator i = vote_min_list.find(playlist.get(t_index).id);
-					// if more than half of all clients voted for this song
-					if((i != vote_min_list.end()) && ((i->second.size() * 2) > clients.size())) {
-						// mark track playlist[t_index] for removal from all wish_lists
+				while(!found_track && (playlist.size()>0)) {
+					TrackID tid = playlist.get(0).id;
+					found_track = true;
+					if(is_down_voted(tid, vote_min_list_lock, clients_lock)) {
+						cout << "Skipping track " << tid << ", assuming a duration of " << average_song_duration << " seconds" << endl;
 						// FIXME: average song duration does not have a mutex yet (does it need one?)
-						penalty_list[playlist.get(t_index)] += average_song_duration;
+						update_zero_sum(tid, average_song_duration, clients_lock);
+						vote_min_list.erase(tid);
+						remove_from_wish_lists(tid, clients_lock);
+						// TODO: This may take a while, we could optimise synced_playlist
+						//       a bit do update it's internal vector immidiately, and only
+						//       do the network update in the background.
+						recalculateplaylist(clients_lock, current_track_lock, playlist_lock, vote_min_list_lock);
+						found_track = false;
 					}
-					else {
-						found_track = true;
-						break;
-					}
-					++t_index;
 				}
+				playlist.sync();
 
-				dcerr("foreach");
-				typedef std::pair<Track, uint32> vtype;
-				BOOST_FOREACH(vtype p, penalty_list) {
-					update_zero_sum(p.first, p.second, clients_lock);
-					// remove track playlist[t_index] from all wish_lists
-					// FIXME: Assumes recalculateplaylist() merges multiple entries into a single entry.
-					BOOST_FOREACH(Client_ref c, clients) {
-						for(uint32 i=0; i < c->wish_list.size(); ++i) {
-							if(c->wish_list.get(i).id == p.first.id) {
-								c->wish_list.remove(i);
-								break;
-							}
-						}
-					}
-					vote_min_list.erase(vote_min_list.find(p.first.id)); // no longer in any wish_list, remove also from vote_min_list
-				}
-
-				dcerr("final");
-				if(t_index < playlist.size()) {
+				// NOTE: On occasion, something funny happens with the playlist's size,
+				//       but it's been so long since I've hacked on this code that I
+				//       don't know how to reproduce this any more, be warned though...
+				current_track = Track();
+				server_datasource.reset();
+				if(playlist.size() > 0) {
 					server_datasource = boost::shared_ptr<ServerDataSource>(new ServerDataSource());
-					current_track = playlist.get(t_index);
+					current_track = playlist.get(0);
 					message_request_file_ref msg(new message_request_file(current_track.id));
-					dcerr("requesting " << STRFORMAT("%08x:%08x", current_track.id.first, current_track.id.second));
+					dcerr("requesting " << current_track.id);
 					networkhandler.send_message(current_track.id.first, msg);
-				}
-				else {
-					current_track = Track();
-					server_datasource.reset();
 				}
 				ds = server_datasource;
 			}
-			recalculateplaylist();
 			data_source_renewed_barrier.wait();
 			ac.set_data_source(ds);
 			ac.start_playback(); // FIXME: do this here?
 		}
 
 		void remove_client(ClientID id) {
-			boost::mutex::scoped_lock clock(clients_mutex);
+			boost::mutex::scoped_lock clients_lock(clients_mutex);
+			boost::mutex::scoped_lock current_track_lock(current_track_mutex);
+			boost::mutex::scoped_lock playlist_lock(playlist_mutex);
+			boost::mutex::scoped_lock vote_min_list_lock(vote_min_list_mutex);
+
 			cout << "Removing client " << STRFORMAT("%08x", id) << std::endl;
 			if (clients.find(id) == clients.end())
 				return;
@@ -340,21 +335,18 @@ class Server {
 				}
 			}
 
-			{
-				boost::mutex::scoped_lock lock(vote_min_list_mutex);
-				std::vector<TrackID> empty_vote_tracks;
-				typedef std::pair<TrackID, std::set<ClientID> > vtype;
-				BOOST_FOREACH(vtype i, vote_min_list) {           // For each (trackid, {client})
-					if(i.second.find(id) != i.second.end()) {     // If the disconnecting client voted for trackid
-						i.second.erase(i.second.find(id));        // Remove him/her from the list of voters
-						if(i.second.size() == 0) {                // and if he/she was the last voter
-							empty_vote_tracks.push_back(i.first);
-						}
+			std::vector<TrackID> empty_vote_tracks;
+			typedef std::pair<TrackID, std::set<ClientID> > vtype;
+			BOOST_FOREACH(vtype i, vote_min_list) {           // For each (trackid, {client})
+				if(i.second.find(id) != i.second.end()) {     // If the disconnecting client voted for trackid
+					i.second.erase(i.second.find(id));        // Remove him/her from the list of voters
+					if(i.second.size() == 0) {                // and if he/she was the last voter
+						empty_vote_tracks.push_back(i.first);
 					}
 				}
-				BOOST_FOREACH(TrackID id, empty_vote_tracks) {
-					vote_min_list.erase(vote_min_list.find(id));  // remove trackid from vote_min_list
-				}
+			}
+			BOOST_FOREACH(TrackID id, empty_vote_tracks) {
+				vote_min_list.erase(vote_min_list.find(id));  // remove trackid from vote_min_list
 			}
 
 			{
@@ -415,9 +407,17 @@ class Server {
 				//  * Will not try to enque a song from this client since we just removed all
 				//    his songs from all wish_lists.
 				//  * Will not race msg_playlist_update because of the ghost client we just added.
-				clock.unlock(); // make sure we don't hold any locks when we start calling other functions
+				//    (clients will hold multiple 'ghost' clients)
+				// make sure we don't hold any locks when we start calling other functions
+				vote_min_list_lock.unlock();
+				playlist_lock.unlock();
+				current_track_lock.unlock();
+				clients_lock.unlock();
 				ac.stop_playback();
-				clock.lock();
+				clients_lock.lock();
+				current_track_lock.lock();
+				playlist_lock.lock();
+				vote_min_list_lock.lock();
 				ghost = clients.find(invalid_cid); // iterator may have become invalid, refresh it
 			}
 			cr->zero_sum = (*ghost)->zero_sum;
@@ -430,8 +430,8 @@ class Server {
 				i->zero_sum += total/clients.size();
 				cout << "(dc)  for " << STRFORMAT("%08x", i->id) << ": " << old << " -> " << i->zero_sum << std::endl;
 			}
-			clock.unlock();
-			recalculateplaylist();
+
+			recalculateplaylist(clients_lock, current_track_lock, playlist_lock, vote_min_list_lock);
 		}
 
 		void handle_received_message(const messageref m, ClientID id) {
@@ -460,7 +460,7 @@ class Server {
 							string str("Client ");
 							if(is_reconnect)
 								str += "re-";
-							str += STRFORMAT("connect detected for %x, zero_sum: %i\n", id, total);
+							str += STRFORMAT("connect detected for %08x, zero_sum: %i\n", id, total);
 							cout << str;
 							BOOST_FOREACH(Client_ref i, clients) {
 								double old = i->zero_sum;
@@ -541,7 +541,10 @@ class Server {
 					case message::MSG_REQUEST_FILE_RESULT: {
 						//dcerr("Received a MSG_REQUEST_FILE_RESULT from " << STRFORMAT("%08x", id));
 						message_request_file_result_ref msg = boost::static_pointer_cast<message_request_file_result>(m);
+						{
+						boost::mutex::scoped_lock current_track_lock(current_track_mutex);
 						if(current_track.id != msg->id) break;
+						}
 						if(msg->data.size()) {
 							boost::mutex::scoped_lock lock(server_datasource_mutex);
 							if(server_datasource)
@@ -558,56 +561,24 @@ class Server {
 						message_vote_ref msg = boost::static_pointer_cast<message_vote>(m);
 						if(msg->is_min_vote) {
 							boost::mutex::scoped_lock clients_lock(clients_mutex);
+							boost::mutex::scoped_lock current_track_lock(current_track_mutex);
 							boost::mutex::scoped_lock vote_min_list_lock(vote_min_list_mutex);
 							vote_min_list[msg->id].insert(id);
-							if((current_track.id==msg->id) && (vote_min_list[msg->id].size()*2) > clients.size()) {
+							if((current_track.id==msg->id) && is_down_voted(msg->id, vote_min_list_lock, clients_lock)) {
 								boost::mutex::scoped_lock server_datasource_lock(server_datasource_mutex);
 								if(server_datasource) {
 									/* Notify sender to stop sending */
 									vector<uint8> empty;
 									message_request_file_result_ref msg(new message_request_file_result(empty, current_track.id));
 									networkhandler.send_message(current_track.id.first, msg);
-									vote_min_list.erase(current_track.id); // Don't spam sender
-									vote_min_penalty = true; // Current song will incur a penalty
+// 									vote_min_list.erase(current_track.id); // Don't spam sender
 									clients_lock.unlock();
+									current_track_lock.unlock();
 									vote_min_list_lock.unlock();
 									server_datasource_lock.unlock();
-									ac.stop_playback();      // calls next_song
+									ac.stop_playback(); // might call next_song (AC guarantees next_song is called only once even when EOF)
 								}
 							}
-
-
-							//		current_track = Track();
-							//		server_datasource.reset();
-							//		ac.set_data_source(server_datasource);
-
-
-							//boost::mutex::scoped_lock lock(vote_min_list_mutex);
-							//vote_min_list[msg->id].insert(id);
-							//boost::mutex::scoped_lock clients_lock(clients_mutex);
-							//if((current_track.id==msg->id) && (vote_min_list[msg->id].size()*2) > clients.size())
-							//	recalculateplaylist=true;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	// 						* TODO *
-	// 						bool is_in_playlist = false;
-	// 						BOOST_FOREACH( , playlist) {
-	// 						}
-	// 						if(is_in_playlist) {
-	// 							vote_min_list[msg->getID()].insert(id);
-	// 						}
 						}
 					}; break;
 					default: {
@@ -619,7 +590,13 @@ class Server {
 				networkhandler.send_message(id, messageref(new message_disconnect("You are not connected! Go away.")));
 			}
 			if(recalculateplaylist) {
-				this->recalculateplaylist();
+				{
+					boost::mutex::scoped_lock clients_lock(clients_mutex);
+					boost::mutex::scoped_lock current_track_lock(current_track_mutex);
+					boost::mutex::scoped_lock playlist_lock(playlist_mutex);
+					boost::mutex::scoped_lock vote_min_list_lock(vote_min_list_mutex);
+					this->recalculateplaylist(clients_lock, current_track_lock, playlist_lock, vote_min_list_lock);
+				}
 				boost::shared_ptr<ServerDataSource> ds;
 				{
 					boost::mutex::scoped_lock lock(server_datasource_mutex);
@@ -648,7 +625,6 @@ class Server {
 		std::map<ClientID, Client_ref> disconnected_clients;
 		boost::mutex vote_min_list_mutex;
 		std::map<TrackID, std::set<ClientID> > vote_min_list;
-		bool vote_min_penalty;
 		boost::mutex clients_mutex;
 
 		boost::mutex                        add_datasource_thread_mutex;
@@ -662,7 +638,6 @@ class Server {
 		std::map<uint32, std::pair<std::pair<ClientID, uint32>,  std::set<ClientID> > > outstanding_query_result_list;
 
 		/* Some playback related variables*/
-		//bool add_datasource;
 		double average_song_duration;
 
 		struct sort_by_zero_sum_decreasing {
@@ -671,11 +646,15 @@ class Server {
 			}
 		};
 
-		void recalculateplaylist() {
+		void recalculateplaylist(
+			boost::mutex::scoped_lock& clients_lock,
+			boost::mutex::scoped_lock& current_track_lock,
+			boost::mutex::scoped_lock& vote_min_list_lock,
+			boost::mutex::scoped_lock& playlist_lock
+		) {
 			std::vector<Track> new_playlist;
-			{
-			boost::mutex::scoped_lock clients_lock(clients_mutex);
-			boost::mutex::scoped_lock vote_min_list_lock(vote_min_list_mutex);
+			if(current_track != Track())
+				new_playlist.push_back(current_track);
 
 			std::vector<std::pair<Client_ref, uint32> > client_list;
 			uint32 maxsize = 0;
@@ -694,19 +673,20 @@ class Server {
 				BOOST_FOREACH(vt& i, client_list) {
 					if (i.second < i.first->wish_list.size()) {
 						done = false;
-						const Track& t(i.first->wish_list.get(i.second++));
-						new_playlist.push_back(t);
+						const Track& track(i.first->wish_list.get(i.second++));
+						bool present = false;
+						BOOST_FOREACH(Track& t, new_playlist) {
+							present = present || (t == track);
+						}
+						if(!present) {
+							new_playlist.push_back(track);
+						}
 					}
 				}
 			}
-			}
 
-			{
-			boost::mutex::scoped_lock playlist_lock(playlist_mutex);
 			playlist.clear();
 			playlist.append(new_playlist);
-			}
-
 			playlist.sync();
 		}
 };
