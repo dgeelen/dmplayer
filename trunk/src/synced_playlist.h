@@ -2,6 +2,7 @@
 #define SYNCED_PLAYLIST_H
 
 #include "packet.h"
+#include "error-handling.h"
 #include <boost/thread.hpp>
 #include <boost/thread/condition.hpp>
 
@@ -11,10 +12,56 @@ class SyncedPlaylist : public IPlaylist {
 		PlaylistVector data;
 		mutable boost::mutex     internal_mutex;
 		boost::condition sync_condition;
-		//virtual void vote(TrackID id) { Playlist::vote(id); };
-		//virtual void add(Track track)  { Playlist::add(track); };
-		//virtual void clear()  { Playlist::clear(); };
+
+		bool playlist_sync_loop_running;
+		boost::thread playlist_sync_loop_thread;
+		void sync_loop() {
+			while(playlist_sync_loop_running) {
+				{
+					boost::mutex::scoped_lock lock(internal_mutex);
+					message_playlist_update_ref m;
+					while(!msgque.empty()) {
+						m = msgque.front();
+						m->apply(data);
+						sig_send_message(m);
+						msgque.pop_front();
+					}
+					sync_condition.notify_one();
+				}
+				usleep(100*1000);
+			}
+		}
+
 	public:
+		/**
+		 * Emitted whenever a message should be send to keep the playlist with
+		 * it's counterpart(s).
+		 * The callback should have the prototype <b>void(messageref)</b>
+		 */
+		boost::signal<void(messageref)> sig_send_message;
+
+		/**
+		 * Note: Don't forget to connect to SyncedPlaylist's sig_send_message.
+		 *       This signal will be issued whenever a message needs to be send
+		 *       via the network. It depends on your particular application
+		 *       if you should use send_message_client(), send_message_clientall()
+		 *       or something else entirely.
+		 */
+		SyncedPlaylist()
+		: IPlaylist(),
+		  playlist_sync_loop_running(true)
+		{
+			dcerr("Starting playlist_sync_loop_thread");
+			boost::thread t1(makeErrorHandler(boost::bind(&SyncedPlaylist::sync_loop, this)));
+			playlist_sync_loop_thread.swap(t1);
+		}
+
+		~SyncedPlaylist() {
+			dcerr("Joining playlist_sync_loop_thread");
+			playlist_sync_loop_running = false;
+			playlist_sync_loop_thread.join();
+		}
+
 		/// clears all tracks from the playlist
 		virtual void clear() {
 			boost::mutex::scoped_lock lock(internal_mutex);
@@ -95,20 +142,6 @@ class SyncedPlaylist : public IPlaylist {
 			while(!msgque.empty()) {
 				sync_condition.wait(lock);
 			}
-		}
-
-		messageref pop_msg() {
-			boost::mutex::scoped_lock lock(internal_mutex);
-			message_playlist_update_ref ret;
-			if (!msgque.empty()) {
-				ret = msgque.front();
-				ret->apply(data);
-				msgque.pop_front();
-			}
-
-			if(msgque.empty())
-				sync_condition.notify_one();
-			return ret;
 		}
 };
 
