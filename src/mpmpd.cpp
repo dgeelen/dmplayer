@@ -125,12 +125,8 @@ class Server {
 			: networkhandler(listen_port, server_name)
 			, server_message_receive_signal_connection(networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2)))
 			, data_source_renewed_barrier(2)
-			, server_thread_start_barrier(2)
 		{
-			//server_datasource = boost::shared_ptr<ServerDataSource>((ServerDataSource*)NULL);
-			//add_datasource = false;
-			playlist_sync_loop_running = true;
-			vote_min_penalty = false;
+			playlist.sig_send_message.connect(boost::bind(&network_handler::send_message_allclients, &networkhandler, _1));
 			// The following constant was obtained by scanning my personal music library,
 			// counting only songs with a duration greater than 00:01:30 and less than
 			// 00:10:00. This yielded a total duration of 3 days, 14 hours, 14 minutes and
@@ -142,14 +138,9 @@ class Server {
 			#ifdef DEBUG
 				next_query_id = 0; // Intentionally not initialized.
 			#endif
-			//ac.start_playback();
-			dcerr("Starting playlist_sync_loop_thread");
-			boost::thread t1(makeErrorHandler(boost::bind(&Server::playlist_sync_loop, this)));
-			playlist_sync_loop_thread.swap(t1);
 			dcerr("Starting network_handler");
 			networkhandler.start();
 			dcerr("Server initialized");
-			server_thread_start_barrier.wait(); // FIXME: perhaps do this on_exit()?
 		}
 
 		~Server() {
@@ -157,10 +148,9 @@ class Server {
 			dcerr("stopping networkhandler");
 			networkhandler.send_message_allclients(messageref(new message_disconnect("Server is shutting down.")));
 			networkhandler.stop();
-			dcerr("Joining playlist_sync_loop_thread");
+
 			server_message_receive_signal_connection.disconnect();
-			playlist_sync_loop_running = false;
-			playlist_sync_loop_thread.join();
+
 			dcerr("Stopping playback");
 			ac.playback_finished.disconnect(boost::bind(&Server::next_song, this, _1));
 			ac.stop_playback();
@@ -643,12 +633,11 @@ class Server {
 			}
 		}
 	private:
-		SyncedPlaylist playlist;
-		boost::barrier server_thread_start_barrier;
 		boost::mutex playlist_mutex;
 		boost::mutex current_track_mutex;
 		Track current_track;
 		network_handler networkhandler;
+		SyncedPlaylist playlist;
 		AudioController ac;
 		typedef boost::multi_index_container<
 			Client_ref,
@@ -664,8 +653,6 @@ class Server {
 		bool vote_min_penalty;
 		boost::mutex clients_mutex;
 
-		bool playlist_sync_loop_running;
-		boost::thread                       playlist_sync_loop_thread;
 		boost::mutex                        add_datasource_thread_mutex;
 		boost::thread                       add_datasource_thread;
 		boost::signals::connection          server_message_receive_signal_connection;

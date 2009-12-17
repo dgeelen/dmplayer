@@ -22,6 +22,7 @@ middle_end::middle_end()
 	trackdb.add_directory("d:\\My Documents\\My Music\\");
 	networkhandler.start();
 	sig_search_tracks.connect(boost::bind(&middle_end::handle_msg_query_trackdb_query_result, this, _1, _2));
+	client_synced_playlist.sig_send_message.connect(boost::bind(&network_handler::send_server_message, &networkhandler, _1));
 
 #ifdef DEBUG
 	next_search_id = 0; // Intentionally not initialized.
@@ -218,12 +219,7 @@ void middle_end::mylist_append(Track track) {
 	//FIXME: If this is going to take a while (e.g. slow connection / lots of tracks)
 	//       then we should do this in a separate thread rather than force the client
 	//       to wait.
-	while(messageref msg = client_synced_playlist.pop_msg()) {
-		try {
-			networkhandler.send_server_message(msg);
-		}
-		catch(Exception e) {}
-	}
+	client_synced_playlist.sync();
 }
 
 void middle_end::handle_message_request_file(const message_request_file_ref request, bool* done) {
