@@ -30,10 +30,6 @@ IPlaylistRef gmpmpc_playlist_widget::sig_update_playlist_handler() {
 	return treeview;
 }
 
-void gmpmpc_playlist_widget::add_to_wishlist(Track& track) {
-	wish_list.append(track);
-}
-
 void gmpmpc_playlist_widget::on_vote_down_button_clicked() {
 	Glib::RefPtr<Gtk::TreeModel> model = ((gmpmpc_track_treeview*)treeview.get())->get_model();
 	Glib::RefPtr<Gtk::ListStore> store = Glib::RefPtr<Gtk::ListStore>::cast_dynamic(model);
@@ -44,6 +40,5 @@ void gmpmpc_playlist_widget::on_vote_down_button_clicked() {
 		Gtk::TreeModel::iterator i = model->get_iter(p);
 		Track t = (*i)[((gmpmpc_track_treeview*)treeview.get())->m_Columns.track];
 		middleend.playlist_vote_down(t);
-// 		vote_signal(t.id, -1);
 	}
 }

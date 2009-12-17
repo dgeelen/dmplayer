@@ -19,9 +19,6 @@
 			IPlaylistRef sig_update_playlist_handler();
 			void add_to_wishlist(Track& track);
 
-			boost::signal<void(messageref)> send_message_signal;
-			boost::signal<void(TrackID, int)> vote_signal;
-
 		private:
 			middle_end& middleend;
 			void on_vote_down_button_clicked();
@@ -31,7 +28,6 @@
 			Gtk::ScrolledWindow scrolledwindow;
 			Gtk::VBox           vbox;
 			Gtk::Button         vote_down_button;
-			SyncedPlaylist wish_list;
 	};
 
 #endif // GMPMPC_PLAYLIST_H
