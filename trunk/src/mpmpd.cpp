@@ -221,6 +221,7 @@ class Server {
 		void update_zero_sum(const TrackID target_track, const uint32 playtime_secs, boost::mutex::scoped_lock& clients_lock) {
 			vector<ClientID> has_song;
 			vector<ClientID> does_not_have_song;
+			vector<ClientID> others;
 
 			BOOST_FOREACH(Client_ref c, clients) {
 				uint32 pos = 0;
@@ -229,31 +230,42 @@ class Server {
 						break;
 				if (pos != c->wish_list.size()) {
 					has_song.push_back(c->id);
-					// TODO: do something with weights!
 				}
 				else {
-					does_not_have_song.push_back(c->id);
+					if(c->wish_list.size() > 0) {
+						// Only people who actively participate are rewarded
+						// TODO: Perhaps instead of pure yes/no do some weighting
+						does_not_have_song.push_back(c->id);
+					}
+					else {
+						others.push_back(c->id);
+					}
 				}
 			}
 
-			// TODO: do something with weights and playtime_secs
-			double avg_min  = double(playtime_secs)/has_song.size();
-			double avg_plus = double(playtime_secs)/clients.size();
-			if((has_song.size() == 0) || (clients.size() == 0)) { // Should only happen if we're (just have) removing a client
+			double avg_min  = 0.0;
+			double avg_plus = 0.0;
+			if(does_not_have_song.size() > 0) {
+				avg_min  = playtime_secs / double(has_song.size());
+				avg_plus = playtime_secs / double(does_not_have_song.size());
+			}
+			if(has_song.size() == 0) { // Should never happen //TODO: Check if this can still happen
 				cout << "WARNING: Division by zero, ZeroSum compromised!!" << endl;
-				cout << "has_song.size()==" << has_song.size() << " clients.size()==" << clients.size() << " avg_min==" << avg_min << " avg_plus==" << avg_plus << endl;
-				avg_plus = avg_min = 0.0; //FIXME : ugly hax //TODO: Check if this can still happen
+				cout << "has_song.size()==" << has_song.size() << " clients.size()==" << clients.size() << " others.size==" << others.size() << " avg_min==" << avg_min << " avg_plus==" << avg_plus << endl;
+				avg_plus = avg_min = 0.0; //FIXME : ugly hax
 			}
 			BOOST_FOREACH(ClientID& id, has_song) {
 				double old = (*clients.find(id))->zero_sum;
 				(*clients.find(id))->zero_sum -= avg_min;
-				(*clients.find(id))->zero_sum += avg_plus;
 				cout << "(min)  for " << STRFORMAT("%08x", id) << ": " << old << " -> " << (*clients.find(id))->zero_sum << endl;
 			}
-			BOOST_FOREACH( ClientID& id, does_not_have_song) {
+			BOOST_FOREACH(ClientID& id, does_not_have_song) {
 				double old = (*clients.find(id))->zero_sum;
 				(*clients.find(id))->zero_sum += avg_plus;
 				cout << "(plus) for " << STRFORMAT("%08x", id) << ": " << old << " -> " << (*clients.find(id))->zero_sum << endl;
+			}
+			BOOST_FOREACH(ClientID& id, others) {
+				cout << "(same) for " << STRFORMAT("%08x", id) << ": " << (*clients.find(id))->zero_sum << endl;
 			}
 		}
 
