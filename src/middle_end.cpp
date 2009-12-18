@@ -37,6 +37,10 @@ middle_end::middle_end()
 #endif
 }
 
+void middle_end::trackdb_add(boost::filesystem::path path) {
+	trackdb.add_directory(path);
+}
+
 void middle_end::abort_all_file_transfers() {
 	bool done(false);
 	while(!done) {
