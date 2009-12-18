@@ -4,6 +4,7 @@
 	#include <vector>
 	#include <boost/signal.hpp>
 	#include <boost/thread.hpp>
+	#include <boost/filesystem.hpp>
 	#include <boost/thread/mutex.hpp>
 	#include <boost/strong_typedef.hpp>
 	#include "packet.h"
@@ -152,6 +153,16 @@
 			 */
 			boost::shared_ptr<boost::mutex::scoped_lock> search_tracks(const Track query, SearchID* id);
 
+			/**
+			 * Add a single file or whole directories to the trackdb.
+			 * @param path is the path which should be added to the trackdb. Path may either point to a
+			 *             directory or file. If path points to a directory all files and sub-directories
+			 *             in the directory are added recursively.
+			 * @note that this is only a preliminary interface to the trackdb and subject to change without
+			 *            further notice (caveat emptor!).
+			 *            
+			 */
+			void trackdb_add(boost::filesystem::path path);
 
 
 			/*********************************************

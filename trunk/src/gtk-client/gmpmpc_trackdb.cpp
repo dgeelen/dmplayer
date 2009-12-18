@@ -172,11 +172,11 @@ void gmpmpc_trackdb_widget::on_drag_data_received_signal(const Glib::RefPtr<Gdk:
 	switch(info) {
 		case 0: {
 			BOOST_FOREACH(std::string file, urilist_convert(selection_data.get_data_as_string())) {
-// 				trackdb.add_directory(file);
+				middleend.trackdb_add(boost::filesystem::path(file));
 			}
 		}; break;
 		case 1: {
-// 			trackdb.add(boost::filesystem::path(selection_data.get_data_as_string()));
+			middleend.trackdb_add(boost::filesystem::path(selection_data.get_data_as_string()));
 		}; break;
 		default:
 			dcerr("Unhandled drop? info="<<info);
