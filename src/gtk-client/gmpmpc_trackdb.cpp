@@ -150,16 +150,22 @@ string urldecode(std::string s) { //http://www.koders.com/cpp/fid6315325A03C89DE
 }
 
 vector<std::string> urilist_convert(const std::string urilist) {
+	#ifdef WIN32
+		#define FILEURILEN 8
+	#else
+		#define FILEURILEN 7
+	#endif
 	vector<std::string> files;
 	int begin = urilist.find("file://", 0);
 	int end = urilist.find("\r\n", begin);
 	while( end != string::npos) {
-		files.push_back(urldecode(urilist.substr(begin + 7, end-begin-7)));
+		files.push_back(urldecode(urilist.substr(begin + FILEURILEN, end-begin-FILEURILEN)));
 		begin = urilist.find("file://", end);
 		if(begin == string::npos) break;
 		end = urilist.find("\r\n", begin);
 	}
 	return files;
+	#undef FILEURILEN
 }
 
 void gmpmpc_trackdb_widget::on_drag_data_received_signal(const Glib::RefPtr<Gdk::DragContext>& context,
