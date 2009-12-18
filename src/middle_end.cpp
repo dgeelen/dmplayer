@@ -16,10 +16,18 @@ middle_end::middle_end()
 	networkhandler.client_message_receive_signal.connect(bind(&middle_end::handle_received_message, this, _1));
 	trackdb.add_directory("/home/dafox/sharedfolder/music/");
 	trackdb.add_directory("f:\\home\\dafox\\sharedfolder\\music\\");
+	trackdb.add_directory("c:\\music\\");
 	trackdb.add_directory("d:\\music\\");
+	trackdb.add_directory("e:\\music\\");
+	trackdb.add_directory("c:\\stuff\\music\\");
 	trackdb.add_directory("d:\\stuff\\music\\");
+	trackdb.add_directory("e:\\stuff\\music\\");
+	trackdb.add_directory("c:\\mp3\\");
 	trackdb.add_directory("d:\\mp3\\");
+	trackdb.add_directory("e:\\mp3\\");
+	trackdb.add_directory("c:\\My Documents\\My Music\\");
 	trackdb.add_directory("d:\\My Documents\\My Music\\");
+	trackdb.add_directory("e:\\My Documents\\My Music\\");
 	networkhandler.start();
 	sig_search_tracks.connect(boost::bind(&middle_end::handle_msg_query_trackdb_query_result, this, _1, _2));
 	client_synced_playlist.sig_send_message.connect(boost::bind(&network_handler::send_server_message, &networkhandler, _1));
