@@ -3,10 +3,11 @@
 #ifndef DISPATCHER_MARSHALLER_H
 #define DISPATCHER_MARSHALLER_H
 
-#include <vector>
+#include <deque>
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 #include <boost/function.hpp>
-#include <boost/thread/mutex.hpp>
+#include <boost/thread.hpp>
 #include <boost/preprocessor/repetition.hpp>
 #include <boost/preprocessor/iteration/iterate.hpp>
 #include <boost/preprocessor/punctuation/comma_if.hpp>
@@ -19,17 +20,24 @@
 class DispatcherMarshaller : public Glib::Dispatcher {
 	private:
 		typedef boost::function<void(void)> function_type;
-
+		boost::thread::id          instantiating_thread;
 		boost::mutex               queue_mutex;
-		std::vector<function_type> queue;
+		std::deque<function_type>  queue;
+	
 		// This is called by the Dispatcher object to run in the thread
 		// DispatcherMarshaller belongs to.
 		void queue_runfunction() {
-			boost::mutex::scoped_lock lock(queue_mutex);
-			BOOST_FOREACH(function_type f, queue) {
+			function_type f;
+			{
+				boost::mutex::scoped_lock lock(queue_mutex);
+				if(queue.size() > 0) {
+					f = queue.front();
+					queue.pop_front();
+				}
+			}
+			if(f) {
 				f();
 			}
-			queue.clear();
 		}
 
 		template <typename TCallee>
@@ -48,6 +56,7 @@ class DispatcherMarshaller : public Glib::Dispatcher {
 
 	public:
 			DispatcherMarshaller() : Glib::Dispatcher() {
+				instantiating_thread = boost::this_thread::get_id();
 				connect(boost::bind(&DispatcherMarshaller::queue_runfunction, this));
 			};
 
@@ -57,9 +66,23 @@ class DispatcherMarshaller : public Glib::Dispatcher {
 			};
 
 			void invoke(function_type f) {
-				boost::mutex::scoped_lock lock(queue_mutex);
-				queue.push_back(f);
-				(*this)(); // Notification of dispatcher (which will invoke queue_runfunction)
+				if(boost::this_thread::get_id() == instantiating_thread) {
+					// We want to avoid calling Glib::Dispatcher::operator()
+					// from the thread that instantiated the dispatcher object
+					// because Glib::Dispatcher internally uses a pipe for
+					// communication. Writing to this pipe from the receiving
+					// end seems to deadlock. However, since we want to execute
+					// f() in the instantiating thread anyway, we can just do
+					// so now anyways.
+					f();
+				}
+				else {
+					{
+						boost::mutex::scoped_lock lock(queue_mutex);
+						queue.push_back(f);
+					}
+					(*this)(); // Notification of dispatcher (which will invoke queue_runfunction)
+				}
 			};
 
 			template <typename TCallee>
