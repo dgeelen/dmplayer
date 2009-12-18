@@ -3,6 +3,7 @@
 
 #include "packet.h"
 #include "error-handling.h"
+#include "cross-platform.h"
 #include <boost/thread.hpp>
 #include <boost/thread/condition.hpp>
 
