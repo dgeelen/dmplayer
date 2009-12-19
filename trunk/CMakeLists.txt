@@ -1,71 +1,74 @@
 cmake_minimum_required(VERSION 2.4.0)
 
+SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
+
 IF(COMMAND cmake_policy)
 	cmake_policy(SET CMP0003 NEW)
-ENDIF(COMMAND cmake_policy)
+	cmake_policy(SET CMP0005 OLD)
+ENDIF()
 
 PROJECT(mpmp)
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
-
-# Use DEBUG as default build type for now
-if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Debug CACHE STRING
-    "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel."
-    FORCE)
-endif (NOT CMAKE_BUILD_TYPE)
-
-# Treat warnings as errors cmake option (todo: support this on gcc/other compilers)
-SET(TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Treat warnings as errors")
-
-# Treat warnings as errors cmake option
-SET(TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Treat warnings as errors")
-
 IF(MSVC)
-	SET(LINK_STATIC_RUNTIME OFF CACHE BOOL "Link statically against C++ runtime")
-	ADD_DEFINITIONS("-D_CRT_SECURE_NO_WARNINGS")
-
+	# NOTE: Because we need to link to GTK which compiled with the Dynamic Runtime (/MD option),
+	#       we cannot (easily?) support static linking.
+	# TODO: See if we can't do something to link statically with the dynamic runtime?
+	
 	IF(TREAT_WARNINGS_AS_ERRORS)
 		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")
 		SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /WX")
 	ENDIF()
 
 	# Extra speed optimisation options
-	SET(MSVC_EXTRA_OPTIMIZE OFF CACHE BOOL "Use extra optimization flags in release builds")
+	# NOTE: These *ARE* passed to clxx and friends, even if you can't tell by looking at the
+	#       CMAKE_CXX_FLAGS in cmake-gui or properties window in Visual Studio
+	SET(MSVC_EXTRA_OPTIMIZE ON CACHE BOOL "Use extra optimization flags in release builds")
 	IF(MSVC_EXTRA_OPTIMIZE)
-		MESSAGE(STATUS "FIXME: I am overriding your custom C- and CXX-flags :-).")
-		SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}     /Ox /Ob2 /Oi /Ot /Oy /GT /GL /GF /FD /GS- /fp:fast" CACHE STRING "Flags used by the compiler during release builds." FORCE)
-		SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox /Ob2 /Oi /Ot /Oy /GT /GL /GF /FD /GS- /fp:fast" CACHE STRING "Flags used by the compiler during release builds." FORCE)
-		SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /OPT:REF /OPT:ICF /LTCG"  CACHE STRING "Flags used by the compiler during release builds." FORCE)
-		SET(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} /OPT:REF /OPT:ICF /LTCG"  CACHE STRING "Flags used by the compiler during release builds." FORCE)
+		SET(CMAKE_C_FLAGS_RELEASE             "${CMAKE_C_FLAGS_RELEASE}             /Ox /Ob2 /Oi /Ot /Oy /GT /GL /GF /FD /GS- /fp:fast")
+		SET(CMAKE_CXX_FLAGS_RELEASE           "${CMAKE_CXX_FLAGS_RELEASE}           /Ox /Ob2 /Oi /Ot /Oy /GT /GL /GF /FD /GS- /fp:fast")
+		SET(CMAKE_EXE_LINKER_FLAGS_RELEASE    "${CMAKE_EXE_LINKER_FLAGS_RELEASE}    /OPT:REF /OPT:ICF /LTCG")
+		SET(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} /OPT:REF /OPT:ICF /LTCG")
 	ENDIF()
-
+	
+	# Even more speed optimisations
 	SET(MSVC_OPTIMIZE_SSE2 OFF CACHE BOOL "Use SSE2 instruction set in release builds")
 	IF(MSVC_OPTIMIZE_SSE2)
-		SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /arch:SSE2")
+		SET(CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE}   /arch:SSE2")
 		SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /arch:SSE2")
-	ENDIF()
+	ENDIF()	
+ENDIF()
 
-	#SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /NODEFAULTLIB:LIBCMTD")
-	SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /NODEFAULTLIB:LIBCMT /NODEFAULTLIB:libcpmt")
+IF(UNIX)
+	ADD_DEFINITIONS("-D_LARGEFILE_SOURCE")
+	ADD_DEFINITIONS("-D_FILE_OFFSET_BITS=64")
+ENDIF()
 
-	IF(LINK_STATIC_RUNTIME)
-		MESSAGE(STATUS "Linking with *STATIC* runtime (/MT)")
-		foreach(cfgtype ${CMAKE_CONFIGURATION_TYPES} ${CMAKE_BUILD_TYPE})
-			string(TOUPPER "CMAKE_C_FLAGS_${cfgtype}" flag_var)
-			string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-			string(TOUPPER "CMAKE_CXX_FLAGS_${cfgtype}" flag_var)
-			string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-			SET(${flag_var} "${${flag_var}}" CACHE STRING "FIXME: Use the official VisualStudio way" FORCE)
-		endforeach()
-		ADD_DEFINITIONS("-DLINK_STATIC_RUNTIME")
-		#SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /NODEFAULTLIB:msvcrt /NODEFAULTLIB:msvcrtd")
+IF(WIN32)
+	ADD_DEFINITIONS("-DNOMINMAX")
+	ADD_DEFINITIONS("-D_SCL_SECURE_NO_WARNINGS")
+ENDIF()
+
+
+IF(CMAKE_COMPILER_IS_GNUCXX)
+	# Treat warnings as errors cmake option
+	SET(TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Treat warnings as errors") # TODO: Support this for MINGW && MSVC also
+	
+	IF(TREAT_WARNINGS_AS_ERRORS)
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+		SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
 	ENDIF()
 ENDIF()
 
+IF(MINGW)
+	SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -mwindows")
+ENDIF()
+
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
+
+add_definitions(-DNETWORK_CORE_USE_LOCKS) # TODO: Make this configurable?
+
 # Define DEBUG when doing debug builds.
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DDEBUG")
-add_definitions(-DNETWORK_CORE_USE_LOCKS)
+set(CMAKE_C_FLAGS_DEBUG   "${CMAKE_C_FLAGS_DEBUG} -DDEBUG")
 
 SUBDIRS(src)
