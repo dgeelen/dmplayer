@@ -9,7 +9,6 @@ SUBDIRS(qt-client)
 SUBDIRS(audio)
 SUBDIRS(network)
 
-
 ADD_EXECUTABLE(mpmpd
 	mpmpd.h mpmpd.cpp
 	network-handler.h network-handler.cpp
@@ -33,7 +32,6 @@ TARGET_LINK_LIBRARIES(mpmpd
 	lib_network
 )
 
-INCLUDE_DIRECTORIES("D:/Stuff/Projects/dMPlayer/portaudio_v18_1/pa_common")
 INCLUDE_DIRECTORIES("libexecstream")
 
 IF(WIN32)
