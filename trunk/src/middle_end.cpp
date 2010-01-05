@@ -247,26 +247,27 @@ void middle_end::handle_message_request_file(const message_request_file_ref requ
 		if(filesystem::exists(s[0].filename)) {
 			filesystem::ifstream f( s[0].filename, std::ios_base::in | std::ios_base::binary );
 
-			const int BYTES_TO_SEND(1024*8);
+			const int BYTES_TO_SEND(1024*4);
 			std::vector<uint8> data(BYTES_TO_SEND);
-			uint32 sleeptime = 0;
 			uint32 bytes_sent = 0;
 			while(!tl_done) {
-				posix_time::ptime start_time(posix_time::microsec_clock::universal_time());
 				f.read((char*)&data[0], BYTES_TO_SEND);
 				uint32 read = f.gcount();
+				posix_time::ptime time_a(posix_time::microsec_clock::universal_time());
 				if(read) {
 					std::vector<uint8> vdata;
 					std::vector<uint8>::iterator from = data.begin();
 					std::vector<uint8>::iterator to = from + read;
 					vdata.insert(vdata.begin(), from, to);
 					message_request_file_result_ref msg(new message_request_file_result(vdata, request->id));
+
 					try {
 						networkhandler.send_server_message(msg);
 					}
 					catch(Exception e) {
 						tl_done = true;
 					}
+					posix_time::ptime time_b(posix_time::microsec_clock::universal_time());
 
 					// Common WAV formats:
 					// 8KHz 8bit 1-channel        ~= 7.8125 kb/s
@@ -278,24 +279,26 @@ void middle_end::handle_message_request_file(const message_request_file_ref requ
 					// 48kHz 32bit 2-channels     ~= 375 kb/s
 					// 96kHz 32bit 2-channels     ~= 750 kb/s
 					//
-					// So choose 200kb/s as a target transfer speed.
-					// This is 200*8/320 = 5 times higher than the highest
-					// officially supported MP3 bitrate.
-					posix_time::ptime now(posix_time::microsec_clock::universal_time());
+					// So choose 256kb/s as a target transfer speed.
+					// This is 256*8/320 = 6.4 times higher than the highest
+					// officially supported MP3 bitrate, and should even accomodate
+					// most flac encoded files.					
 					bytes_sent += read;
-					posix_time::time_duration time_elapsed = now - start_time;
-					if(bytes_sent > 1024 * 128) { // After 128k we start slowing down
-						double avg_rate = bytes_sent / double( time_elapsed.total_microseconds() );
-						posix_time::time_duration chunk_time = posix_time::microseconds(int64(0.5 + (avg_rate / double(BYTES_TO_SEND))));
-						posix_time::time_duration max_wait(posix_time::microseconds(int64(0.5 + (1000000.0 / ((200*1024) / double(BYTES_TO_SEND))))));
-						posix_time::time_duration sleep_time = max_wait - chunk_time;
+					if(bytes_sent > 1024 * 256) { // After 256k we start slowing down
+						posix_time::time_duration time_elapsed = time_b - time_a;
+						// we target 256KB/ps
+						uint64 bps = (256 * 1024) / BYTES_TO_SEND; // number of buffers per second
+						uint64 target_duration = 1000000 / bps;
+						target_duration = time_elapsed.total_microseconds(); // time left for this buffer
+						posix_time::time_duration sleep_time = posix_time::microseconds(target_duration);
 						if(sleep_time > posix_time::microseconds(0)) {
 							try {
 								this_thread::sleep(sleep_time);
 							}
-							catch(boost::thread_interrupted e) {}
+							catch(boost::thread_interrupted e) {} // We will only sleep less because of this, no need to sleep 'the rest'
 						}
 					}
+					time_a = posix_time::microsec_clock::universal_time();
 
 					{
 						mutex::scoped_lock lock(file_requests_mutex);
