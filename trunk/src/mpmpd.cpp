@@ -505,6 +505,23 @@ class Server {
 						{
 							msg->apply(pl);
 							recalculateplaylist = true;
+							uint32 i = 0;
+							while(i < pl.size()) {
+								if(clients.find(pl.get(i).id.first ) == clients.end()) {
+									// This song does not belong to any client so it is an obvious fake
+									// (or someone is trying to add files from a client which has already 
+									// disconnected), so remove it from the wishlist.
+									// TODO: Possibly also check that the minor-id (id.second) is valid
+									//       somehow (although we should get feedback from the client
+									//       in question when requesting an invalid track, and more
+									//       importantly: fix this properly since we still have a
+									//       race-condition when a client disconnects (hard quit/crash/
+									//       loss of connectivity/etc) at the same moment that we enqueue
+									//       one of his tracks.
+									pl.remove(i--);
+								}
+								++i;
+							}
 						}
 						else {
 							dcerr("Ignoring playlist update, playlist full."); // TODO: Penalty?
