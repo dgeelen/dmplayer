@@ -4,11 +4,12 @@
 
 WAVWriterBackend::WAVWriterBackend(AudioController* dec)	: IBackend(dec) {
 	/* let the world know what audio format we accept */
-	af.Channels      = 2;
-	af.BitsPerSample = 16;
+	af.Channels      = 6;
+	af.BitsPerSample = 32;
 	af.SampleRate    = 44100;
 	af.SignedSample  = true;
 	af.LittleEndian  = true;
+	af.Float         = true;
 	decoder = dec;
 	outputter_thread = NULL;
 	f = NULL;
@@ -45,7 +46,7 @@ void WAVWriterBackend::outputter() {
 		                'W', 'A', 'V', 'E',
 		                'f', 'm', 't', ' ',
 		                 16,   0,   0,   0,
-		                  1,   0,
+		                 af.Float ? 3 : 1,   0,
 		                (af.Channels&0xff),   ((af.Channels>>8)&0xff),
 		                (af.SampleRate&0xff), ((af.SampleRate>>8)&0xff), ((af.SampleRate>>16)&0xff), ((af.SampleRate>>24)&0xff),
 		                (ByteRate&0xff), ((ByteRate>>8)&0xff), ((ByteRate>>16)&0xff), ((ByteRate>>24)&0xff),
@@ -60,12 +61,25 @@ void WAVWriterBackend::outputter() {
 	if(!f)
 		throw Exception("Could not open file output.wav");
 
-	uint8 buf[4096];
+	uint32 total = 0;
+	int size = (af.BitsPerSample>>3) * af.Channels * 1024;
+	uint8* buf = new uint8[size];
 	while(!done) {
-		int read = decoder->getData(buf, 4096);
+		int read = decoder->getData(buf, size);
 		fwrite((char*)buf, sizeof(uint8), read, f);
+		total += read;
+		if(read == 0) break;
 	}
+	delete[] buf;
 
+	// FIXME: the values for total which we write are guestimates, 
+	//        it seems to work ok though.
+	//        (we might miss a few ms of data at the end)
+	fseek(f, 8*4 + 4*2, SEEK_SET);
+	fwrite(&total, 1, 4, f);
+	total += 4 + 24 + 8;
+	fseek(f, 4, SEEK_SET);
+	fwrite(&total, 1, 4, f);
 	fclose(f);
 	dcerr("stopped WAV output");
 }
