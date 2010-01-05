@@ -46,6 +46,7 @@ ReformatFilter::ReformatFilter(IAudioSourceRef as, AudioFormat target)
 			if(!src->getAudioFormat().Float) {
 				AudioFormat float_target(target);
 				float_target.Float = true;
+				float_target.BitsPerSample = 32;
 				src = IAudioSourceRef(new SampleConverterFilter(src, float_target));
 			}
 			src = IAudioSourceRef(new LibSamplerateFilter(src, target));
