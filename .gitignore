@@ -10,3 +10,4 @@ build/*
 build_release/*
 extralibs/*
 extralibs_devel/*
+mpmp_redist/*
