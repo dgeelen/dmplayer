@@ -34,6 +34,7 @@ IIRFilter::IIRFilter(IAudioSourceRef as, AudioFormat target, std::vector<float> 
 	this->inputs  = std::deque<float>(feedforward_coefficients.size() * audioformat.Channels);
 	this->outputs = std::deque<float>(feedback_coefficients.size() * audioformat.Channels);
 	audioformat.Float = true;
+	audioformat.BitsPerSample = 32;
 	is_exhausted = false;
 }
 

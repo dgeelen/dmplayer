@@ -126,6 +126,7 @@ NormalizeFilter::NormalizeFilter(IAudioSourceRef as, AudioFormat target)
 	if(!src->getAudioFormat().Float) { // both IIR filter *and* resample filter expect Float input
 		AudioFormat af_float(src->getAudioFormat());
 		af_float.Float = true;
+		af_float.BitsPerSample = 32;
 		audioformat = af_float;
 		dcerr("Auto inserting SampleConverterFilter");
 		src = IAudioSourceRef(new SampleConverterFilter(src, af_float));

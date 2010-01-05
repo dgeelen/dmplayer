@@ -27,6 +27,7 @@ LibSamplerateFilter::LibSamplerateFilter(IAudioSourceRef as, AudioFormat target)
 		throw Exception("Need float input");
 	}
 	audioformat.Float = true;
+	audioformat.BitsPerSample = 32;
 	audioformat.SampleRate = target.SampleRate;
 	int error = 0;
 	callback_data.input_buffer.resize(1024*32);
