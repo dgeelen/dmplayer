@@ -20,6 +20,7 @@ class AudioController {
 		void start_playback();
 		void stop_playback();
 		void set_data_source(IDataSourceRef ds);
+		uint64 get_current_playtime();
 		boost::signal<void(uint64)> playback_finished;
 	private:
 		IBackendRef backend;
