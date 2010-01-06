@@ -184,9 +184,12 @@ class Server {
 			return 0;
 		}
 
-		// True if more than half of all clients voted for this song
+		// True if more than half of all clients voted for this song, 
+		// minus one required vote for each average_song_duration
 		bool is_down_voted(TrackID tid, boost::mutex::scoped_lock& vote_min_list_lock, boost::mutex::scoped_lock& clients_lock) {
-			if(vote_min_count(tid, vote_min_list_lock) * 2 > clients.size())
+			uint64 current_playtime = ac.get_current_playtime();
+			uint32 n_avg_song_durations = current_playtime / average_song_duration;
+			if(vote_min_count(tid, vote_min_list_lock) * 2 + n_avg_song_durations > clients.size())
 				return true;
 			return false;
 		}

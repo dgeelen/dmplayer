@@ -89,6 +89,10 @@ uint32 AudioController::getData(uint8* buf, uint32 len)
 	return read;
 }
 
+uint64 AudioController::get_current_playtime() {
+	return bytes_played / backend->getAudioFormat().getBytesPerSecond(); //FIXME: Low resolution!
+}
+
 void AudioController::set_data_source(const IDataSourceRef ds) {
 	IAudioSourceRef newdecoder;
 	if(ds) {
