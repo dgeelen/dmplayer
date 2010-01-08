@@ -7,6 +7,7 @@
 #include "filter_sampledoubler.h"
 #include "filter_monotostereo.h"
 #include "filter_sampleconverter.h"
+#include "filter_upmix.h"
 #ifdef LIBSAMPLERATE_FILTER
 	#include "filter_libsamplerate.h"
 #endif
@@ -38,6 +39,12 @@ ReformatFilter::ReformatFilter(IAudioSourceRef as, AudioFormat target)
 			dcerr(src->getAudioFormat().Channels << " != " << target.Channels);
 			src = IAudioSourceRef(new MonoToStereoFilter(src));
 			++nfilters;
+		}
+
+		// Increase number of channels when needed
+		if(src->getAudioFormat().Channels < target.Channels) {
+			dcerr("Inserting upmix filter: " << src->getAudioFormat().Channels << " -> " << target.Channels);
+			src = IAudioSourceRef(new UpmixFilter(src, target));
 		}
 
 		if(src->getAudioFormat().SampleRate != target.SampleRate) {

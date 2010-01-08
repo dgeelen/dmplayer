@@ -153,6 +153,7 @@ ADD_LIBRARY(mpmp_audio
 	filter_split.h                filter_split.cpp
 	filter_normalize.h            filter_normalize.cpp
 	filter_downmix.h              filter_downmix.cpp
+	filter_upmix.h                filter_upmix.cpp
 
 	${BACKEND_SOURCE_FILES}
 	${DECODER_SOURCE_FILES}
