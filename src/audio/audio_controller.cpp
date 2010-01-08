@@ -15,6 +15,7 @@
 #include "filter_reformat.h"
 #include "backend_wavwriter.h"
 #include "filter_normalize.h"
+#include "filter_downmix.h"
 
 // TODO, also poll for data...
 class NullBackend: public IBackend {
@@ -124,8 +125,15 @@ void AudioController::set_data_source(const IDataSourceRef ds) {
 		}
 
 		#ifndef DEBUG // Uses too much CPU to do any usefull debugging, so leave it disabled unless needed
-		newdecoder = IAudioSourceRef( new NormalizeFilter( newdecoder, backend->getAudioFormat()) );
+		newdecoder = IAudioSourceRef(new NormalizeFilter(newdecoder, backend->getAudioFormat()));
 		#endif
+
+		// FIXME: This is really a custom hack for our personal use
+		AudioFormat mono_format(backend->getAudioFormat());
+		if((mono_format.Channels != 1) && (newdecoder->getAudioFormat().Channels == 2)) {
+			mono_format.Channels = 1;
+			newdecoder = IAudioSourceRef(new DownmixFilter(newdecoder, mono_format));
+		}
 
 		if(newdecoder->getAudioFormat() != backend->getAudioFormat())
 			newdecoder = IAudioSourceRef(new ReformatFilter(newdecoder, backend->getAudioFormat()));
