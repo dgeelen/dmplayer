@@ -185,13 +185,15 @@ class Server {
 		}
 
 		// True if more than half of all clients voted for this song, 
-		// minus one required vote for each average_song_duration
-		bool is_down_voted(TrackID tid, boost::mutex::scoped_lock& vote_min_list_lock, boost::mutex::scoped_lock& clients_lock) {
+		// except for the current track which requires one vote less
+		// for each average_song_duration it lasts longer than
+		// average_song_duration.
+		bool is_down_voted(TrackID tid, boost::mutex::scoped_lock& vote_min_list_lock, boost::mutex::scoped_lock& clients_lock, boost::mutex::scoped_lock& current_track_mutex) {
 			uint64 current_playtime = ac.get_current_playtime();
-			uint32 n_avg_song_durations = current_playtime / average_song_duration;
-			if(vote_min_count(tid, vote_min_list_lock) * 2 + n_avg_song_durations > clients.size())
-				return true;
-			return false;
+			uint32 vmc = vote_min_count(tid, vote_min_list_lock);
+			uint32 n_avg_song_durations = (current_playtime / average_song_duration) * (current_track.id == tid);
+			n_avg_song_durations = n_avg_song_durations > 0 ? n_avg_song_durations - 1 : 0;
+			return (clients.size() - (vmc > 0) * n_avg_song_durations < 2 * vmc);
 		}
 
 		void next_song(uint32 playtime_secs) {
@@ -202,7 +204,7 @@ class Server {
 			boost::mutex::scoped_lock vote_min_list_lock(vote_min_list_mutex);
 
 			cout << "Next song, playtime was " << playtime_secs << " seconds" << endl;
-			bool vote_min_penalty = is_down_voted(current_track.id, vote_min_list_lock, clients_lock);
+			bool vote_min_penalty = is_down_voted(current_track.id, vote_min_list_lock, clients_lock, current_track_lock);
 			if((vote_min_penalty && playtime_secs < average_song_duration * 0.2) || (playtime_secs < 15)) {
 				cout << "issueing a penalty of " << uint32(average_song_duration) << " seconds" << endl;
 				playtime_secs += uint32(average_song_duration);
@@ -300,7 +302,7 @@ class Server {
 				while(!found_track && (playlist.size()>0)) {
 					TrackID tid = playlist.get(0).id;
 					found_track = true;
-					if(is_down_voted(tid, vote_min_list_lock, clients_lock)) {
+					if(is_down_voted(tid, vote_min_list_lock, clients_lock, current_track_lock)) {
 						cout << "Skipping track " << tid << ", assuming a duration of " << average_song_duration << " seconds" << endl;
 						// FIXME: average song duration does not have a mutex yet (does it need one?)
 						update_zero_sum(tid, average_song_duration, clients_lock);
@@ -596,7 +598,7 @@ class Server {
 							boost::mutex::scoped_lock current_track_lock(current_track_mutex);
 							boost::mutex::scoped_lock vote_min_list_lock(vote_min_list_mutex);
 							vote_min_list[msg->id].insert(id);
-							if((current_track.id==msg->id) && is_down_voted(msg->id, vote_min_list_lock, clients_lock)) {
+							if((current_track.id==msg->id) && is_down_voted(msg->id, vote_min_list_lock, clients_lock, current_track_lock)) {
 								boost::mutex::scoped_lock server_datasource_lock(server_datasource_mutex);
 								if(server_datasource) {
 									/* Notify sender to stop sending */
