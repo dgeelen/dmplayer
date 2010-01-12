@@ -27,15 +27,17 @@ using namespace std;
 
 class Client {
 	public:
-		Client() : id(ClientID(-1)), zero_sum(0.0) {}
+		Client() : id(ClientID(-1)), zero_sum(0.0), is_active(true) {}
 		Client(ClientID id_) {
 			id = id_;
 			zero_sum = 0.0;
+			is_active = true;
 		}
 
 		ClientID id;
 		double zero_sum;
 		PlaylistVector wish_list;
+		bool is_active;
 };
 typedef boost::shared_ptr<Client> Client_ref;
 
@@ -171,10 +173,17 @@ class Server {
 					if(c->wish_list.get(i).id == tid) {
 						c->wish_list.remove(i);
 						--i;
-// 						break; // No spamming of the playlist plz
 					}
 				}
 			}
+		}
+
+		uint32 n_active_clients() {
+			uint32 count = 0;
+			BOOST_FOREACH(Client_ref cr, clients) {
+				count += cr->is_active;
+			}
+			return count;
 		}
 
 		uint32 vote_min_count(TrackID tid, boost::mutex::scoped_lock& vote_min_list_lock) {
@@ -193,7 +202,7 @@ class Server {
 			uint32 vmc = vote_min_count(tid, vote_min_list_lock);
 			uint32 n_avg_song_durations = (current_playtime / average_song_duration) * (current_track.id == tid);
 			n_avg_song_durations = n_avg_song_durations > 0 ? n_avg_song_durations - 1 : 0;
-			return (clients.size() - (vmc > 0) * n_avg_song_durations < 2 * vmc);
+			return (n_active_clients() - (vmc > 0) * n_avg_song_durations < 2 * vmc);
 		}
 
 		void next_song(uint32 playtime_secs) {
@@ -237,7 +246,7 @@ class Server {
 					has_song.push_back(c->id);
 				}
 				else {
-					if(c->wish_list.size() > 0) {
+					if((c->wish_list.size() > 0) && c->is_active) {
 						// Only people who actively participate are rewarded
 						// TODO: Perhaps instead of pure yes/no do some weighting
 						does_not_have_song.push_back(c->id);
@@ -256,7 +265,7 @@ class Server {
 			}
 			if(has_song.size() == 0) { // Should never happen //TODO: Check if this can still happen
 				cout << "WARNING: Division by zero, ZeroSum compromised!!" << endl;
-				cout << "has_song.size()==" << has_song.size() << " clients.size()==" << clients.size() << " others.size==" << others.size() << " avg_min==" << avg_min << " avg_plus==" << avg_plus << endl;
+				cout << "has_song.size()==" << has_song.size() << " n_active_clients()==" << n_active_clients() << " others.size==" << others.size() << " avg_min==" << avg_min << " avg_plus==" << avg_plus << endl;
 				avg_plus = avg_min = 0.0; //FIXME : ugly hax
 			}
 			BOOST_FOREACH(ClientID& id, has_song) {
@@ -343,8 +352,12 @@ class Server {
 			boost::mutex::scoped_lock vote_min_list_lock(vote_min_list_mutex);
 
 			cout << "Removing client " << STRFORMAT("%08x", id) << std::endl;
-			if (clients.find(id) == clients.end())
+
+			ClientMap::iterator i = clients.find(id);
+			if (i == clients.end())
 				return;
+			Client_ref cr = *i;
+
 			{
 				boost::mutex::scoped_lock lock(server_datasource_mutex);
 				if(current_track.id.first == id && server_datasource) { // Client which is serving current file disconnected!
@@ -389,8 +402,7 @@ class Server {
 				}
 			}
 
-			Client_ref cr = *clients.find(id);
-			// check if somebody else is still listening.
+			// check if somebody other than this client is still listening to the current track.
 			bool has_listeners = false;
 			BOOST_FOREACH(Client_ref c, clients) {
 				if(cr->id != c->id) {
@@ -401,53 +413,39 @@ class Server {
 						}
 					}
 				}
-				for(unsigned int i=0; i < c->wish_list.size(); ++i) {
-					if(c->wish_list.get(i).id.first == id) { // No way to retrieve this song from this client now...
-						c->wish_list.remove(i);
-						--i;
-					}
-				}
 			}
-
-			// Do some magic with 'ghost' clients to prevent zero_sum from becoming corrupt
-			// due to this client now leaving. (Might cause 'has_song' to become an empty set)
-			ClientID invalid_cid(-1);
-			ClientMap::iterator ghost = clients.insert(Client_ref(new Client(invalid_cid))).first;
-			(*ghost)->zero_sum = cr->zero_sum;
-			(*ghost)->wish_list.append(current_track);
-			clients.erase(id);
-			disconnected_clients[id] = cr;
-			if(!has_listeners) { // Cue next song since no-one wants to hear this now
+			cr->is_active = false;
+			if(!has_listeners && cr->wish_list.size()>0) { // Cue next song since no-one wants to hear this now
+				PlaylistVector pv(cr->wish_list);
+				cr->wish_list.clear();
+				cr->wish_list.append(pv.get(0)); // we know there must be at least one track in this wishlist, and we know (for now) that this must the current track
+				pv.remove(0);
 				// NOTE:
 				//  * Also calls next_song which is important since if has_song becomes empty
 				//    zero_sum is compromised.
 				//  * Will not try to enque a song from this client since we just removed all
-				//    his songs from all wish_lists.
-				//  * Will not race msg_playlist_update because of the ghost client we just added.
-				//    (clients will hold multiple 'ghost' clients)
+				//    his songs from his wish_lists, and he's now inactive.
+				//  * Will not race msg_playlist_update because this client is inactive
+				//  * Might race msg_connect / msg_playlist_update combo...
+				//
 				// make sure we don't hold any locks when we start calling other functions
 				vote_min_list_lock.unlock();
 				playlist_lock.unlock();
-				current_track_lock.unlock();
+				current_track_lock.unlock(); 
 				clients_lock.unlock();
-				ac.stop_playback();
+				ac.stop_playback(); // client should still be active and receive penalty
 				clients_lock.lock();
 				current_track_lock.lock();
 				playlist_lock.lock();
 				vote_min_list_lock.lock();
-				ghost = clients.find(invalid_cid); // iterator may have become invalid, refresh it
+				cr->wish_list = pv;
 			}
-			cr->zero_sum = (*ghost)->zero_sum;
-			clients.erase(ghost);
+			cr->wish_list.clear(); // FIXME: This should be removed as soon as clients can manipulate their own playlists
 
-			double total = cr->zero_sum;
-			cout << "This clients zero_sum was:" << total << std::endl;
 			BOOST_FOREACH(Client_ref i, clients) {
-				double old = i->zero_sum;
-				i->zero_sum += total/clients.size();
-				cout << "(dc)  for " << STRFORMAT("%08x", i->id) << ": " << old << " -> " << i->zero_sum << std::endl;
+				cout << "remove: " << STRFORMAT("%08x", i->id) << ": " << i->zero_sum << std::endl;
 			}
-
+			
 			recalculateplaylist(clients_lock, current_track_lock, playlist_lock, vote_min_list_lock);
 		}
 
@@ -456,35 +454,25 @@ class Server {
 			bool is_known_client = false;
 			{
 				boost::mutex::scoped_lock lock_clients(clients_mutex);
-				is_known_client = (clients.find(id) != clients.end());  // Ensure that we know this client,
+				ClientMap::iterator i = clients.find(id);
+				is_known_client = (i != clients.end()) && ((*i)->is_active);  // Ensure that we know this client, and he is not currently disconnected
 			}
-			if((m->get_type() ==  message::MSG_CONNECT) || is_known_client) { // unless it is a genuine request.
+			if((m->get_type() ==  message::MSG_CONNECT) || is_known_client) { // unless it is a genuine connection request.
 				switch(m->get_type()) {
 					case message::MSG_CONNECT: {
 						dcerr("Received a MSG_CONNECT from " << STRFORMAT("%08x", id));
 						{
 							boost::mutex::scoped_lock lock_clients(clients_mutex);
-							std::map<ClientID, Client_ref>::iterator i = disconnected_clients.find(id);
-							bool is_reconnect = true;
-							if(i == disconnected_clients.end()) {
-								disconnected_clients[id] = Client_ref(new Client(id));
-								i = disconnected_clients.find(id);
-								is_reconnect = false;
-							}
-							Client_ref cr = i->second;
-							disconnected_clients.erase(i);
-							double total = cr->zero_sum;
-							string str("Client ");
-							if(is_reconnect)
-								str += "re-";
-							str += STRFORMAT("connect detected for %08x, zero_sum: %i\n", id, total);
-							cout << str;
-							BOOST_FOREACH(Client_ref i, clients) {
-								double old = i->zero_sum;
-								i->zero_sum -= total/clients.size();
-								cout << "(dc)  for " << STRFORMAT("%08x", i->id) << ": " << old << " -> " << i->zero_sum << std::endl;
-							}
+							ClientMap::iterator i = clients.find(id);
+							bool is_new_client = (i == clients.end());
+							Client_ref cr = is_new_client ? Client_ref(new Client(id)) : *i;
+							cr->is_active = true;
 							clients.insert(cr);
+							cout << (string("Client ") + (is_new_client ? "" : "re-") + STRFORMAT("connect detected for %08x, zero_sum: %i\n", id, cr->zero_sum));
+							recalculateplaylist = cr->wish_list.size() > 0; 
+							BOOST_FOREACH(Client_ref i, clients) {
+								cout << "connect: " << STRFORMAT("%08x", i->id) << ": " << i->zero_sum << std::endl;
+							}
 						}
 						boost::mutex::scoped_lock lock_playlist(playlist_mutex);
 						networkhandler.send_message(id, messageref(new message_playlist_update(playlist)));
@@ -512,7 +500,8 @@ class Server {
 							recalculateplaylist = true;
 							uint32 i = 0;
 							while(i < pl.size()) {
-								if(clients.find(pl.get(i).id.first ) == clients.end()) {
+								ClientMap::iterator cmi = clients.find(pl.get(i).id.first);
+								if(cmi == clients.end() || !(*cmi)->is_active ) {
 									// This song does not belong to any client so it is an obvious fake
 									// (or someone is trying to add files from a client which has already 
 									// disconnected), so remove it from the wishlist.
@@ -651,12 +640,11 @@ class Server {
 		typedef boost::multi_index_container<
 			Client_ref,
 			boost::multi_index::indexed_by<
-				// non_unique because we need to insert multiple clients with an invalid id at times
-				boost::multi_index::ordered_non_unique<boost::multi_index::member<Client, ClientID, &Client::id> >
+				// no longer non_unique because we shouldn't need to insert multiple clients with an invalid id
+				boost::multi_index::ordered_unique<boost::multi_index::member<Client, ClientID, &Client::id> >
 			>
 		> ClientMap;
 		ClientMap clients;
-		std::map<ClientID, Client_ref> disconnected_clients;
 		boost::mutex vote_min_list_mutex;
 		std::map<TrackID, std::set<ClientID> > vote_min_list;
 		boost::mutex clients_mutex;
@@ -712,7 +700,8 @@ class Server {
 						BOOST_FOREACH(Track& t, new_playlist) {
 							present = present || (t == track);
 						}
-						if(!present) {
+						ClientMap::iterator cmi = clients.find(track.id.first);
+						if((!present) && (cmi != clients.end() && (*cmi)->is_active)) {
 							new_playlist.push_back(track);
 						}
 					}
