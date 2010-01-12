@@ -44,7 +44,8 @@ uint32 DownmixFilter::getData(uint8* buf, uint32 len) {
 		float* s = input;
 		float* d = (float*)buf;
 		for(uint sample = 0 ; sample < samples_todo; ++sample) {
-			*(d++) = (*(s++) + *(s++)) / 2.0f;
+			*(d++) = (s[0] + s[1]) * 0.5;
+			s+=2;
 		}
 	}
 	else { // TODO: Generic downmixer or so?
