@@ -118,7 +118,8 @@ void GtkMpmpClientWindow::construct_gui() {
 	set_default_icon(statusicon_pixbuf);
 #endif
 
-	statusicon->set_tooltip("gmpmpc\nA GTK+ Client for MPMP");
+	sigc::slot<bool> slot = sigc::mem_fun(*this, &GtkMpmpClientWindow::on_check_current_song_timeout);
+	Glib::signal_timeout().connect_seconds(slot, 1);
 	statusicon->set_visible(true);
 
 	/* Create actions */
@@ -172,6 +173,15 @@ void GtkMpmpClientWindow::construct_gui() {
 	show_all();
 	present();
 	main_paned.set_position(main_paned.get_width()/2);
+}
+
+bool GtkMpmpClientWindow::on_check_current_song_timeout() {
+	Track t = playlist_widget.get_current_track();
+	if(t.id != TrackID(ClientID(-1), LocalTrackID(-1))) 
+		statusicon->set_tooltip(t.metadata["FILENAME"]);
+	else
+		statusicon->set_tooltip("gmpmpc\nA GTK+ Client for MPMP");
+	return true;
 }
 
 void GtkMpmpClientWindow::on_menu_file_connect() {

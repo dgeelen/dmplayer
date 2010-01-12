@@ -42,3 +42,10 @@ void gmpmpc_playlist_widget::on_vote_down_button_clicked() {
 		middleend.playlist_vote_down(t);
 	}
 }
+
+Track gmpmpc_playlist_widget::get_current_track() {
+	if(treeview->size() > 0)
+		return treeview->get(0);
+	else
+		return Track();
+}

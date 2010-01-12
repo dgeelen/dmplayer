@@ -18,6 +18,7 @@
 			~gmpmpc_playlist_widget();
 			IPlaylistRef sig_update_playlist_handler();
 			void add_to_wishlist(Track& track);
+			Track get_current_track();
 
 		private:
 			middle_end& middleend;
