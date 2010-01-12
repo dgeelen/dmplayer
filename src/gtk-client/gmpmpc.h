@@ -73,6 +73,7 @@
 			void construct_gui();
 			void set_status_message(std::string msg);
 			void send_message(messageref m);
+			bool on_check_current_song_timeout();
 			bool clear_status_messages();
 	};
 
