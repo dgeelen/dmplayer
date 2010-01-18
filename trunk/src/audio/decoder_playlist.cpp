@@ -89,11 +89,16 @@ bool PlaylistDecoder::exhausted()
 
 IDecoderRef PlaylistDecoder::tryDecode(IDataSourceRef datasource)
 {
+	static int recurselevel = 0;
 	IDecoderRef ret;
-	try {
-		ret = IDecoderRef(new PlaylistDecoder(datasource));
-	} catch (...) {
-		ret.reset();
+	if (recurselevel < 3) {
+		++recurselevel;
+		try {
+			ret = IDecoderRef(new PlaylistDecoder(datasource));
+		} catch (...) {
+			ret.reset();
+		}
+		--recurselevel;
 	}
 	return ret;
 }
