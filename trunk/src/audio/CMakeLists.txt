@@ -113,6 +113,9 @@ ENDIF(LIBSAMPLERATE_FOUND AND LIBSAMPLERATE_DEBUG_FOUND)
 # we can always compile the wave decoder, no libs needed for that
 SET(DECODER_NAMES ${DECODER_NAMES} Wave)
 
+# we can always compile the Playlist decoder, no libs needed for that
+SET(DECODER_NAMES ${DECODER_NAMES} Playlist)
+
 # configure all decoders
 SET(FName ${CMAKE_CURRENT_BINARY_DIR}/decoder_linker.inc)
 FILE(WRITE "${FName}" "\n")
