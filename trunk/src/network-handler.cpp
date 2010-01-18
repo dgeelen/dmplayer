@@ -106,7 +106,7 @@ void network_handler::client_tcp_connection(ipv4_socket_addr addr) { // Initiate
 	try {
 		sock = tcp_socket_ref(new tcp_socket(addr));
 	}
-	catch(std::runtime_error e) {
+	catch(std::exception& e) {
 		message_disconnect_ref msg(new message_disconnect(e.what()));
 		client_message_receive_signal(msg);
 		sock.reset();

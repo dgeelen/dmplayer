@@ -113,7 +113,7 @@ IDecoderRef AACDecoder::tryDecode(IDataSourceRef ds) {
 	try {
 		return IDecoderRef(new AACDecoder(ds));
 	}
-	catch (Exception& e) {
+	catch (std::exception& e) {
 		dcerr("AAC tryDecode failed: " << e.what());
 		return IDecoderRef();
 	}
