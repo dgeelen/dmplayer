@@ -76,7 +76,7 @@ void TrackDataBase::add_directory(fs::path path) {
 				if(fs::exists(iter->path())) {
 					add_directory(iter->path());
 				}
-			} catch(exception& e) {} // on error resume next (eg exception denied etc)
+			} catch(std::exception& e) {} // on error resume next (eg exception denied etc)
 		}
 	}
 	else { // Some kind of file //FIXME: Handle recursive symlinks

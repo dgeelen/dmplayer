@@ -112,7 +112,7 @@ void AudioController::set_data_source(const IDataSourceRef ds) {
 				IDataSourceRef httpdatasource = IDataSourceRef(new HTTPStreamDataSource(s));
 				newdecoder = IDecoder::findDecoder(httpdatasource);
 			}
-			catch (Exception& e) {
+			catch (std::exception& e) {
 				VAR_UNUSED(e); // in debug mode
 				dcerr("Error message: " << e.what());
 				ds->reset();
@@ -153,7 +153,7 @@ void AudioController::test_functie(std::string file) {
 		try {
 			ds = IDataSourceRef(new FileReaderDataSource(file));
 		}
-		catch (Exception& e) {
+		catch (std::exception& e) {
 			VAR_UNUSED(e); // in debug mode
 			dcerr("Error message: " << e.what());
 			ds.reset();
@@ -164,7 +164,7 @@ void AudioController::test_functie(std::string file) {
 		try {
 			ds = IDataSourceRef(new HTTPStreamDataSource(file));
 		}
-		catch (Exception& e) {
+		catch (std::exception& e) {
 			VAR_UNUSED(e); // in debug mode
 			dcerr("Error message: " << e.what());
 			ds.reset();
