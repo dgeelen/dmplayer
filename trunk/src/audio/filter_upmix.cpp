@@ -80,6 +80,5 @@ uint32 UpmixFilter::getData(uint8* buf, uint32 len) {
 }
 
 bool UpmixFilter::exhausted() {
-	//return IIRButter->exhausted();
-	return false;
+	return src->exhausted();
 }
