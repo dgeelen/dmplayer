@@ -99,29 +99,9 @@ void AudioController::set_data_source(const IDataSourceRef ds) {
 	if(ds) {
 		newdecoder = IDecoder::findDecoder(ds);
 		if (!newdecoder) {
-			try {
-				ds->reset();
-				vector<uint8> svec;
-				svec.resize(4096);
-				int read = ds->getData(&svec[0], 4096);
-				string s;
-				s.resize(read);
-				for(int i = 0; i<read; ++i) {
-					s[i] = svec[i];
-				}
-				IDataSourceRef httpdatasource = IDataSourceRef(new HTTPStreamDataSource(s));
-				newdecoder = IDecoder::findDecoder(httpdatasource);
-			}
-			catch (std::exception& e) {
-				VAR_UNUSED(e); // in debug mode
-				dcerr("Error message: " << e.what());
-				ds->reset();
-			}
-			if(!newdecoder) {
-				dcerr("Cannot find decoder!");
-				playback_finished(0); //FIXME: Low resolution!
-				return;
-			}
+			dcerr("Cannot find decoder!");
+			playback_finished(0); //FIXME: Low resolution!
+			return;
 		}
 
 		#ifndef DEBUG // Uses too much CPU to do any usefull debugging, so leave it disabled unless needed
@@ -137,7 +117,6 @@ void AudioController::set_data_source(const IDataSourceRef ds) {
 
 		if(newdecoder->getAudioFormat() != backend->getAudioFormat())
 			newdecoder = IAudioSourceRef(new ReformatFilter(newdecoder, backend->getAudioFormat()));
-		if(!newdecoder) dcerr("All decoders failed!");
 	}
 
 	{
