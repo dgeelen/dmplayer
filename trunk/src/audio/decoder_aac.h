@@ -18,7 +18,6 @@
 	#endif
 #endif
 
-#define BLOCK_SIZE 8*1024
 class AACDecoder : public IDecoder {
 	public:
 		~AACDecoder();
@@ -26,6 +25,7 @@ class AACDecoder : public IDecoder {
 		uint32 getData(uint8* buf, uint32 max);
 		bool exhausted();
 	private:
+		static const size_t BLOCK_SIZE = 8*1024;
 		AACDecoder(IDataSourceRef source);
 
 		void uninitialize();
