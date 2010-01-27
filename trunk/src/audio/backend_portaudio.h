@@ -3,26 +3,20 @@
 
 #include "backend_interface.h"
 #include "audio_controller.h"
-#include "portaudio.h"
+#include "portaudio.h" // NOTE: *MUST* be portaudio V19
 
-// ugh, how ugly is this...
-#ifdef PORT_AUDIO_H
-#define PA_VERSION 18
-#endif
-#ifdef PORTAUDIO_H
-#define PA_VERSION 19
-#endif
-
-class PortAudioBackend : public IBackend{
+class PortAudioBackend : public IBackend {
 	private:
-#if PA_VERSION == 18
-		PortAudioStream *stream;
-#endif
-#if PA_VERSION == 19
+		static int pa_callback(const void *inputBuffer, void *outputBuffer,
+                               unsigned long frameCount,
+                               const PaStreamCallbackTimeInfo* timeInfo,
+                               PaStreamCallbackFlags statusFlags,
+                               void *userData );
 		PaStream *stream;
-#endif
+		AudioController* dec;
+
 	public:
-		PortAudioBackend(AudioController* dec);
+		PortAudioBackend(AudioController* _dec);
 		virtual ~PortAudioBackend();
 		void start_output();
 		void stop_output();
