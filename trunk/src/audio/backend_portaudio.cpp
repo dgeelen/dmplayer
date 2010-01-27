@@ -1,6 +1,8 @@
 #include "backend_portaudio.h"
 #include "../error-handling.h"
 #include "../util/StrFormat.h"
+#include <boost/thread/mutex.hpp>
+boost::mutex pa_mutex; // PortAudio is not thread safe
 
 using namespace std;
 
@@ -24,8 +26,10 @@ int PortAudioBackend::pa_callback(const void *inputBuffer, void *outputBuffer,
 PortAudioBackend::PortAudioBackend(AudioController* _dec)
 	: IBackend(dec), dec(_dec)
 {
+	boost::mutex::scoped_lock lock(pa_mutex);
 	PaError err = Pa_Initialize();
-	if (err != paNoError) throw SoundException("PortAudio backend: ERROR: initialisation failed");
+	if (err != paNoError)
+		throw SoundException("PortAudioBackend initialisation failed");
 
 	int numDevices = Pa_GetDeviceCount();
 	if(numDevices < 0) {
@@ -69,7 +73,7 @@ PortAudioBackend::PortAudioBackend(AudioController* _dec)
 		}
 	}
 	dcerr("Selecting device #" << best_device << " (default is #" << default_device << ")");
-	
+
 	if(fabs(samplerate - double(long(samplerate))) > 0.5)
 		cout << "PortAudio backend: WARNING: samplerate mismatch > 0.5!" << endl;
 
@@ -107,6 +111,7 @@ PortAudioBackend::PortAudioBackend(AudioController* _dec)
 
 PortAudioBackend::~PortAudioBackend()
 {
+	boost::mutex::scoped_lock lock(pa_mutex);
 	dcerr("shutting down");
 	Pa_StopStream(stream);
 	Pa_CloseStream(stream);
@@ -116,6 +121,7 @@ PortAudioBackend::~PortAudioBackend()
 
 void PortAudioBackend::stop_output()
 {
+	boost::mutex::scoped_lock lock(pa_mutex);
 	PaError err = Pa_StopStream( stream );
 	if((err != paNoError) && (err != paStreamIsStopped))
 		throw SoundException(STRFORMAT("failed to stop portaudio stream: %s", Pa_GetErrorText(err)));
@@ -123,8 +129,8 @@ void PortAudioBackend::stop_output()
 
 void PortAudioBackend::start_output()
 {
+	boost::mutex::scoped_lock lock(pa_mutex);
 	PaError err = Pa_StartStream( stream );
 	if ((err != paNoError) && (err != paStreamIsNotStopped))
 		throw SoundException(STRFORMAT("failed to start portaudio stream: %s", Pa_GetErrorText(err)));
 }
-
