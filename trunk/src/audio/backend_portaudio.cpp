@@ -97,7 +97,7 @@ PortAudioBackend::PortAudioBackend(AudioController* _dec)
 			NULL,
 			&outputParameters,
 			samplerate,
-			1024 * outputParameters.channelCount * 4, /* Float32 is 4 bytes */
+			paFramesPerBufferUnspecified, // Let PortAudio decide the optimal number of frames per buffer
 			paClipOff,         /* we won't output out of range samples so don't bother clipping them */
 			pa_callback,
 			(void*)this)
@@ -107,6 +107,8 @@ PortAudioBackend::PortAudioBackend(AudioController* _dec)
 	else {
 		throw SoundException("PortAudio backend: ERROR: Format not supported!");
 	}
+
+
 };
 
 PortAudioBackend::~PortAudioBackend()
