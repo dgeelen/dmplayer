@@ -44,7 +44,7 @@ PortAudioBackend::PortAudioBackend(AudioController* _dec)
 	int best_device    = default_device;
 	int n_channels     = deviceInfo->maxOutputChannels;
 	double samplerate  = deviceInfo->defaultSampleRate;
-	double latency     = deviceInfo->defaultLowOutputLatency;
+	double latency     = deviceInfo->defaultHighOutputLatency;
 	for(int i=0; i<numDevices; i++) {
 		deviceInfo = Pa_GetDeviceInfo( i );
 		dcerr( "Found device #" << i << ": '" << deviceInfo->name << "'");
@@ -57,19 +57,19 @@ PortAudioBackend::PortAudioBackend(AudioController* _dec)
 		outputParameters.device = i;
 		outputParameters.hostApiSpecificStreamInfo = NULL;
 		outputParameters.sampleFormat = paFloat32;
-		outputParameters.suggestedLatency = deviceInfo->defaultLowOutputLatency;
+		outputParameters.suggestedLatency = deviceInfo->defaultHighOutputLatency;
 		if(Pa_IsFormatSupported(NULL, &outputParameters, deviceInfo->defaultSampleRate) == paFormatIsSupported) {
 			if( ((deviceInfo->maxOutputChannels > n_channels) &&  (deviceInfo->defaultSampleRate >= samplerate)))
 			{
 				best_device = i;
 				n_channels = deviceInfo->maxOutputChannels;
 				samplerate = deviceInfo->defaultSampleRate;
-				latency    = deviceInfo->defaultLowOutputLatency;
+				latency    = deviceInfo->defaultHighOutputLatency;
 			}
-			dcerr("device supports " << deviceInfo->maxOutputChannels << " channels, " << deviceInfo->defaultSampleRate << "Hz, Float32 output, with " << deviceInfo->defaultLowOutputLatency << "s latency");
+			dcerr("device supports " << deviceInfo->maxOutputChannels << " channels, " << deviceInfo->defaultSampleRate << "Hz, Float32 output, with " << deviceInfo->defaultHighOutputLatency << "s latency");
 		}
 		else {
-			dcerr("device does not support " << deviceInfo->maxOutputChannels << " channels, " << deviceInfo->defaultSampleRate << "Hz, Float32 output, with " << deviceInfo->defaultLowOutputLatency << "s latency");
+			dcerr("device does not support " << deviceInfo->maxOutputChannels << " channels, " << deviceInfo->defaultSampleRate << "Hz, Float32 output, with " << deviceInfo->defaultHighOutputLatency << "s latency");
 		}
 	}
 	dcerr("Selecting device #" << best_device << " (default is #" << default_device << ")");
@@ -89,7 +89,10 @@ PortAudioBackend::PortAudioBackend(AudioController* _dec)
 	outputParameters.device                    = best_device;
 	outputParameters.sampleFormat              = paFloat32;
 	outputParameters.hostApiSpecificStreamInfo = NULL;
-	outputParameters.suggestedLatency          = latency;
+	// Request 1/5 of a second output latency (should give us 'interactive enough'
+	// performance while still allowing some other tasks to interrupt playback
+	// momentarily)
+	outputParameters.suggestedLatency          = 0.2;
 
 	if(Pa_IsFormatSupported(NULL, &outputParameters, samplerate) == paFormatIsSupported) {
 		if(Pa_OpenStream(
