@@ -202,7 +202,7 @@ class Server {
 			uint32 vmc = vote_min_count(tid, vote_min_list_lock);
 			uint32 n_avg_song_durations = (current_playtime / average_song_duration) * (current_track.id == tid);
 			n_avg_song_durations = n_avg_song_durations > 0 ? n_avg_song_durations - 1 : 0;
-			return (n_active_clients() - (vmc > 0) * n_avg_song_durations < 2 * vmc);
+			return (2 * vmc) + (vmc > 0) * n_avg_song_durations > n_active_clients();
 		}
 
 		void next_song(uint32 playtime_secs) {
