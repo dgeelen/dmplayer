@@ -5,6 +5,7 @@
 #include "../network/network-core.h"
 
 #include <string>
+#include <map>
 
 #define HTTP_STREAM_BUFFER_SIZE ( (uint32) 1024*64*2 )
 #define HTTP_STREAM_RECV_CHUNK  ( (uint32) 1024*32 )
@@ -18,6 +19,12 @@ class HTTPStreamDataSource : public IDataSource {
 		uint32 dataofs;     // current offset to begin of stream of buffer
 		tcp_socket* conn;
 		int exhaustion_counter;
+
+		void http_connect(const std::string& str, uint16 port);
+		void do_http_get_request(std::string host, std::string path);
+		std::vector<std::string> receive_http_headers();
+		static std::map<std::string, std::string> parse_url(std::string str);
+		void disconnect();
 	public:
 		HTTPStreamDataSource();
 		HTTPStreamDataSource(std::string url);
