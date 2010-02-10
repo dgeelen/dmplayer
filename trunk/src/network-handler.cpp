@@ -164,9 +164,8 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 		else {
 			cid = c->second;
 			message_disconnect_ref msg(new message_disconnect("Reconnection"));
-			server_message_receive_signal(msg, cid);
-			send_message(cid, msg); // We know the client has a socket_ref in clients
-			boost::mutex::scoped_lock lock(clients_mutex);
+			if(send_message(cid, msg)) // race race...
+				server_message_receive_signal(msg, cid);
 			// NOTE: Need to explicitly close the socket because another 
 			//       (server_tcp_connection_handler) thread may hold a reference to this
 			//       socket. This also causes that thread to exit properly.
@@ -174,8 +173,12 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 			//       later on anyway.
 			//       Also this should handle exactly one client (connect) at a time
 			//       since we still hold known_clients_mutex (this is a bit hacky).
-			if(clients.find(cid) != clients.end()) // The client might have actually disconnected and left by now
-				clients[cid]->disconnect();
+			boost::mutex::scoped_lock lock(clients_mutex); // Can't use disconnect because this swap should be atomic
+			map<ClientID, boost::shared_ptr<tcp_socket> >::iterator i = clients.find(cid);
+			if(i != clients.end()) {
+				(*(i->second)).disconnect();
+			}
+			clients[cid] = sock;
 		}
 	}
 	bool active = true;
@@ -201,12 +204,22 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 						std::cout << "Client protocol version " << msg->get_version() << ", expected " << NETWORK_PROTOCOL_VERSION << std::endl;
 						std::cout << "Boost version " << msg->get_boost_version() << ", expected " << BOOST_VERSION << std::endl;
 						(*sock) << messageref(new message_disconnect(STRFORMAT("Protocol mismatch, you tried to connect with protocol v%i and Boost version %i, but this server expects protocol v%i and boost version %i.",msg->get_version(), msg->get_boost_version(), NETWORK_PROTOCOL_VERSION,BOOST_VERSION)));
+						boost::mutex::scoped_lock lock(clients_mutex); // Can't use disconnect because this should only disconnect the socket for this thread
+						map<ClientID, boost::shared_ptr<tcp_socket> >::iterator i = clients.find(cid);
+						if((i != clients.end()) && (i->second == sock)) {
+							(*(i->second)).disconnect();
+						}
 						active = false;
 					}
 				}; break;
 				case message::MSG_DISCONNECT: {
 					active = false;
 					server_message_receive_signal(m, cid);
+					boost::mutex::scoped_lock lock(clients_mutex); // Can't use disconnect because this should only disconnect the socket for this thread
+					map<ClientID, boost::shared_ptr<tcp_socket> >::iterator i = clients.find(cid);
+					if((i != clients.end()) && (i->second == sock)) {
+						(*(i->second)).disconnect();
+					}
 				}; break;
 				default:
 					server_message_receive_signal(m, cid);
@@ -218,25 +231,33 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 		clients.erase(cid);
 }
 
-void network_handler::send_message_allclients(messageref msg) {
+uint32 network_handler::send_message_allclients(messageref msg) {
 	boost::mutex::scoped_lock lock(clients_mutex);
 	typedef std::pair<ClientID, tcp_socket_ref> vtype;
+	uint32 count = 0;
 	BOOST_FOREACH(vtype cr, clients) {
-		// NOTE: send_message() is copy&pasted here because of the lock() on 'clients_mutex'.
-		//       Using a recursive mutex would be more difficult because server_tcp_connection_handler()
-		//       may change the 'clients' vector.
-		map<ClientID, boost::shared_ptr<tcp_socket> >::iterator sock = clients.find(cr.first);
-		if(sock != clients.end()) {
-			(*(sock->second)) << msg;
-		}
+		(*(cr.second)) << msg;
+		count++;
+	}
+	return count;
+}
+
+void network_handler::disconnect_client(ClientID cid) {
+	boost::mutex::scoped_lock lock(clients_mutex);
+	map<ClientID, boost::shared_ptr<tcp_socket> >::iterator sock = clients.find(cid);
+	if(sock != clients.end()) {
+		(*(sock->second)).disconnect();
 	}
 }
-void network_handler::send_message(ClientID id, messageref msg) {
+
+bool network_handler::send_message(ClientID id, messageref msg) {
 	boost::mutex::scoped_lock lock(clients_mutex);
 	map<ClientID, boost::shared_ptr<tcp_socket> >::iterator sock = clients.find(id);
 	if(sock != clients.end()) {
 		(*(sock->second)) << msg;
+		return true;
 	}
+	return false;
 }
 
 ipv4_socket_addr network_handler::get_target_server_address() {
