@@ -163,7 +163,19 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 		}
 		else {
 			cid = c->second;
-			server_message_receive_signal(message_disconnect_ref(new message_disconnect("Reconnection")), cid);
+			message_disconnect_ref msg(new message_disconnect("Reconnection"));
+			server_message_receive_signal(msg, cid);
+			send_message(cid, msg); // We know the client has a socket_ref in clients
+			boost::mutex::scoped_lock lock(clients_mutex);
+			// NOTE: Need to explicitly close the socket because another 
+			//       (server_tcp_connection_handler) thread may hold a reference to this
+			//       socket. This also causes that thread to exit properly.
+			//       We don't need to erase the client because we're overwriting it
+			//       later on anyway.
+			//       Also this should handle exactly one client (connect) at a time
+			//       since we still hold known_clients_mutex (this is a bit hacky).
+			if(clients.find(cid) != clients.end()) // The client might have actually disconnected and left by now
+				clients[cid]->disconnect();
 		}
 	}
 	bool active = true;
@@ -202,7 +214,8 @@ void network_handler::server_tcp_connection_handler(tcp_socket_ref sock) { // On
 		}
 	}
 	boost::mutex::scoped_lock lock(clients_mutex);
-	clients.erase(cid);
+	if((clients.find(cid) != clients.end()) && (clients[cid] == sock)) // If no new socket has been opened we remove the client entirely
+		clients.erase(cid);
 }
 
 void network_handler::send_message_allclients(messageref msg) {
