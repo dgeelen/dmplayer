@@ -173,6 +173,26 @@ extern const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #  define F_OPEN(name, mode) fopen((name), (mode))
 #endif
 
+/* Diagnostic functions */
+#ifdef DEBUG
+#  include <stdio.h>
+   extern int z_verbose;
+   extern void z_error    OF((char *m));
+#  define Assert(cond,msg) {if(!(cond)) z_error(msg);}
+#  define Trace(x) {if (z_verbose>=0) fprintf x ;}
+#  define Tracev(x) {if (z_verbose>0) fprintf x ;}
+#  define Tracevv(x) {if (z_verbose>1) fprintf x ;}
+#  define Tracec(c,x) {if (z_verbose>0 && (c)) fprintf x ;}
+#  define Tracecv(c,x) {if (z_verbose>1 && (c)) fprintf x ;}
+#else
+#  define Assert(cond,msg)
+#  define Trace(x)
+#  define Tracev(x)
+#  define Tracevv(x)
+#  define Tracec(c,x)
+#  define Tracecv(c,x)
+#endif
+
          /* functions */
 
 #if defined(STDC99) || (defined(__TURBOC__) && __TURBOC__ >= 0x550)
@@ -237,25 +257,6 @@ extern const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
    extern void zmemzero OF((Bytef* dest, uInt len));
 #endif
 
-/* Diagnostic functions */
-#ifdef DEBUG
-#  include <stdio.h>
-   extern int z_verbose;
-   extern void z_error    OF((char *m));
-#  define Assert(cond,msg) {if(!(cond)) z_error(msg);}
-#  define Trace(x) {if (z_verbose>=0) fprintf x ;}
-#  define Tracev(x) {if (z_verbose>0) fprintf x ;}
-#  define Tracevv(x) {if (z_verbose>1) fprintf x ;}
-#  define Tracec(c,x) {if (z_verbose>0 && (c)) fprintf x ;}
-#  define Tracecv(c,x) {if (z_verbose>1 && (c)) fprintf x ;}
-#else
-#  define Assert(cond,msg)
-#  define Trace(x)
-#  define Tracev(x)
-#  define Tracevv(x)
-#  define Tracec(c,x)
-#  define Tracecv(c,x)
-#endif
 
 
 voidpf zcalloc OF((voidpf opaque, unsigned items, unsigned size));
