@@ -162,6 +162,13 @@ HTTPStreamDataSource::HTTPStreamDataSource(string str)
 	conn = NULL;
 	exhaustion_counter=0;
 
+	bool is_valid_host(str.size() <= 255);
+	BOOST_FOREACH(char c, str) {
+		is_valid_host = is_valid_host && ((0x20 <= c) && (c < 0x7F));
+	}
+	if(!is_valid_host)
+		throw HTTPException(STRFORMAT("`%s' does not look like a valid URL", str));
+
 	bool connection_established = false;
 	while(!connection_established) {
 		// Parse str into parts
