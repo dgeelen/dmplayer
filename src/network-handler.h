@@ -60,8 +60,9 @@
 			boost::signal<void(const messageref, ClientID)> server_message_receive_signal;
 			void client_connect_to_server( ipv4_socket_addr dest );
 			void client_disconnect_from_server();
-			void send_message(ClientID id, messageref msg);
-			void send_message_allclients(messageref msg);
+			void disconnect_client(ClientID cid);
+			bool send_message(ClientID id, messageref msg);
+			uint32 send_message_allclients(messageref msg);
 			void send_server_message(messageref msg);
 			ipv4_socket_addr get_target_server_address();
 

@@ -146,10 +146,10 @@ class Server {
 		~Server() {
 			dcerr("shutting down");
 			dcerr("stopping networkhandler");
-			networkhandler.send_message_allclients(messageref(new message_disconnect("Server is shutting down.")));
-			networkhandler.stop();
-
 			server_message_receive_signal_connection.disconnect();
+			networkhandler.send_message_allclients(messageref(new message_disconnect("Server is shutting down.")));
+			// We could call networkhandler.disconnect_client() a couple of times here, but why bother
+			networkhandler.stop();
 
 			dcerr("Stopping playback");
 			ac.playback_finished.disconnect(boost::bind(&Server::next_song, this, _1));
@@ -482,6 +482,7 @@ class Server {
 					}; break;
 					case message::MSG_DISCONNECT: {
 						dcerr("Received a MSG_DISCONNECT from " << STRFORMAT("%08x", id));
+						networkhandler.disconnect_client(id);
 						remove_client(id);
 					} break;
 					case message::MSG_PLAYLIST_UPDATE: {
@@ -611,6 +612,7 @@ class Server {
 			}
 			else {
 				networkhandler.send_message(id, messageref(new message_disconnect("You are not connected! Go away.")));
+				networkhandler.disconnect_client(id);
 			}
 			if(recalculateplaylist) {
 				{
