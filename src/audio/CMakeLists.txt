@@ -115,13 +115,13 @@ ENDIF(LIBSAMPLERATE_FOUND AND LIBSAMPLERATE_DEBUG_FOUND)
 # we can always compile the wave decoder, no libs needed for that
 SET(DECODER_NAMES ${DECODER_NAMES} Wave)
 
-# we can always compile the Playlist decoder, no libs needed for that
-SET(DECODER_NAMES ${DECODER_NAMES} Playlist)
-
 # we can always compile the zlib decoder, we compile our own lib for that
 SET(DECODER_NAMES ${DECODER_NAMES} ZLib)
 SET(DECODER_LIBRARIES ${DECODER_LIBRARIES} our_zlib)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/zlib)
+
+# we can always compile the Playlist decoder, no libs needed for that
+SET(DECODER_NAMES ${DECODER_NAMES} Playlist)
 
 # configure all decoders
 SET(FName ${CMAKE_CURRENT_BINARY_DIR}/decoder_linker.inc)
