@@ -8,6 +8,8 @@ find_package(LibFlac)
 find_package(LibSamplerate)
 find_package(LibDUMB)
 
+ADD_SUBDIRECTORY(zlib)
+
 SET(BACKEND_SOURCE_FILES "")
 SET(DECODER_SOURCE_FILES "")
 SET(FILTER_SOURCE_FILES "")
