@@ -33,7 +33,8 @@ void PlaylistDecoder::fill_buffer() {
 void PlaylistDecoder::parse_buffer()
 {
 	decoder.reset();
-	while (true) {
+	int tries = 32;
+	while (tries-- > 0) {
 		int pos = -1;
 		fill_buffer();
 		for (size_t i = 0; i < bufsize; ++i) {
