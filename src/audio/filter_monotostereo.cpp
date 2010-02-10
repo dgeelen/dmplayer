@@ -21,7 +21,7 @@ uint32 MonoToStereoFilter::getData(uint8* buf, uint32 len)
 	uint8 buffer[1024];
 	uint32 res = 0;
 	while (res < len) {
-		int read = min(len>>1, (uint32)1024);
+		int read = min((len-res)>>1, (uint32)1024);
 		read = src->getData(buffer, read);
 		if (!read) break;
 		for (int i = 0; i < read; ) {
