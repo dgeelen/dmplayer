@@ -81,14 +81,6 @@ class ServerDataSource : public IDataSource {
 			avail    -= n;
 			if(avail==0) {
 				data_exhausted = true;
-				if(wait_for_data) {
-					//FIXME: Seems like a long time to sleep, but needed
-					//       otherwise the portaudio callback with PRIO_REALTIME
-					//       still takes over the system :-(
-					std::cout << "Notice: Pre-emptively suspending playback for 1s" << std::endl;
-					boost::this_thread::sleep(boost::posix_time::seconds(1));
-					boost::this_thread::yield();
-				}
 			}
 			return n;
 		}

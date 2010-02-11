@@ -6,25 +6,115 @@ boost::mutex pa_mutex; // PortAudio is not thread safe
 
 using namespace std;
 
+// Define this to get output on stderr indicating buffer status
+//#define PRINT_BUFSIZE
+
+// In debug mode use a larger buffer to compensate for crappy performance
+#ifndef DEBUG
+#define BUFFER_SECONDS (1)
+#else
+#define BUFFER_SECONDS (10)
+#endif
+
+// Normally data is requested in blocks of size NORMAL_CHUNKSIZE
+#define NORMAL_CHUNKSIZE (64*1024)
+
+// But when buffer is less than FASTFILL_PERCENTAGE filled, blocks of size FASTFILL_CHUNKSIZE are used instead
+#define FASTFILL_PERCENTAGE (10)
+#define FASTFILL_CHUNKSIZE (2048*8)
+
+// When buffer is more than WAITFILL_PERCENTAGE filled, we just idle a bit
+#define WAITFILL_PERCENTAGE (90)
+
 int PortAudioBackend::pa_callback(const void *inputBuffer, void *outputBuffer,
                        unsigned long frameCount,
                        const PaStreamCallbackTimeInfo* timeInfo,
                        PaStreamCallbackFlags statusFlags,
                        void *userData )
-{	// FIXME: This callback runs with PRIO_REALTIME, and can potentially
-	//        halt the system if data is not provided at an adequate pace.
-	//        (such as happens for example at the end of the getData()
-	//         chain, which is connected to the network...)
+{
 	PortAudioBackend* be = (PortAudioBackend*)userData;
-	char *out = (char*)outputBuffer;
+	uint8* out = (uint8*)outputBuffer;
+	unsigned long byteCount = (frameCount * be->af.Channels * be->af.BitsPerSample) >> 3; // divide by 8 for bits->bytes
 
-	// Float32 is 4 bytes, so #channels * 4 = bytes/frame
-	uint32 act = be->dec->getData((uint8*)out, frameCount*(be->af.Channels)*4);
+	return be->data_callback(out, byteCount);
+}
+
+int PortAudioBackend::data_callback(uint8* out, unsigned long byteCount)
+{
+	// FIXED: This callback runs with PRIO_REALTIME, but it doesn't do much so this won't cause problems
+	//        only 1 mutex is locked, 1 memcpy call is made, and possibly 1 memset call
+	//        in addition the mutex is not held by any other threads while they
+	//        do anything taking more than a few cycles
+
+	size_t todo = byteCount;
+
+	while (todo > 0) {
+		size_t copy = (cb_size - cb_rpos);
+		if (todo < copy) copy = todo;
+		memcpy(out, &cbuf[cb_rpos], copy);
+		cb_rpos += copy;
+		out += copy;
+		if (cb_rpos == cb_size) cb_rpos = 0;
+		todo -= copy;
+	}
+
+	size_t silence = byteCount;
+	{
+		boost::mutex::scoped_lock lock(cb_mutex);
+		size_t read = silence;
+		if (read > cb_data) read = cb_data;
+		silence -= read;
+		cb_data -= read;
+		#ifdef PRINT_BUFSIZE
+			std::cerr << STRFORMAT("Read : %_6.2f  %_9d (%d) - %d", cb_data*100.0/cb_size, cb_data , byteCount-silence , silence) << std::endl;
+		#endif
+	}
+
+	if (silence) {
+		//std::cout << "Silence :" << silence << "\n";
+		if (cb_rpos < silence)
+			cb_rpos += cb_size;
+		cb_rpos -= silence;
+		out -= silence;
+		memset(out, 0, silence);
+	}
+
 	return 0;
 }
 
+void PortAudioBackend::decodeloop()
+{
+	size_t decode = 0;
+	while (true) {
+		{
+			boost::mutex::scoped_lock lock(cb_mutex);
+			cb_data += decode;
+			#ifdef PRINT_BUFSIZE
+				std::cerr << STRFORMAT("Write: %_6.2f  %_9d (%d)", cb_data*100.0/cb_size, cb_data , decode) << std::endl;
+			#endif
+
+			while (cb_data * 100 >= cb_size * WAITFILL_PERCENTAGE) {
+				cb_mutex.unlock();
+				boost::this_thread::sleep(boost::posix_time::milliseconds(10)); 
+				cb_mutex.lock();
+			}
+			decode = cb_size - cb_data;
+		}
+		if (cb_data * 100 < cb_size * FASTFILL_PERCENTAGE) {
+			if (decode > FASTFILL_CHUNKSIZE) decode = FASTFILL_CHUNKSIZE;
+		} else {
+			if (decode > NORMAL_CHUNKSIZE) decode = NORMAL_CHUNKSIZE;
+		}
+		if (decode > cb_size - cb_wpos) decode = cb_size - cb_wpos;
+		decode = dec->getData(&cbuf[cb_wpos], decode);
+		cb_wpos += decode;
+		if (cb_wpos == cb_size) cb_wpos = 0;
+		if (decode == 0) boost::this_thread::sleep(boost::posix_time::milliseconds(10)); 
+	}
+}
+
 PortAudioBackend::PortAudioBackend(AudioController* _dec)
-	: IBackend(dec), dec(_dec)
+	: IBackend(dec), dec(_dec), cbuf(1)
 {
 	boost::mutex::scoped_lock lock(pa_mutex);
 	PaError err = Pa_Initialize();
@@ -78,11 +168,21 @@ PortAudioBackend::PortAudioBackend(AudioController* _dec)
 		cout << "PortAudio backend: WARNING: samplerate mismatch > 0.5!" << endl;
 
 	af.SampleRate    = uint32(samplerate);
-	af.Channels      = n_channels > 6 ? 6 : 2;
+	af.Channels      = n_channels >= 6 ? 6 : 2;
 	af.BitsPerSample = 32;
 	af.SignedSample  = true;
 	af.LittleEndian  = true;
 	af.Float         = true;
+
+#ifdef DEBUG
+	cbuf.resize(10 * (af.BitsPerSample/8) * af.Channels * af.SampleRate);
+#else
+	cbuf.resize(1 * (af.BitsPerSample/8) * af.Channels * af.SampleRate);
+#endif
+	cb_rpos = 0;
+	cb_wpos = 0;
+	cb_data = 0;
+	cb_size = cbuf.size();
 
 	PaStreamParameters outputParameters;
 	outputParameters.channelCount              = af.Channels;
@@ -111,7 +211,9 @@ PortAudioBackend::PortAudioBackend(AudioController* _dec)
 		throw SoundException("PortAudio backend: ERROR: Format not supported!");
 	}
 
-
+	decodethread = boost::thread(&PortAudioBackend::decodeloop, this).move();
+	// TODO: remove this (see start_output)
+	PaError err2 = Pa_StartStream( stream );
 };
 
 PortAudioBackend::~PortAudioBackend()
@@ -126,6 +228,8 @@ PortAudioBackend::~PortAudioBackend()
 
 void PortAudioBackend::stop_output()
 {
+	// TODO: re-enable this (see start_output)
+	return;
 	boost::mutex::scoped_lock lock(pa_mutex);
 	PaError err = Pa_StopStream( stream );
 	if((err != paNoError) && (err != paStreamIsStopped))
@@ -134,6 +238,8 @@ void PortAudioBackend::stop_output()
 
 void PortAudioBackend::start_output()
 {
+	// TODO: re-enable this, and fix audio_controller to only call us once
+	return;
 	boost::mutex::scoped_lock lock(pa_mutex);
 	PaError err = Pa_StartStream( stream );
 	if ((err != paNoError) && (err != paStreamIsNotStopped))
