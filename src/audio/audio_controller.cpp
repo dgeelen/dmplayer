@@ -72,20 +72,20 @@ uint32 AudioController::getData(uint8* buf, uint32 len)
 		curdecoder = update_decoder_source;
 		update_decoder_source.reset();
 		update_decoder_flag = false;
+		if (!curdecoder) {
+			playback_finished(get_current_playtime()); //FIXME: Low resolution!
+			bytes_played = 0;
+		}
 	}
 
 	if (curdecoder) {
 		read = curdecoder->getData(buf, len);
 		bytes_played += read;
 	}
-	if (read < len) { //FIXME: Really only if curdecoder->exhausted()
-		memset(buf+read, 0, len-read);
-		read = len; // Disable this when using the WAVWriterBackend
-		if(curdecoder && curdecoder->exhausted()) {
-			playback_finished(bytes_played / backend->getAudioFormat().getBytesPerSecond()); //FIXME: Low resolution!
-			bytes_played = 0;
-			curdecoder.reset();
-		}
+	if (read < len && curdecoder && curdecoder->exhausted()) {
+		playback_finished(get_current_playtime()); //FIXME: Low resolution!
+		bytes_played = 0;
+		curdecoder.reset();
 	}
 	return read;
 }
@@ -100,7 +100,7 @@ void AudioController::set_data_source(const IDataSourceRef ds) {
 		newdecoder = IDecoder::findDecoder(ds);
 		if (!newdecoder) {
 			dcerr("Cannot find decoder!");
-			playback_finished(0); //FIXME: Low resolution!
+			playback_finished(0);
 			return;
 		}
 
@@ -119,10 +119,10 @@ void AudioController::set_data_source(const IDataSourceRef ds) {
 			newdecoder = IAudioSourceRef(new ReformatFilter(newdecoder, backend->getAudioFormat()));
 	}
 
-	{
+	if (newdecoder) {
 		boost::mutex::scoped_lock lock(update_decoder_mutex);
-		update_decoder_flag = true;
 		update_decoder_source = newdecoder;
+		update_decoder_flag = true;
 	}
 }
 
@@ -163,13 +163,9 @@ void AudioController::stop_playback()
 	dcerr("Stopping backend");
 	backend->stop_output();
 	{
-	boost::mutex::scoped_lock lock(update_decoder_mutex);
-	if(curdecoder || update_decoder_flag) { // if no curdecoder we already called playback_finished. FIXME: could probably use a mutex
-		dcerr("curdecoder || update_decoder_flag");
-		playback_finished(bytes_played / backend->getAudioFormat().getBytesPerSecond()); //FIXME: Low resolution!
-	}
-	bytes_played = 0;
-	curdecoder.reset();
+		boost::mutex::scoped_lock lock(update_decoder_mutex);
+		update_decoder_source.reset();
+		update_decoder_flag = true;
 	}
 }
 
