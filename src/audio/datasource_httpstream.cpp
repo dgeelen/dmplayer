@@ -162,12 +162,14 @@ HTTPStreamDataSource::HTTPStreamDataSource(string str)
 	conn = NULL;
 	exhaustion_counter=0;
 
-	bool is_valid_host(str.size() <= 255);
-	BOOST_FOREACH(char c, str) {
-		is_valid_host = is_valid_host && ((0x20 <= c) && (c < 0x7F));
+	{
+		bool is_valid_url = true;
+		BOOST_FOREACH(char c, str) {
+			is_valid_url = is_valid_url && ((0x20 <= c) && (c < 0x7F));
+		}
+		if(!is_valid_url)
+			throw HTTPException(STRFORMAT("`%s' does not look like a valid URL", str));
 	}
-	if(!is_valid_host)
-		throw HTTPException(STRFORMAT("`%s' does not look like a valid URL", str));
 
 	bool connection_established = false;
 	while(!connection_established) {
@@ -176,6 +178,15 @@ HTTPStreamDataSource::HTTPStreamDataSource(string str)
 
 		if(url_parts.find("host") == url_parts.end())
 			throw HTTPException(STRFORMAT("The URL `%s' is not valid (can not find a hostname in this)", str));
+
+		{
+			bool is_valid_host = (url_parts["host"].size() <= 255);
+			BOOST_FOREACH(char c, url_parts["host"]) {
+				is_valid_host = is_valid_host && ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '-' || c == '.');
+			}
+			if(!is_valid_host)
+				throw HTTPException(STRFORMAT("`%s' does not look like a valid hostname", url_parts["host"]));
+		}
 
 		uint16 port = 80;
 		if(url_parts.find("port") != url_parts.end()) {

@@ -31,6 +31,7 @@ using namespace std;
 
 AudioController::AudioController()
 	: update_decoder_flag(false)
+	, started(false)
 {
 	bytes_played = 0;
 	backend.reset();
@@ -53,6 +54,7 @@ AudioController::AudioController()
 	}
 
 	/* Now we have a backend */
+	start_playback();
 }
 
 AudioController::~AudioController() {
@@ -160,17 +162,21 @@ void AudioController::test_functie(std::string file) {
 
 void AudioController::stop_playback()
 {
+	if (!started) return;
 	dcerr("Stopping backend");
 	backend->stop_output();
-	{
-		boost::mutex::scoped_lock lock(update_decoder_mutex);
-		update_decoder_source.reset();
-		update_decoder_flag = true;
-	}
 }
 
 void AudioController::start_playback()
 {
+	if (started) return;
 	dcerr("Starting backend");
 	backend->start_output();
+}
+
+void AudioController::abort_current_decoder()
+{
+	boost::mutex::scoped_lock lock(update_decoder_mutex);
+	update_decoder_source.reset();
+	update_decoder_flag = true;
 }
