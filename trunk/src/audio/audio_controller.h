@@ -19,6 +19,8 @@ class AudioController {
 
 		void start_playback();
 		void stop_playback();
+		void abort_current_decoder();
+
 		void set_data_source(IDataSourceRef ds);
 		uint64 get_current_playtime();
 		boost::signal<void(uint64)> playback_finished;
@@ -27,6 +29,8 @@ class AudioController {
 		IAudioSourceRef curdecoder;
 
 		uint64 bytes_played;
+
+		bool started;
 
 		// possibly overkill here
 		volatile bool update_decoder_flag;

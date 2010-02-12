@@ -334,7 +334,6 @@ class Server {
 			}
 			data_source_renewed_barrier.wait();
 			ac.set_data_source(ds);
-			ac.start_playback(); // FIXME: do this here?
 		}
 
 		void remove_client(ClientID id) {
@@ -425,7 +424,7 @@ class Server {
 				playlist_lock.unlock();
 				current_track_lock.unlock(); 
 				clients_lock.unlock();
-				ac.stop_playback(); // client should still be active and receive penalty
+				ac.abort_current_decoder(); // client should still be active and receive penalty
 				clients_lock.lock();
 				current_track_lock.lock();
 				playlist_lock.lock();
@@ -592,7 +591,7 @@ class Server {
 									current_track_lock.unlock();
 									vote_min_list_lock.unlock();
 									server_datasource_lock.unlock();
-									ac.stop_playback(); // might call next_song (AC guarantees next_song is called only once even when EOF)
+									ac.abort_current_decoder(); // might call next_song (AC guarantees next_song is called only once even when EOF)
 								}
 							}
 						}
