@@ -142,6 +142,10 @@ uint32 SampleConverterFilter::convert_float_to_int16(int16* output, uint32 size)
  * with audioformat.Channels == 2 and TargetType == Unsigned 16Bit
  **/
 uint32 SampleConverterFilter::getData(uint8* buf, uint32 len) {
+	if(src->getAudioFormat().LittleEndian != audioformat.LittleEndian) {
+		dcerr("Cannot convert sampletype [" << src->getAudioFormat() << "] to [" << audioformat << "]");
+		throw Exception("Endianness conversions are not implemented (yet)");
+	}
 	if(src->getAudioFormat().Float != audioformat.Float) {
 		if(src->getAudioFormat().Float) {
 			switch(audioformat.BitsPerSample) {
