@@ -91,6 +91,19 @@ uint32 SampleConverterFilter::convert_int16_to_float(float* output, uint32 size)
 	return size * sizeof(float);
 }
 
+uint32 SampleConverterFilter::convert_uint16_to_float(float* output, uint32 size) {
+	uint16* input = new uint16[size];
+
+	size = fill_buffer((uint8*)input, size, sizeof(uint16));
+
+	for(uint32 i = 0; i < size; ++i) {
+		output[i] = float(input[i]) / 32768.0f - 1.0f;
+	}
+
+	delete[] input;
+	return size * sizeof(float);
+}
+
 uint32 SampleConverterFilter::convert_float_to_int8(int8* output, uint32 size) {
 	float* input = new float[size];
 
@@ -157,6 +170,8 @@ uint32 SampleConverterFilter::getData(uint8* buf, uint32 len) {
 				case 16: {
 					if(src->getAudioFormat().SignedSample)
 						return convert_int16_to_float((float*)buf, len / sizeof(float));
+					else
+						return convert_uint16_to_float((float*)buf, len / sizeof(float));
 				}; break;
 				case 32: {
 				}; break;
