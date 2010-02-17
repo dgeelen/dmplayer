@@ -4,12 +4,7 @@
 #include <boost/thread/mutex.hpp>
 boost::mutex pa_mutex; // PortAudio is not thread safe
 
-// In debug mode use a larger buffer to compensate for crappy performance
-#ifndef DEBUG
-#define BUFFER_SECONDS (1)
-#else
-#define BUFFER_SECONDS (10)
-#endif
+#define BUFFER_SECONDS (1) // FIXME: This is really coarse grained
 
 using namespace std;
 
@@ -119,11 +114,7 @@ PortAudioBackend::PortAudioBackend(AudioController* _dec)
 	af.LittleEndian  = true;
 	af.Float         = true;
 
-#ifdef DEBUG
-	cbuf.reset(10 * (af.BitsPerSample/8) * af.Channels * af.SampleRate);
-#else
-	cbuf.reset(1 * (af.BitsPerSample/8) * af.Channels * af.SampleRate);
-#endif
+	cbuf.reset(BUFFER_SECONDS * (af.BitsPerSample/8) * af.Channels * af.SampleRate);
 
 	PaStreamParameters outputParameters;
 	outputParameters.channelCount              = af.Channels;
