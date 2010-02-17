@@ -9,6 +9,7 @@ class SampleConverterFilter : public IAudioSource {
 		uint32 convert_int8_to_float(float* output, uint32 size);
 		uint32 convert_uint8_to_float(float* output, uint32 size);
 		uint32 convert_int16_to_float(float* output, uint32 size);
+		uint32 convert_uint16_to_float(float* output, uint32 size);
 		uint32 convert_float_to_int8(int8* output, uint32 size);
 		uint32 convert_float_to_int16(int16* output, uint32 size);
 		IAudioSourceRef src;
