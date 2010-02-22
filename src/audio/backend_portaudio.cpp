@@ -49,7 +49,7 @@ void PortAudioBackend::decodeloop()
 
 			if (decode == 0) boost::this_thread::sleep(boost::posix_time::milliseconds(10)); 
 		}
-	} catch (boost::thread_interrupted& e) {
+	} catch (boost::thread_interrupted& /*e*/) {
 	}
 }
 
