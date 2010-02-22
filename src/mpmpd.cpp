@@ -222,6 +222,12 @@ class Server {
 			recalculateplaylist(clients_lock, current_track_lock, vote_min_list_lock, playlist_lock);
 			}
 			cue_next_track();
+
+			{
+				boost::mutex::scoped_lock next_song_lock(next_song_mutex);
+				next_song_notify = true;
+			}
+			next_song_condition_variable.notify_all();
 		}
 
 		void update_zero_sum(const TrackID target_track, const uint32 playtime_secs, boost::mutex::scoped_lock& clients_lock) {
@@ -405,7 +411,6 @@ class Server {
 					}
 				}
 			}
-			cr->is_active = false;
 			if(!has_listeners && cr->wish_list.size()>0) { // Cue next song since no-one wants to hear this now
 				PlaylistVector pv(cr->wish_list);
 				cr->wish_list.clear();
@@ -418,19 +423,29 @@ class Server {
 				//    his songs from his wish_lists, and he's now inactive.
 				//  * Will not race msg_playlist_update because this client is inactive
 				//  * Might race msg_connect / msg_playlist_update combo...
-				//
-				// make sure we don't hold any locks when we start calling other functions
+				ac.abort_current_decoder();
+
+				{
+					boost::mutex::scoped_lock next_song_lock(next_song_mutex);
+					next_song_notify = false;
+				}
+
 				vote_min_list_lock.unlock();
 				playlist_lock.unlock();
 				current_track_lock.unlock(); 
 				clients_lock.unlock();
-				ac.abort_current_decoder(); // client should still be active and receive penalty
+				{
+					// wait for playback_finished (next_song finished), client should still be active and receive penalty
+					boost::mutex::scoped_lock next_song_lock(next_song_mutex);
+					while (!next_song_notify) next_song_condition_variable.wait(next_song_lock);
+				}
 				clients_lock.lock();
 				current_track_lock.lock();
 				playlist_lock.lock();
 				vote_min_list_lock.lock();
 				cr->wish_list = pv;
 			}
+			cr->is_active = false;
 			cr->wish_list.clear(); // FIXME: This should be removed as soon as clients can manipulate their own playlists
 
 			BOOST_FOREACH(Client_ref i, clients) {
@@ -642,6 +657,9 @@ class Server {
 		std::map<TrackID, std::set<ClientID> > vote_min_list;
 		boost::mutex clients_mutex;
 
+		bool                                next_song_notify;
+		boost::mutex                        next_song_mutex;
+		boost::condition_variable           next_song_condition_variable;
 		boost::mutex                        add_datasource_thread_mutex;
 		boost::thread                       add_datasource_thread;
 		boost::signals::connection          server_message_receive_signal_connection;
