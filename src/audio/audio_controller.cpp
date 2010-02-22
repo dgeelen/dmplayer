@@ -81,8 +81,14 @@ uint32 AudioController::getData(uint8* buf, uint32 len)
 	}
 
 	if (curdecoder) {
-		read = curdecoder->getData(buf, len);
-		bytes_played += read;
+		try {
+			read = curdecoder->getData(buf, len);
+			bytes_played += read;
+		} catch (std::exception&) {
+			playback_finished(get_current_playtime()); //FIXME: Low resolution!
+			bytes_played = 0;
+			curdecoder.reset();
+		}
 	}
 	if (read < len && curdecoder && curdecoder->exhausted()) {
 		playback_finished(get_current_playtime()); //FIXME: Low resolution!
