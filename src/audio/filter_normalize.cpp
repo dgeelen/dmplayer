@@ -160,7 +160,7 @@ NormalizeFilter::NormalizeFilter(IAudioSourceRef as, AudioFormat target)
 		             )
 	);
 
-	rms_period_sample_count = audioformat.SampleRate / 20; // ~1/50sec (or 2205 samples for 44.1khz source)
+	rms_period_sample_count = audioformat.SampleRate / 50; // ~1/50sec (or 2205 samples for 44.1khz source)
 	position = rms_period_sample_count * audioformat.Channels * sizeof(float);
 	peak_amplitude = std::numeric_limits<float>::min();
 
@@ -220,7 +220,8 @@ void NormalizeFilter::update_gain() {
 	}
 	level = (*l); // TODO: figure out if we should use something like std::max((*l), (REFERENCE_LEVEL*3)) here, or just use something like 100.0f for max_gain
 
-	float max_gain = std::min(1.0f/std::sqrt(peak_amplitude), 100.0f);
+	float gain_limit = 35.4813389; //10^(REFERENCE_LEVEL / 20)  , REFERENCE_LEVEL=31
+	float max_gain = std::min(1.0f/std::sqrt(peak_amplitude), gain_limit);
 	gain  = std::pow(10.0f, (REFERENCE_LEVEL - level) / 20.0f);
 	gain  = std::min(gain, max_gain);
 }
