@@ -6,6 +6,8 @@
 	#include <dlfcn.h>
 #endif
 
+#include <boost/algorithm/string.hpp>
+
 struct DynamicLibrary::impl_t {
 	#ifdef WIN32
 		HMODULE libhandle;
@@ -18,7 +20,12 @@ DynamicLibrary::DynamicLibrary(boost::filesystem::path& path)
 : impl(new impl_t)
 {
 	#ifdef WIN32
-		impl->libhandle = LoadLibrary(path.string().c_str());
+		// Check for extension because LoadLibrary doesn't just fail on non-dll files,
+		// but spawns an annoying dialog which can't be suppressed it seems
+		if (boost::iequals(path.extension(), ".dll"))
+			impl->libhandle = LoadLibrary(path.string().c_str());
+		else
+			impl->libhandle = NULL;
 	#else
 		impl->libhandle = dlopen(path.string().c_str(), RTLD_LAZY);
 	#endif
