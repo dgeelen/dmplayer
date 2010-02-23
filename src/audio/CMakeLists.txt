@@ -141,6 +141,9 @@ SET(DECODER_ZLIB_LIBRARIES our_zlib)
 # we can always compile the Playlist decoder, no libs needed for that
 SET(DECODER_NAMES ${DECODER_NAMES} Playlist)
 
+# we can always compile the Plugin decoder, no libs needed for that
+SET(DECODER_NAMES_STATIC ${DECODER_NAMES_STATIC} Plugin)
+
 # optional filters
 IF(LIBSAMPLERATE_FOUND AND LIBSAMPLERATE_DEBUG_FOUND)
 	SET(FILTER_SOURCE_FILES ${FILTER_SOURCE_FILES}
