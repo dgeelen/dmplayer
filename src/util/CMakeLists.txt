@@ -4,5 +4,5 @@ ADD_LIBRARY(mpmp_util
 	UPXFix.h
 	thread_group2.h        thread_group2.cpp
 	
-	DynLoadLibrary.h       DynloadLibrary.cpp
+	DynLoadLibrary.h       DynLoadLibrary.cpp
 )
