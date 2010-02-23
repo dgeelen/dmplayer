@@ -1,4 +1,9 @@
 # Try to find all packages that we need/support
+FIND_PACKAGE(MyBoost)
+
+INCLUDE_DIRECTORIES("${BOOST_INCLUDE_DIR}")
+LINK_DIRECTORIES("${BOOST_LIBRARY_DIR}")
+
 find_package(PortAudio)
 find_package(Mad)
 find_package(LibOGG)
@@ -219,13 +224,15 @@ FOREACH(name ${DECODER_NAMES_DYNAMIC})
 		decoder_${lname}.cpp
 		plugin_helper.h
 		plugin_helper.cpp
+		# a bit hacky...
+		../util/ScopeExitSignal.cpp ../error-handling.cpp
 	)
 
 	# add include directories
 	INCLUDE_DIRECTORIES(${DECODER_${uname}_INCLUDES})
 
 	# add link libraries
-	TARGET_LINK_LIBRARIES(pluginDecoder${name} ${DECODER_${uname}_LIBRARIES})
+	TARGET_LINK_LIBRARIES(pluginDecoder${name} ${BOOST_SIGNALS_LIBRARY} ${DECODER_${uname}_LIBRARIES})
 
 	# add definitions
 	SET_TARGET_PROPERTIES(pluginDecoder${name} PROPERTIES COMPILE_DEFINITIONS
