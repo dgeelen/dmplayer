@@ -27,7 +27,7 @@ DynamicLibrary::DynamicLibrary(boost::filesystem::path& path)
 		else
 			impl->libhandle = NULL;
 	#else
-		impl->libhandle = dlopen(path.string().c_str(), RTLD_LAZY);
+		impl->libhandle = dlopen(path.string().c_str(), RTLD_NOW);
 	#endif
 }
 
