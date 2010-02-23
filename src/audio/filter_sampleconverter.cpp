@@ -46,7 +46,7 @@ uint32 SampleConverterFilter::fill_buffer(uint8* buffer, uint32 count, uint32 si
 		int read = src->getData(buffer + size - todo, todo);
 		todo -= read;
 		if(read == 0 && src->exhausted()) {
-			return ((count * size_of) - todo) / size_of;
+			return (size - todo) / size_of;
 		}
 	}
 	return count;
@@ -134,6 +134,17 @@ uint32 SampleConverterFilter::convert_float_to_int16(int16* output, uint32 size)
 	return size * sizeof(int16);
 }
 
+uint32 SampleConverterFilter::convert_uint8_to_uint16(uint16* output, uint32 size) {
+	uint8* input = new uint8[size];
+
+	size = fill_buffer(input, size, sizeof(uint8));
+
+	for(uint32 i = 0; i < size; ++i)
+		output[i] = input[i] << 8;
+
+	delete[] input;
+	return size * sizeof(int16);
+}
 
 /**
  * Note:
@@ -180,6 +191,21 @@ uint32 SampleConverterFilter::getData(uint8* buf, uint32 len) {
 				case 32: {
 				}; break;
 			}
+		}
+	} else if (src->getAudioFormat().Float) {
+		// float to float
+	} else {
+		switch(src->getAudioFormat().BitsPerSample) {
+			case 8: {
+				switch(audioformat.BitsPerSample) {
+					case 16: {
+						if(src->getAudioFormat().SignedSample)
+							/* dunno */;
+						else
+							return convert_uint8_to_uint16((uint16*)buf, len / sizeof(uint16));
+					}; break;
+				}
+			}; break;
 		}
 	}
 	dcerr("Cannot convert sampletype [" << src->getAudioFormat() << "] to [" << audioformat << "]");
