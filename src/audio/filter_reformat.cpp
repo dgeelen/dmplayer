@@ -60,11 +60,13 @@ ReformatFilter::ReformatFilter(IAudioSourceRef as, AudioFormat target)
 		#else
 			// partially fix sample rate (only multiply by powers of 2)
 			int count = 0;
-			while ((src->getAudioFormat().SampleRate < target.SampleRate) && (count++<3)) {
-				dcerr(src->getAudioFormat().SampleRate << " < " << target.SampleRate);
+			// tgt - src = 2*src - tgt   ==   3*src = 2*tgt
+			while ((src->getAudioFormat().SampleRate*3 <= target.SampleRate*2) && (count++<3)) {
+				dcerr(src->getAudioFormat().SampleRate << " != " << target.SampleRate);
 				src = IAudioSourceRef(new SampleDoublerFilter(src));
 			}
-			dcerr(src->getAudioFormat().SampleRate << " < " << target.SampleRate);
+			dcerr(src->getAudioFormat().SampleRate << " != " << target.SampleRate);
+			target.SampleRate = src->getAudioFormat().SampleRate;
 		#endif
 			++nfilters;
 		}
