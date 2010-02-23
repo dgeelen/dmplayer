@@ -17,6 +17,16 @@ class IDataSource {
 		virtual void reset() = 0;
 
 		virtual uint32 getData(uint8* buffer, uint32 len) = 0;
+
+		uint32 getDataRetry(uint8* buffer, uint32 len)
+		{
+			uint32 done = 0;
+			while (done < len && !exhausted()) {
+				uint32 read = getData(buffer+done, len-done);
+				done += read;
+			}
+			return done;
+		}
 };
 
 #endif//DATASOURCE_INTERFACE_H
