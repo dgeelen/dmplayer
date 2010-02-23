@@ -86,7 +86,7 @@ class ZLibDataSource: public IDataSource
 				strm.avail_out = len-done;
 
 				int ret = inflate(&strm, 0);
-				if (ret != Z_OK && ret != Z_STREAM_END) throw std::runtime_error("inflate failed");
+				if (ret != Z_OK && ret != Z_BUF_ERROR && ret != Z_STREAM_END) throw std::runtime_error("inflate failed");
 
 				uint32 rdone = (istop-istart)-strm.avail_in;
 				uint32 wdone = (len-done)-strm.avail_out;
@@ -109,7 +109,7 @@ IDecoderRef ZLibDecoder::tryDecode(IDataSourceRef datasource)
 {
 	/* first do some quick checks to see if we might be able to handle this */
 	uint8 tbuf[2];
-	if (datasource->getData(tbuf,2) != 2) return IDecoderRef();
+	if (datasource->getDataRetry(tbuf,2) != 2) return IDecoderRef();
 	bool is_gzip = (tbuf[0] == 0x1f) && (tbuf[1] == 0x8b); // gzip magix from http://www.ietf.org/rfc/rfc1952.txt
 	bool is_zlib = (((tbuf[0] << 8) | tbuf[1]) % 31 == 0); // zlib magix from http://www.ietf.org/rfc/rfc1950.txt
 	if (!is_gzip && !is_zlib) return IDecoderRef();
