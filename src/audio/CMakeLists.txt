@@ -74,6 +74,7 @@ IF(LIBOGG_FOUND AND LIBOGG_DEBUG_FOUND) # Xiph.org OGG decoder (demuxer really)
 	# is not really a decoder but a demuxer
 	SET(DECODER_OGG_SOURCES
 		datasource_oggstream.cpp datasource_oggstream.h
+		datasource_resetbuffer.cpp datasource_resetbuffer.h
 	)
 ENDIF(LIBOGG_FOUND AND LIBOGG_DEBUG_FOUND)
 
@@ -150,6 +151,7 @@ SET(DECODER_NAMES ${DECODER_NAMES} Playlist)
 
 # we can always compile the Plugin decoder, no libs needed for that
 SET(DECODER_NAMES_STATIC ${DECODER_NAMES_STATIC} Plugin)
+SET(DECODER_PLUGIN_SOURCES decoder_plugin_legacy.h decoder_plugin_legacy.cpp)
 
 # optional filters
 IF(LIBSAMPLERATE_FOUND AND LIBSAMPLERATE_DEBUG_FOUND)
@@ -226,6 +228,8 @@ FOREACH(name ${DECODER_NAMES_DYNAMIC})
 		decoder_${lname}.cpp
 		plugin_helper.h
 		plugin_helper.cpp
+		plugin_util.h
+		plugin_util.cpp
 		# a bit hacky...
 		../util/ScopeExitSignal.cpp ../error-handling.cpp
 	)
@@ -258,7 +262,6 @@ ADD_LIBRARY(mpmp_audio
 
 	datasource_filereader.h       datasource_filereader.cpp
 	datasource_httpstream.h       datasource_httpstream.cpp
-	datasource_resetbuffer.h      datasource_resetbuffer.cpp
 
 	filter_sampledoubler.h        filter_sampledoubler.cpp
 	filter_sampleconverter.h      filter_sampleconverter.cpp
@@ -269,6 +272,9 @@ ADD_LIBRARY(mpmp_audio
 	filter_normalize.h            filter_normalize.cpp
 	filter_downmix.h              filter_downmix.cpp
 	filter_upmix.h                filter_upmix.cpp
+
+	plugin_util.h
+	plugin_util.cpp
 
 	${BACKEND_SOURCE_FILES}
 	${DECODER_SOURCE_FILES}
