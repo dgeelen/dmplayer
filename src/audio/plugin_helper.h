@@ -28,7 +28,7 @@
   #endif
 #endif
 
-#include "../Types.h"
+#include "../types.h"
 
 typedef uint32 (*source_callback_getData_cbt)(void*, uint8*, uint32);
 typedef void (*source_callback_reset_cbt)(void*);
