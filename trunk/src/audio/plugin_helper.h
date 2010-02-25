@@ -30,16 +30,12 @@
 
 #include "../types.h"
 
-typedef uint32 (*source_callback_getData_cbt)(void*, uint8*, uint32);
-typedef void (*source_callback_reset_cbt)(void*);
-typedef bool (*source_callback_exhausted_cbt)(void*);
-typedef uint32 (*source_callback_getpos_cbt)(void*);
+#include "plugin_util.h"
+
+typedef ppvoid_t (*find_decoder_callback_type)(ppvoid_t);
 
 extern "C" DLL_PUBLIC const char* getplugintype();
-extern "C" DLL_PUBLIC void* create(void*,source_callback_getData_cbt,source_callback_reset_cbt,source_callback_exhausted_cbt,source_callback_getpos_cbt);
-extern "C" DLL_PUBLIC void destroy(void*);
-extern "C" DLL_PUBLIC uint32 getdata(void*,uint8*,uint32);
-extern "C" DLL_PUBLIC bool exhausted(void*);
-extern "C" DLL_PUBLIC void getaudioformat(void*, uint32*,uint32*,uint32*,bool*,bool*,bool*);
+extern "C" DLL_PUBLIC ppvoid_t create_decoder(ppvoid_t);
+extern "C" DLL_PUBLIC void set_find_decoder_callback(find_decoder_callback_type);
 
 #endif//PLUGIN_DLL_H

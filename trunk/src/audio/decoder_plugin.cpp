@@ -5,75 +5,60 @@
 
 #include <boost/filesystem.hpp>
 
-uint32 PluginDecoder::source_callback_getData(void* source, uint8* buf, uint32 max)
-{
-	return ((IDataSource*)source)->getData(buf, max);
-}
+#include "decoder_plugin_legacy.h"
 
-void PluginDecoder::source_callback_reset(void* source)
-{
-	((IDataSource*)source)->reset();
-}
-
-bool PluginDecoder::source_callback_exhausted(void* source)
-{
-	return ((IDataSource*)source)->exhausted();
-}
-
-uint32 PluginDecoder::source_callback_getpos(void* source)
-{
-	return ((IDataSource*)source)->getpos();
-}
+namespace {
+	ppvoid_t find_decoder_callback(ppvoid_t dsobj)
+	{
+		IDataSourceRef ds = PPVoidToIDataSource(dsobj);
+		IDecoderRef dec = IDecoder::findDecoder(ds);
+		if (!dec) return NULL;
+		return IDecoderToPPVoid(dec);
+	};
+};
 
 PluginDecoder::PluginDecoder(boost::filesystem::path dllname, IDataSourceRef source_)
-: dll(dllname), dlldecoder(NULL), source(source_)
+: DecoderFromPPVoid(NULL), dll(dllname), source(source_)
 {
+	source->reset();
+
 	boost::function<const char*()> df_type;
 	dll.getFunction("getplugintype", df_type);
 
 	std::string type(df_type());
-	if (type != "Decoder-1") throw std::runtime_error("Invalid plugin type");
 
-	if (!dll.getFunction("create", dll_create)
-	 || !dll.getFunction("destroy", dll_destroy)
-	 || !dll.getFunction("getdata", dll_getdata)
-	 || !dll.getFunction("exhausted", dll_exhausted)
-	 || !dll.getFunction("getaudioformat", dll_getaudioformat)
-	 ) throw std::runtime_error("Failed to load functions");
+	ppvoid_t decoder_obj = NULL;
+	if (type == "Decoder-1") {
+		decoder_obj = decoder_plugin_legacy_1(dll, source);
+	} else if (type == "Decoder-2") {
+		typedef ppvoid_t (*find_decoder_callback_type)(ppvoid_t);
+		boost::function<ppvoid_t(ppvoid_t)> create_decoder;
+		boost::function<void(find_decoder_callback_type)> set_find_decoder_callback;
 
-	dlldecoder = dll_create(source.get(), &source_callback_getData, &source_callback_reset, &source_callback_exhausted, &source_callback_getpos);
-	if (!dlldecoder) throw std::runtime_error("Failed to create plugin decoder");
-	dll_getaudioformat(dlldecoder,
-		&audioformat.SampleRate,
-		&audioformat.Channels,
-		&audioformat.BitsPerSample,
-		&audioformat.SignedSample,
-		&audioformat.LittleEndian,
-		&audioformat.Float
-	);
+		if (!dll.getFunction("create_decoder", create_decoder)
+		 || !dll.getFunction("set_find_decoder_callback", set_find_decoder_callback)
+		 ) throw std::runtime_error("Failed to load functions");
+
+		set_find_decoder_callback(&find_decoder_callback);
+
+		decoder_obj = create_decoder(IDataSourceToPPVoid(source));
+	} else
+		throw std::runtime_error("Invalid plugin type");
+
+	if (!decoder_obj) throw std::runtime_error("Failed to create decoder_obj");
+	init(decoder_obj);
 }
 
 PluginDecoder::~PluginDecoder()
 {
-	dll_destroy(dlldecoder);
-}
-
-uint32 PluginDecoder::getData(uint8* buf, uint32 max)
-{
-	if (max == 0xffffffff) --max;
-	uint32 ret = dll_getdata(dlldecoder, buf, max);
-	if (ret == 0xffffffff) throw std::runtime_error("PluginDecoder Exception");
-	return ret;
-}
-
-bool PluginDecoder::exhausted()
-{
-	return dll_exhausted(dlldecoder);
+	// we can't call the destroy callback after ~DynamicLibrary for 'dll' unloads the library
+	// so we call destroy() here to make sure it happens before the library is unloaded	
+	destroy();
 }
 
 IDecoderRef PluginDecoder::tryDecodePath(IDataSourceRef datasource, boost::filesystem::path path, int recurse)
 {
-	std::cerr << "PluginDecoder: Trying: " << path << "\n";
+	dcerr("PluginDecoder: Trying: " << path);
 	IDecoderRef ret;
 	if (path.empty()) {
 		if (!ret) ret = tryDecodePath(datasource, "plugins/");
