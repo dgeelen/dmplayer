@@ -52,7 +52,7 @@ PluginDecoder::PluginDecoder(boost::filesystem::path dllname, IDataSourceRef sou
 PluginDecoder::~PluginDecoder()
 {
 	// we can't call the destroy callback after ~DynamicLibrary for 'dll' unloads the library
-	// so we call destroy() here to make sure it happens before the library is unloaded	
+	// so we call destroy() here to make sure it happens before the library is unloaded
 	destroy();
 }
 
