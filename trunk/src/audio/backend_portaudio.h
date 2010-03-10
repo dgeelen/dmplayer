@@ -16,12 +16,12 @@
 
 // Normally data is requested in blocks of size NORMAL_CHUNKSIZE
 // But when buffer is less than FASTFILL_PERCENTAGE filled, blocks of size FASTFILL_CHUNKSIZE are used instead
-// When buffer is more than WAITFILL_PERCENTAGE filled, we just idle WAITFILL_SLEEPMS ms before trying again
+// When buffer is more than WAITFILL_PERCENTAGE filled, we idle WAITFILL_SLEEPMS ms before trying again
 template<typename T, size_t NORMAL_CHUNKSIZE = 64*1024, size_t FASTFILL_PERCENTAGE = 10, size_t FASTFILL_CHUNKSIZE = 2048*8, size_t WAITFILL_PERCENTAGE = 90, size_t WAITFILL_SLEEPMS = 10>
 class circular_buffer {
 	private:
 		boost::mutex cb_mutex;
-		std::vector<uint8> cb_buf;
+		std::vector<T> cb_buf;
 		size_t cb_rpos; // Read position, only modified by read() calls
 		size_t cb_wpos; // Write position, only modified by prepare_write() calls
 		size_t cb_data; // Amount of data in buffer, modified (with locking) by both read() and prepare_write() calls
@@ -59,7 +59,7 @@ class circular_buffer {
 			while (todo > 0) {
 				size_t copy = (cb_size - cb_rpos);
 				if (todo < copy) copy = todo;
-				memcpy(buf, &cb_buf[cb_rpos], copy);
+				memcpy(buf, &cb_buf[cb_rpos], copy * sizeof(T));
 				cb_rpos += copy;
 				buf += copy;
 				if (cb_rpos == cb_size) cb_rpos = 0;
@@ -73,10 +73,11 @@ class circular_buffer {
 				if (read > cb_data) read = cb_data;
 				failed -= read;
 				cb_data -= read;
-				#ifdef PRINT_BUFSIZE
-					std::cerr << STRFORMAT("Read : %_6.2f  %_9d (%d) - %d", cb_data*100.0/cb_size, cb_data , count-failed , failed) << std::endl;
-				#endif
 			}
+
+			#ifdef PRINT_BUFSIZE
+				std::cerr << STRFORMAT("Read : %_6.2f  %_9d (%d) - %d", cb_data*100.0/cb_size, cb_data , count-failed , failed) << std::endl;
+			#endif
 
 			if (failed > 0) {
 				if (cb_rpos < failed)
@@ -94,7 +95,7 @@ class circular_buffer {
 		 *  @param buf [out] Will contain a pointer to the start of the prepared buffer
 		 *  @param count [out] Will contain the amount of elements that can we written to the prepared buffer
 		 *
-		 *  After data is written to the buffer call commit_write to commit os
+		 *  After data is written to the buffer call commit_write to commit it to the circular_buffer
 		 */
 		void write_prepare(T*& buf, size_t& count) {
 			write(buf, count, 0);
@@ -102,7 +103,7 @@ class circular_buffer {
 
 		/**
 		 *  Commits data written to previously prepared buffer
-		 *  This makes it available to the read() operation
+		 *  This makes it available for the read() operation
 		 *
 		 *  @param written Amount of data written to the buffer
 		 */
@@ -128,7 +129,7 @@ class circular_buffer {
 				boost::mutex::scoped_lock lock(cb_mutex);
 				cb_data += written;
 				#ifdef PRINT_BUFSIZE
-					std::cerr << STRFORMAT("Write: %_6.2f  %_9d (%d)", cb_data*100.0/cb_size, cb_data , written) << std::endl;
+					if (written > 0) std::cerr << STRFORMAT("Write: %_6.2f  %_9d (%d)", cb_data*100.0/cb_size, cb_data , written) << std::endl;
 				#endif
 
 				while (cb_data * 100 >= cb_size * WAITFILL_PERCENTAGE) {
