@@ -154,6 +154,7 @@ ppvoid_t IDecoderToPPVoid(IDecoderRef ds)
 }
 
 DecoderFromPPVoid::DecoderFromPPVoid(ppvoid_t obj_)
+: obj(NULL)
 {
 	init(obj_);
 }
@@ -173,6 +174,7 @@ void DecoderFromPPVoid::destroy()
 
 void DecoderFromPPVoid::init(ppvoid_t obj_)
 {
+	destroy();
 	obj = obj_;
 	if (!obj) return;
 	// getaudioformat
