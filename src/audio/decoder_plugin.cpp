@@ -61,10 +61,12 @@ IDecoderRef PluginDecoder::tryDecodePath(IDataSourceRef datasource, boost::files
 	dcerr("PluginDecoder: Trying: " << path);
 	IDecoderRef ret;
 	if (path.empty()) {
-		if (!ret) ret = tryDecodePath(datasource, "plugins/");
-		if (!ret) ret = tryDecodePath(datasource, "audio/");
-		if (!ret) ret = tryDecodePath(datasource, "src/audio/");
-		if (!ret) ret = tryDecodePath(datasource, "audio/Debug/");
+		ret = tryDecodePath(datasource, "plugins/");
+		#ifdef DEBUG
+			if (!ret) ret = tryDecodePath(datasource, "audio/");
+			if (!ret) ret = tryDecodePath(datasource, "src/audio/");
+			if (!ret) ret = tryDecodePath(datasource, "audio/Debug/");
+		#endif
 		return ret;
 	}
 	try {
