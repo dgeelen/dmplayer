@@ -4,12 +4,12 @@
 
 WAVWriterBackend::WAVWriterBackend(AudioController* dec)	: IBackend(dec) {
 	/* let the world know what audio format we accept */
-	af.Channels      = 6;
-	af.BitsPerSample = 32;
+	af.Channels      = 2;
+	af.BitsPerSample = 16;
 	af.SampleRate    = 44100;
 	af.SignedSample  = true;
 	af.LittleEndian  = true;
-	af.Float         = true;
+	af.Float         = false;
 	decoder = dec;
 	outputter_thread = NULL;
 	f = NULL;
@@ -38,6 +38,8 @@ void WAVWriterBackend::stop_output() {
 void WAVWriterBackend::outputter() {
 	dcerr("starting WAV output");
 	f = fopen("output.wav", "wb");
+	if(!f)
+		throw Exception("Could not open file output.wav");
 	{
 		uint32 ByteRate = af.SampleRate * af.Channels * af.BitsPerSample / 8;
 		uint32 BlockAlign = af.Channels * af.BitsPerSample / 8;
@@ -58,17 +60,15 @@ void WAVWriterBackend::outputter() {
 		               };
 		fwrite(hdr, 1, 48, f);
 	}
-	if(!f)
-		throw Exception("Could not open file output.wav");
 
 	uint32 total = 0;
 	int size = (af.BitsPerSample>>3) * af.Channels * 1024;
 	uint8* buf = new uint8[size];
-	while(!done) {
+	while (!done) {
 		int read = decoder->getData(buf, size);
 		fwrite((char*)buf, sizeof(uint8), read, f);
 		total += read;
-		if(read == 0) break;
+		if (read == 0) break;
 	}
 	delete[] buf;
 
