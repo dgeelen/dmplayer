@@ -6,21 +6,18 @@ SET(LIBOGG_FOUND FALSE)
 SET(LIBOGG_DEBUG_FOUND FALSE)
 
 Find_Path(LIBOGG_INCLUDE_DIR
-	ogg/ogg.h
-	/usr/include /usr/local/include
-	${LIBOGG_EXTRALIB_INCLUDE_PATHS}
+	NAMES ogg/ogg.h
+	PATHS /usr/include /usr/local/include ${LIBOGG_EXTRALIB_INCLUDE_PATHS}
 )
 
 Find_Library(LIBOGG_LIBRARY
-	ogg
-	/usr/lib /usr/local/lib
-	${LIBOGG_EXTRALIB_LIBRARY_PATHS}
+	NAMES ogg
+	PATHS /usr/lib /usr/local/lib ${LIBOGG_EXTRALIB_LIBRARY_PATHS}
 )
 
 Find_Library(LIBOGG_DEBUG_LIBRARY
-	oggd
-	/usr/lib /usr/local/lib
-	${LIBOGG_EXTRALIB_LIBRARY_PATHS}
+	NAMES oggd
+	PATHS /usr/lib /usr/local/lib ${LIBOGG_EXTRALIB_LIBRARY_PATHS}
 )
 
 IF(NOT MSVC) # Assume non-MSVC compilers don't care about different runtimes

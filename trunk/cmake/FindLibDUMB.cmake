@@ -6,21 +6,18 @@ SET(LIBDUMB_FOUND FALSE)
 SET(LIBDUMB_DEBUG_FOUND FALSE)
 
 Find_Path(LIBDUMB_INCLUDE_DIR
-	dumb.h
-	/usr/include /usr/local/include
-	${LIBDUMB_EXTRALIB_INCLUDE_PATHS}
+	NAMES dumb.h
+	PATHS /usr/include /usr/local/include ${LIBDUMB_EXTRALIB_INCLUDE_PATHS}
 )
 
 Find_Library(LIBDUMB_LIBRARY
-	dumb
-	/usr/lib /usr/local/lib
-	${LIBDUMB_EXTRALIB_LIBRARY_PATHS}
+	NAMES dumb
+	PATHS /usr/lib /usr/local/lib ${LIBDUMB_EXTRALIB_LIBRARY_PATHS}
 )
 
 Find_Library(LIBDUMB_DEBUG_LIBRARY
-	dumbd
-	/usr/lib /usr/local/lib
-	${LIBDUMB_EXTRALIB_LIBRARY_PATHS}
+	NAMES dumbd
+	PATHS /usr/lib /usr/local/lib ${LIBDUMB_EXTRALIB_LIBRARY_PATHS}
 )
 
 IF(NOT MSVC) # Assume non-MSVC compilers don't care about different runtimes
@@ -30,5 +27,5 @@ ENDIF(NOT MSVC)
 IF(LIBDUMB_INCLUDE_DIR AND LIBDUMB_LIBRARY AND LIBDUMB_DEBUG_LIBRARY)
 	SET(LIBDUMB_FOUND TRUE)
 	SET(LIBDUMB_DEBUG_FOUND TRUE)
-	MESSAGE(STATUS "Found dumb library (libdumb)")
+	MESSAGE(STATUS "Found dumb library")
 ENDIF(LIBDUMB_INCLUDE_DIR AND LIBDUMB_LIBRARY  AND LIBDUMB_DEBUG_LIBRARY)
