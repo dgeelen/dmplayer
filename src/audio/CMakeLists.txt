@@ -5,7 +5,7 @@ INCLUDE_DIRECTORIES("${BOOST_INCLUDE_DIR}")
 LINK_DIRECTORIES("${BOOST_LIBRARY_DIR}")
 
 find_package(PortAudio)
-find_package(Mad)
+find_package(LibMad)
 find_package(LibOGG)
 find_package(LibVorbis)
 find_package(LibFaad2)

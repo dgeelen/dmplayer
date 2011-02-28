@@ -8,21 +8,18 @@ SET(LIBFLACPP_FOUND FALSE)
 SET(LIBFLACPP_DEBUG_FOUND FALSE)
 
 Find_Path(LIBFLAC_INCLUDE_DIR
-	FLAC/all.h
-	/usr/include/ /usr/local/include/
-	${LIBFLAC_EXTRALIB_INCLUDE_PATHS}
+	NAMES FLAC/all.h
+	PATHS /usr/include/ /usr/local/include/ ${LIBFLAC_EXTRALIB_INCLUDE_PATHS}
 )
 
 Find_Library(LIBFLAC_LIBRARY
-	FLAC
-	/usr/lib /usr/local/lib
-	${LIBFLAC_EXTRALIB_LIBRARY_PATHS}
+	NAMES FLAC
+	PATHS /usr/lib /usr/local/lib ${LIBFLAC_EXTRALIB_LIBRARY_PATHS}
 )
 
 Find_Library(LIBFLAC_DEBUG_LIBRARY
-	FLACd
-	/usr/lib /usr/local/lib
-	${LIBFLAC_EXTRALIB_LIBRARY_PATHS}
+	NAMES FLACd
+	PATHS /usr/lib /usr/local/lib ${LIBFLAC_EXTRALIB_LIBRARY_PATHS}
 )
 
 IF(NOT MSVC) # Assume non-MSVC compilers don't care about different runtimes
@@ -36,23 +33,19 @@ IF(LIBFLAC_INCLUDE_DIR AND LIBFLAC_LIBRARY AND LIBFLAC_DEBUG_LIBRARY)
 ENDIF(LIBFLAC_INCLUDE_DIR AND LIBFLAC_LIBRARY AND LIBFLAC_DEBUG_LIBRARY)
 
 Find_Path(LIBFLACPP_INCLUDE_DIR
-	FLAC++/all.h
-	/usr/include/ /usr/local/include/
-	${LIBFLAC_INCLUDE_DIR}
-	${LIBFLAC_EXTRALIB_INCLUDE_PATHS}
+	NAMES FLAC++/all.h
+	PATHS /usr/include/ /usr/local/include/ ${LIBFLAC_INCLUDE_DIR} ${LIBFLAC_EXTRALIB_INCLUDE_PATHS}
 )
 
 Find_Library(LIBFLACPP_LIBRARY
-	FLAC++
-	/usr/lib /usr/local/lib
-	${LIBFLAC_EXTRALIB_LIBRARY_PATHS}
+	NAMES FLAC++
+	PATHS /usr/lib /usr/local/lib ${LIBFLAC_EXTRALIB_LIBRARY_PATHS}
 )
 
 
 Find_Library(LIBFLACPP_DEBUG_LIBRARY
-	FLAC++d
-	/usr/lib /usr/local/lib
-	${LIBFLAC_EXTRALIB_LIBRARY_PATHS}
+	NAMES FLAC++d
+	PATHS /usr/lib /usr/local/lib ${LIBFLAC_EXTRALIB_LIBRARY_PATHS}
 )
 
 IF(NOT MSVC) # Assume non-MSVC compilers don't care about different runtimes
