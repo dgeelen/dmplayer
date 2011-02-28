@@ -13,7 +13,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-
+#include <string.h>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
 
