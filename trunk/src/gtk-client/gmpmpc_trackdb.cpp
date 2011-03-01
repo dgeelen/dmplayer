@@ -3,6 +3,8 @@
 #include <gtkmm/treemodel.h>
 #include <vector>
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
+#include <boost/algorithm/string.hpp>
 #include "../util/StrFormat.h"
 #include "../error-handling.h"
 
@@ -33,7 +35,7 @@ gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(middle_end& m)
 	std::list<Gtk::TargetEntry> listTargets;
 	listTargets.push_back( Gtk::TargetEntry("text/uri-list", Gtk::TARGET_OTHER_APP, 0) ); // Last parameter is 'Info', used to distinguish
 	listTargets.push_back( Gtk::TargetEntry("text/plain"   , Gtk::TARGET_OTHER_APP, 1) ); // different types if TargetEntry in the drop handler
-	listTargets.push_back( Gtk::TargetEntry("STRING"       , Gtk::TARGET_OTHER_APP, 1) );
+	listTargets.push_back( Gtk::TargetEntry("STRING"       , Gtk::TARGET_OTHER_APP, 2) );
 	treeview.drag_dest_set(listTargets); // Should use defaults, DEST_DEFAULT_ALL, Gdk::ACTION_COPY);
 
 	search_entry.signal_changed().connect(boost::bind(&gmpmpc_trackdb_widget::on_search_entry_changed, this));
@@ -150,42 +152,33 @@ string urldecode(std::string s) { //http://www.koders.com/cpp/fid6315325A03C89DE
 }
 
 vector<std::string> urilist_convert(const std::string urilist) {
-	#ifdef WIN32
-		#define FILEURILEN 8
-	#else
-		#define FILEURILEN 7
-	#endif
-	vector<std::string> files;
-	int begin = urilist.find("file://", 0);
-	int end = urilist.find("\r\n", begin);
-	while( end != string::npos) {
-		files.push_back(urldecode(urilist.substr(begin + FILEURILEN, end-begin-FILEURILEN)));
-		begin = urilist.find("file://", end);
-		if(begin == string::npos) break;
-		end = urilist.find("\r\n", begin);
+	vector<string> files;
+	boost::split(files, urilist, boost::is_any_of("\r\n"), boost::token_compress_on);
+	BOOST_FOREACH(string& file, files) {
+		if(file.substr(0,7) == "file://")
+			file = file.substr(7);
+		file = urldecode(file);
 	}
 	return files;
-	#undef FILEURILEN
 }
 
 void gmpmpc_trackdb_widget::on_drag_data_received_signal(const Glib::RefPtr<Gdk::DragContext>& context,
                                                          int x, int y,
                                                          const Gtk::SelectionData& selection_data,
                                                          guint info, guint time) {
-	dcerr("DROP!");
+	dcerr("DROP!" << info);
 
 	// Note: We know we only receive strings (of type STRING, text/uri-list and text/plain)
 	switch(info) {
-		case 0: {
+		case 0:   // text/uri-list
+		case 1:   // text/plain
+		case 2: { // STRING
 			BOOST_FOREACH(std::string file, urilist_convert(selection_data.get_data_as_string())) {
 				middleend.trackdb_add(boost::filesystem::path(file));
 			}
 		}; break;
-		case 1: {
-			middleend.trackdb_add(boost::filesystem::path(selection_data.get_data_as_string()));
-		}; break;
 		default:
-			dcerr("Unhandled drop? info="<<info);
+			cerr << "Unhandled drop: drop-type=" << info;
 	}
 	update_treeview();
 	context->drop_finish(true, time);
