@@ -73,11 +73,13 @@ bool gmpmpc_trackdb_widget::focus_add_to_wishlist_button() {
 }
 
 bool gmpmpc_trackdb_widget::on_treeview_clicked(GdkEventButton *event) {
-	if(event->type == Gdk::DOUBLE_BUTTON_PRESS) {
+	bool is_double_button_press = (event->type == Gdk::DOUBLE_BUTTON_PRESS);
+	if(is_double_button_press) {
 		on_add_to_wishlist_button_clicked();
 	}
- 	Glib::signal_idle().connect(sigc::mem_fun(*this, &gmpmpc_trackdb_widget::focus_add_to_wishlist_button));
- 	return false;
+	// note: next line fucks up ctrl-select-multi
+ 	//Glib::signal_idle().connect(sigc::mem_fun(*this, &gmpmpc_trackdb_widget::focus_add_to_wishlist_button));
+ 	return is_double_button_press;
 }
 
 void gmpmpc_trackdb_widget::on_add_to_wishlist_button_clicked() {
