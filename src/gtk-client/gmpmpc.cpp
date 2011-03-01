@@ -206,7 +206,7 @@ void GtkMpmpClientWindow::on_menu_file_quit() {
 
 void GtkMpmpClientWindow::on_statusicon_activate() {
 	if( is_visible() ) {
-		if( property_is_active() ) {
+		if( property_is_active() || property_has_toplevel_focus() ) {
 			hide();
 		}
 		else {
