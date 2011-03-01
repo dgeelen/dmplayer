@@ -9,11 +9,20 @@ gmpmpc_track_treeview::gmpmpc_track_treeview() {
 	//FIXME: Appending columns appears to cause HEAP corruption in release mode?! (on exit)
 	append_column("TrackID", m_Columns.trackid);
 	append_column("Filename", m_Columns.filename);
-	get_selection()->set_mode(Gtk::SELECTION_MULTIPLE);
-	set_rubber_banding(true);
-
 	model = get_model();
 	store = Glib::RefPtr<Gtk::ListStore>::cast_dynamic(model);
+
+	set_headers_clickable(true);
+	set_rules_hint(true);
+	set_search_column(m_Columns.filename);
+	//store->set_sort_column(m_Columns.filename, Gtk::SORT_ASCENDING);
+	BOOST_FOREACH(Gtk::TreeViewColumn* column, get_columns()) {
+		column->set_reorderable(true);
+		column->set_resizable(true);
+	}
+	set_enable_search(true);
+	set_rubber_banding(true);
+	get_selection()->set_mode(Gtk::SELECTION_MULTIPLE);
 }
 
 void gmpmpc_track_treeview::clear() {
