@@ -194,7 +194,7 @@ void GtkMpmpClientWindow::on_menu_file_preferences() {
 }
 
 bool GtkMpmpClientWindow::on_delete_event(GdkEventAny* event) {
-	on_statusicon_activate();
+	hide();
 	return true;
 }
 
