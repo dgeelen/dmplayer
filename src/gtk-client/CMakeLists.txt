@@ -181,11 +181,11 @@ IF(ENABLE_GTK_GUI)
 
 	TARGET_LINK_LIBRARIES(gmpmpc
 	                      ${GMPMPC_LINK_LIBRARIES}
-	                      ${BOOST_THREAD_LIBRARY}
-	                      ${BOOST_SIGNALS_LIBRARY}
+	                      ${BOOST_FILESYSTEM_LIBRARY}
 	                      ${BOOST_PROGRAM_OPTIONS_LIBRARY}
 	                      ${BOOST_SERIALIZATION_LIBRARY}
-	                      ${BOOST_FILESYSTEM_LIBRARY}
+	                      ${BOOST_SIGNALS_LIBRARY}
+	                      ${BOOST_THREAD_LIBRARY}
 	                      lib_network
 	                      mpmp_util
 	)
