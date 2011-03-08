@@ -5,6 +5,7 @@
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/foreach.hpp>
+#include <boost/regex.hpp>
 
 namespace fs = boost::filesystem;
 namespace ba = boost::algorithm;
@@ -47,18 +48,25 @@ LocalTrackID TrackDataBase::get_first_free_id() {
 	*/
 }
 
+const boost::regex regex_match_no_filename("^/$"); // The forward slash is invalid in _file_names on both windows and linux
 vector<LocalTrack> TrackDataBase::search(Track track) {
 	vector<LocalTrack> result;
 	MetaDataMap& t = track.metadata;
 	string filename = ba::to_lower_copy(t["FILENAME"]);
+	boost::regex regex(filename, boost::regex::perl|boost::regex::icase|boost::regex::no_except); // probably not every valid filename is also a valid or matching regex
+	if(regex.status() != 0) { // regex is not valid
+		regex = regex_match_no_filename;
+	}
 	BOOST_FOREACH(LocalTrack& tr, entries) {
 		if (track.id.second != LocalTrackID(0xffffffff)) {
 			if(track.id.second == tr.id) {
 				result.push_back(tr);
 			}
 		}
-		else if( ba::to_lower_copy(tr.metadata["FILENAME"]).find(filename) != string::npos ) {
-			result.push_back(tr);
+		else {
+			const string& fn = tr.metadata["FILENAME"];
+			if((ba::to_lower_copy(fn).find(filename) != string::npos) || boost::regex_search(fn, regex))
+				result.push_back(tr);
 		}
 	}
 	return result;
