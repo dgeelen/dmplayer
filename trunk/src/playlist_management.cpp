@@ -3,9 +3,11 @@
 
 #include "util/StrFormat.h"
 
+#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
+
 
 namespace fs = boost::filesystem;
 namespace ba = boost::algorithm;
@@ -57,6 +59,9 @@ vector<LocalTrack> TrackDataBase::search(Track track) {
 	if(regex.status() != 0) { // regex is not valid
 		regex = regex_match_no_filename;
 	}
+	vector<string> fn_parts;
+	boost::split(fn_parts, filename, boost::is_space(), boost::token_compress_on);
+
 	BOOST_FOREACH(LocalTrack& tr, entries) {
 		if (track.id.second != LocalTrackID(0xffffffff)) {
 			if(track.id.second == tr.id) {
@@ -64,8 +69,12 @@ vector<LocalTrack> TrackDataBase::search(Track track) {
 			}
 		}
 		else {
-			const string& fn = tr.metadata["FILENAME"];
-			if((ba::to_lower_copy(fn).find(filename) != string::npos) || boost::regex_search(fn, regex))
+			const string& fn       = tr.metadata["FILENAME"];
+			const string  fn_lower = ba::to_lower_copy(fn);
+			bool          matches  = true;
+			BOOST_FOREACH(string& fn_part, fn_parts)
+				matches = matches && (fn_lower.find(fn_part) != string::npos);
+			if(matches || boost::regex_search(fn, regex))
 				result.push_back(tr);
 		}
 	}
