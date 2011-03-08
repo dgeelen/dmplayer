@@ -68,13 +68,21 @@ PortAudioBackend::PortAudioBackend(AudioController* _dec)
 	if(numDevices == 0) {
 		throw SoundException("PortAudio backend: ERROR: No output devices available");
 	}
-	const   PaDeviceInfo *deviceInfo;
-	int default_device = Pa_GetDefaultOutputDevice();
-	deviceInfo = Pa_GetDeviceInfo( default_device );
-	int best_device    = default_device;
-	int n_channels     = deviceInfo->maxOutputChannels;
-	double samplerate  = deviceInfo->defaultSampleRate;
-	double latency     = deviceInfo->defaultHighOutputLatency;
+	int                 default_device = Pa_GetDefaultOutputDevice();
+	const PaDeviceInfo* deviceInfo     = Pa_GetDeviceInfo( default_device );
+	int                 best_device    = default_device;
+	string              default_name   = deviceInfo->name;
+	string              device_name    = deviceInfo->name;
+	int                 n_channels     = deviceInfo->maxOutputChannels;
+	double              samplerate     = deviceInfo->defaultSampleRate;
+	double              latency        = deviceInfo->defaultHighOutputLatency;
+	PaStreamParameters  outputParameters;
+	outputParameters.channelCount              = deviceInfo->maxOutputChannels;
+	outputParameters.device                    = default_device;
+	outputParameters.hostApiSpecificStreamInfo = NULL;
+	outputParameters.sampleFormat              = paFloat32;
+	outputParameters.suggestedLatency          = deviceInfo->defaultHighOutputLatency;
+	bool                supports_float = (Pa_IsFormatSupported(NULL, &outputParameters, deviceInfo->defaultSampleRate) == paFormatIsSupported);
 	for(int i=0; i<numDevices; i++) {
 		deviceInfo = Pa_GetDeviceInfo( i );
 		dcerr( "Found device #" << i << ": '" << deviceInfo->name << "'");
@@ -82,7 +90,6 @@ PortAudioBackend::PortAudioBackend(AudioController* _dec)
 		dcerr( "\tmaxOutputChannels=" << deviceInfo->maxOutputChannels);
 		dcerr( "\tdefaultSampleRate=" << deviceInfo->defaultSampleRate);
 
-		PaStreamParameters outputParameters;
 		outputParameters.channelCount = deviceInfo->maxOutputChannels;
 		outputParameters.device = i;
 		outputParameters.hostApiSpecificStreamInfo = NULL;
@@ -91,10 +98,11 @@ PortAudioBackend::PortAudioBackend(AudioController* _dec)
 		if(Pa_IsFormatSupported(NULL, &outputParameters, deviceInfo->defaultSampleRate) == paFormatIsSupported) {
 			if( ((deviceInfo->maxOutputChannels > n_channels) &&  (deviceInfo->defaultSampleRate >= samplerate)))
 			{
-				best_device = i;
-				n_channels = deviceInfo->maxOutputChannels;
-				samplerate = deviceInfo->defaultSampleRate;
-				latency    = deviceInfo->defaultHighOutputLatency;
+				best_device    = i;
+				n_channels     = deviceInfo->maxOutputChannels;
+				samplerate     = deviceInfo->defaultSampleRate;
+				latency        = deviceInfo->defaultHighOutputLatency;
+				supports_float = true;
 			}
 			dcerr("device supports " << deviceInfo->maxOutputChannels << " channels, " << deviceInfo->defaultSampleRate << "Hz, Float32 output, with " << deviceInfo->defaultHighOutputLatency << "s latency");
 		}
@@ -102,13 +110,15 @@ PortAudioBackend::PortAudioBackend(AudioController* _dec)
 			dcerr("device does not support " << deviceInfo->maxOutputChannels << " channels, " << deviceInfo->defaultSampleRate << "Hz, Float32 output, with " << deviceInfo->defaultHighOutputLatency << "s latency");
 		}
 	}
-	dcerr("Selecting device #" << best_device << " (default is #" << default_device << ")");
+	if(!supports_float) { // FIXME: try to set up default 16bit PCM output
+		cerr << "PortAudio: Error: Could not find a suitable device (missing float32 output support!). Expect Major Breakage!!"  << endl;
+	}
 
 	if(fabs(samplerate - double(long(samplerate))) > 0.5)
 		cout << "PortAudio backend: WARNING: samplerate mismatch > 0.5!" << endl;
 
 	af.SampleRate    = uint32(samplerate);
-	af.Channels      = n_channels >= 6 ? 6 : 2;
+	af.Channels      = std::min(dec->get_preferred_output_channel_count(), n_channels);
 	af.BitsPerSample = 32;
 	af.SignedSample  = true;
 	af.LittleEndian  = true;
@@ -116,7 +126,6 @@ PortAudioBackend::PortAudioBackend(AudioController* _dec)
 
 	cbuf.reset(BUFFER_SECONDS * (af.BitsPerSample/8) * af.Channels * af.SampleRate);
 
-	PaStreamParameters outputParameters;
 	outputParameters.channelCount              = af.Channels;
 	outputParameters.device                    = best_device;
 	outputParameters.sampleFormat              = paFloat32;
@@ -142,6 +151,8 @@ PortAudioBackend::PortAudioBackend(AudioController* _dec)
 	else {
 		throw SoundException("PortAudio backend: ERROR: Format not supported!");
 	}
+	cout << "PortAudio: Selected device '" << device_name << "', device #" << best_device << " (default is '" << default_name << "', device #" << default_device << ")." << endl;
+	cout << "PortAudio: Device supports " << n_channels << " channels (requested " << af.Channels << "), " << samplerate << "Hz, Float32 output, with " << latency << "s latency." << endl;
 };
 
 PortAudioBackend::~PortAudioBackend()

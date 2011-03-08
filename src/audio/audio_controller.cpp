@@ -29,12 +29,26 @@ class NullBackend: public IBackend {
 
 using namespace std;
 
-AudioController::AudioController()
-	: update_decoder_flag(false)
+AudioController::AudioController(int preferred_output_channel_count_)
+	: preferred_output_channel_count(preferred_output_channel_count_)
+	, update_decoder_flag(false)
 	, started(false)
 {
+	initialize();
+}
+
+AudioController::AudioController()
+	: preferred_output_channel_count(6)
+	, update_decoder_flag(false)
+	, started(false)
+{
+	initialize();
+}
+
+void AudioController::initialize() {
 	bytes_played = 0;
 	backend.reset();
+	dcerr("preferred_output_channel_count:" << preferred_output_channel_count);
 	#ifdef PORTAUDIO_BACKEND
 	try {
 		backend = IBackendRef(new PortAudioBackend(this));
@@ -50,7 +64,7 @@ AudioController::AudioController()
 	if(backend == NULL) {
 		backend = IBackendRef(new NullBackend(this));
 		//throw SoundException("AudioController(): Could not find a suitable backend!");
-		dcerr("AudioController(): Could not find a suitable backend!");
+		cerr << "AudioController: Error: Could not find a suitable backend!" << endl;
 	}
 
 	/* Now we have a backend */
@@ -115,13 +129,6 @@ void AudioController::set_data_source(const IDataSourceRef ds) {
 		#ifndef DEBUG // Uses too much CPU to do any usefull debugging, so leave it disabled unless needed
 		newdecoder = IAudioSourceRef(new NormalizeFilter(newdecoder, backend->getAudioFormat()));
 		#endif
-
-		// FIXME: This is really a custom hack for our personal use
-		AudioFormat mono_format(backend->getAudioFormat());
-		if((mono_format.Channels != 1) && (newdecoder->getAudioFormat().Channels == 2)) {
-			mono_format.Channels = 1;
-			newdecoder = IAudioSourceRef(new DownmixFilter(newdecoder, mono_format));
-		}
 
 		if(newdecoder->getAudioFormat() != backend->getAudioFormat())
 			newdecoder = IAudioSourceRef(new ReformatFilter(newdecoder, backend->getAudioFormat()));

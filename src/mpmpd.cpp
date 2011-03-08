@@ -113,8 +113,9 @@ class ServerDataSource : public IDataSource {
 
 class Server {
 	public:
-		Server(int listen_port, string server_name)
-			: networkhandler(listen_port, server_name)
+		Server(int listen_port, string server_name, int channels)
+			: ac(channels)
+			, networkhandler(listen_port, server_name)
 			, server_message_receive_signal_connection(networkhandler.server_message_receive_signal.connect(boost::bind(&Server::handle_received_message, this, _1, _2)))
 			, data_source_renewed_barrier(2)
 		{
@@ -727,12 +728,13 @@ class Server {
 
 int main_impl(int argc, char* argv[])
 {
-	int listen_port;
+	int listen_port = 0;
 	string filename;
 	string server_name;
 	string musix;
 	string findtext;
-	bool showhelp;
+	bool showhelp = false;
+	int channels = 0;
 	cout << "starting mpmpd V" MPMP_VERSION_STRING
 	#ifdef DEBUG
 	     << "   [Debug Build]"
@@ -742,12 +744,13 @@ int main_impl(int argc, char* argv[])
 	// Declare the supported options.
 	po::options_description desc("Allowed options");
 	desc.add_options()
-			("help", po::bool_switch(&showhelp)                   , "produce help message")
-			("port", po::value(&listen_port)->default_value(TCP_PORT_NUMBER), "listen port for daemon (TCP part)")
-			("file", po::value(&filename)->default_value("")      , "file to play (Debug for fmod lib)")
-			("name", po::value(&server_name)->default_value("mpmpd V" MPMP_VERSION_STRING), "Server name")
-			("musix", po::value(&musix)->default_value("")      , "directory to add music from")
-			("find", po::value(&findtext)->default_value("")      , "text to find in database")
+			("file",     po::value(&filename)->default_value("")                              , "File to play.")
+			("find",     po::value(&findtext)->default_value("")                              , "Query string for database.")
+			("help",     po::bool_switch(&showhelp)                                           , "Show this help message.")
+			("name",     po::value(&server_name)->default_value("mpmpd V" MPMP_VERSION_STRING), "Server name.")
+			("musix",    po::value(&musix)->default_value("")                                 , "Directory to add music from.")
+			("port",     po::value(&listen_port)->default_value(TCP_PORT_NUMBER)              , "Listen port for daemon (TCP part).")
+			("channels", po::value(&channels)->default_value(6)                               , "Number of preferred output channels. Valid values are 1, 2 or 6.")
 	;
 
 	po::variables_map vm;
@@ -760,7 +763,7 @@ int main_impl(int argc, char* argv[])
 	}
 
 	if(filename != "") {
-		AudioController ac;
+		AudioController ac(channels);
 		ac.test_functie(filename);
 		ac.start_playback();
 		cout << "Press any key to quit" << endl;
@@ -768,7 +771,7 @@ int main_impl(int argc, char* argv[])
 		return 0;
 	}
 
-	Server svr(listen_port, server_name);
+	Server svr(listen_port, server_name, channels);
 
 	cout << "Press any key to quit" << endl;
 	getchar();
