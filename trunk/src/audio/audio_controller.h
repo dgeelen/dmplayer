@@ -13,8 +13,10 @@ typedef boost::shared_ptr<IBackend> IBackendRef;
 class AudioController {
 	public:
 		AudioController();
+		AudioController(int preferred_output_channel_count_);
 		~AudioController();
 		void test_functie(std::string file);
+		int get_preferred_output_channel_count() { return preferred_output_channel_count; };
 		uint32 getData(uint8* buf, uint32 len);
 
 		void start_playback();
@@ -24,7 +26,10 @@ class AudioController {
 		void set_data_source(IDataSourceRef ds);
 		uint64 get_current_playtime();
 		boost::signal<void(uint64)> playback_finished;
+
 	private:
+		void initialize();
+		int preferred_output_channel_count;
 		IBackendRef backend;
 		IAudioSourceRef curdecoder;
 
