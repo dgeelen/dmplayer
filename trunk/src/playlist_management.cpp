@@ -9,6 +9,26 @@
 #include <boost/regex.hpp>
 
 
+#ifdef WIN32
+	/**
+	 * NOTE: When adding tracks we use boost::filesystem::exists() to check whether
+	 *       a given path exists or not. However it appears that sometimes this can
+	 *       cause a windows error popup to appear. The cause is that we may check
+	 *       a non-existant driver for example, which causes windows to throw a
+	 *       'Windows structured exception', not a C++ exception, and hence boost
+	 *       can not catch it. See the following URL for someone with the same
+	 *       problem: http://lists.boost.org/boost-users/2009/09/51934.php
+	 *       Work around/solution: disable these type of errors.
+	 */
+	#include <windows.h>
+	struct ErrorHider {
+		ErrorHider() {
+			SetErrorMode(SEM_FAILCRITICALERRORS);
+		}
+	};
+	ErrorHider eh;
+#endif
+
 namespace fs = boost::filesystem;
 namespace ba = boost::algorithm;
 using namespace std;
