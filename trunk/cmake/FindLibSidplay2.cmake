@@ -33,8 +33,8 @@ Find_Library(LIBSIDPLAY2_RESID_BUILDER_LIBRARY
 )
 
 Find_Library(LIBSIDPLAY2_RESID_BUILDER_DEBUG_LIBRARY
-	NAMES sidplay/builders/resid_builderd
-	PATHS /usr/lib /usr/local/lib ${LIBSIDPLAY2_EXTRALIB_LIBRARY_PATHS}
+	NAMES resid-builderd
+	PATHS /usr/lib/sidplay/builders /usr/local/lib/sidplay/builders ${LIBSIDPLAY2_EXTRALIB_LIBRARY_PATHS}
 )
 
 IF(NOT MSVC) # Assume non-MSVC compilers don't care about different runtimes
