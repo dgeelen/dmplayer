@@ -8,26 +8,55 @@
 using namespace std;
 using namespace boost;
 
+#ifdef WIN32
+	#include <shlwapi.h>
+	#include <shlobj.h>
+	#include <stdio.h>
+	#pragma comment(lib,"shlwapi.lib")
+#endif
 middle_end::middle_end()
 : networkhandler(TCP_PORT_NUMBER),
   client_id(-1)
 {
 	networkhandler.server_list_update_signal.connect(boost::bind(&middle_end::handle_sig_server_list_update, this, _1));
 	networkhandler.client_message_receive_signal.connect(boost::bind(&middle_end::handle_received_message, this, _1));
-	trackdb.add_directory("/home/dafox/sharedfolder/music/");
+
+#ifdef _WIN32
+	uint32 locations[] = {
+		CSIDL_COMMON_MUSIC,
+		CSIDL_MYMUSIC,
+	};
+
+	BOOST_FOREACH(uint32 location, locations) {
+		TCHAR szPath[MAX_PATH];
+		if(SUCCEEDED(SHGetFolderPath(NULL, location, NULL, 0, szPath ))) {
+			trackdb.add_directory(szPath);
+		}
+	}
+
+	char szBuffer[1024];
+	::GetLogicalDriveStrings(1024, szBuffer);
+	char *pch = szBuffer;
+	while(*pch) {
+		string drive(pch);
+
+		/* English locations */
+		trackdb.add_directory(drive + "Music\\");
+		trackdb.add_directory(drive + "Stuff\\music\\");
+		trackdb.add_directory(drive + "Mp3\\");
+		trackdb.add_directory(drive + "My Documents\\My Music\\");
+
+		/* Foreign languages */
+		trackdb.add_directory(drive + "Musica\\");
+		trackdb.add_directory(drive + "Multimedia\\Musica\\");
+
+		pch = &pch[strlen(pch) + 1];
+	}
+
 	trackdb.add_directory("f:\\home\\dafox\\sharedfolder\\music\\");
-	trackdb.add_directory("c:\\music\\");
-	trackdb.add_directory("d:\\music\\");
-	trackdb.add_directory("e:\\music\\");
-	trackdb.add_directory("c:\\stuff\\music\\");
-	trackdb.add_directory("d:\\stuff\\music\\");
-	trackdb.add_directory("e:\\stuff\\music\\");
-	trackdb.add_directory("c:\\mp3\\");
-	trackdb.add_directory("d:\\mp3\\");
-	trackdb.add_directory("e:\\mp3\\");
-	trackdb.add_directory("c:\\My Documents\\My Music\\");
-	trackdb.add_directory("d:\\My Documents\\My Music\\");
-	trackdb.add_directory("e:\\My Documents\\My Music\\");
+#endif // WIN32
+	trackdb.add_directory("/home/dafox/sharedfolder/music/");
+
 	networkhandler.start();
 	sig_search_tracks.connect(boost::bind(&middle_end::handle_msg_query_trackdb_query_result, this, _1, _2));
 	client_synced_playlist.sig_send_message.connect(boost::bind(&network_handler::send_server_message, &networkhandler, _1));
