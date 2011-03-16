@@ -169,7 +169,7 @@ void tcp_listen_socket::listen(const ipv4_addr addr, const uint16 portnumber)
 		throw std::runtime_error(ss.str().c_str());
 	}
 
-	if ( bind( sock, ( sockaddr* )&addr_in, sizeof( addr_in ) ) == SOCKET_ERROR ) {
+	if ( ::bind( sock, ( sockaddr* )&addr_in, sizeof( addr_in ) ) == SOCKET_ERROR ) {
 		stringstream ss;
 		ss << "tcp_listen_socket: Bind to network failed: error " << NetGetLastError() << "(" << strerror(NetGetLastError()) << ")" << "\n";
 		cout << ss.str();

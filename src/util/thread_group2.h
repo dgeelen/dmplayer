@@ -1,9 +1,11 @@
 #ifndef THREAD_GROUP2_H
 #define THREAD_GROUP2_H
 
+#include <boost/function.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
-#include <boost/noncopyable.hpp>
 #include <iterator>
 #include "../types.h"
 

@@ -12,8 +12,8 @@ middle_end::middle_end()
 : networkhandler(TCP_PORT_NUMBER),
   client_id(-1)
 {
-	networkhandler.server_list_update_signal.connect(bind(&middle_end::handle_sig_server_list_update, this, _1));
-	networkhandler.client_message_receive_signal.connect(bind(&middle_end::handle_received_message, this, _1));
+	networkhandler.server_list_update_signal.connect(boost::bind(&middle_end::handle_sig_server_list_update, this, _1));
+	networkhandler.client_message_receive_signal.connect(boost::bind(&middle_end::handle_received_message, this, _1));
 	trackdb.add_directory("/home/dafox/sharedfolder/music/");
 	trackdb.add_directory("f:\\home\\dafox\\sharedfolder\\music\\");
 	trackdb.add_directory("c:\\music\\");
@@ -180,19 +180,19 @@ void middle_end::_search_tracks(SearchID search_id, const Track query, boost::sh
 	}
 }
 
-shared_ptr<mutex::scoped_lock> middle_end::search_tracks(const Track query, SearchID* id) {
+boost::shared_ptr<mutex::scoped_lock> middle_end::search_tracks(const Track query, SearchID* id) {
 	return search_tracks(query, false, id);	
 }
 
-shared_ptr<mutex::scoped_lock> middle_end::search_tracks(const Track query, bool local_search_only, SearchID* id) {
+boost::shared_ptr<mutex::scoped_lock> middle_end::search_tracks(const Track query, bool local_search_only, SearchID* id) {
 	{
 	mutex::scoped_lock lock(next_search_id_mutex);
 	*id = next_search_id++;
 	}
 
 	boost::shared_ptr<boost::mutex> pm(new boost::mutex);
-	shared_ptr<mutex::scoped_lock> plock(new mutex::scoped_lock(*pm));
-	threads.create_thread(bind(&middle_end::_search_tracks, this, *id, query, pm));
+	boost::shared_ptr<boost::mutex::scoped_lock> plock(new mutex::scoped_lock(*pm));
+	threads.create_thread(boost::bind(&middle_end::_search_tracks, this, *id, query, pm));
 
 	if(!local_search_only) {
 		message_query_trackdb_ref msg(new message_query_trackdb(*id, query));
@@ -295,7 +295,7 @@ void middle_end::handle_message_request_file(const message_request_file_ref requ
 							try {
 								this_thread::sleep(sleep_time);
 							}
-							catch(boost::thread_interrupted e) {} // We will only sleep less because of this, no need to sleep 'the rest'
+							catch(boost::thread_interrupted /*e*/) {} // We will only sleep less because of this, no need to sleep 'the rest'
 						}
 					}
 					time_a = posix_time::microsec_clock::universal_time();
@@ -384,7 +384,7 @@ void middle_end::abort_file_transfer(LocalTrackID id) {
 		if((*i).second == id) {
 			*(*i).first.first = true;
 			for(int t = 0 ; t < threads.size(); ++t) {
-				shared_ptr<thread> pthread = threads[t];
+				boost::shared_ptr<boost::thread> pthread = threads[t];
 				if(pthread->get_id() == (*i).first.second) {
 					fr_lock.unlock();
 					t_lock.unlock();
@@ -477,7 +477,7 @@ void middle_end::handle_received_message(const messageref m) {
 			const message_query_trackdb_ref msg = static_pointer_cast<message_query_trackdb>(m);
 			SearchID id;
 			mutex::scoped_lock lock(trackdb_queries_mutex);
-			shared_ptr<mutex::scoped_lock> plock = search_tracks(msg->search, true, &id);
+			boost::shared_ptr<boost::mutex::scoped_lock> plock = search_tracks(msg->search, true, &id);
 			trackdb_queries[id] = msg->qid;
 		}; break;
 		case message::MSG_QUERY_TRACKDB_RESULT: {
@@ -488,7 +488,7 @@ void middle_end::handle_received_message(const messageref m) {
 			message_request_file_ref msg = static_pointer_cast<message_request_file>(m);
 			mutex::scoped_lock lock(file_requests_mutex);
 			bool *b = new bool(false);
-			thread::id tid = threads.create_thread(bind(&middle_end::handle_message_request_file, this, msg, b))->get_id();
+			boost::thread::id tid = threads.create_thread(boost::bind(&middle_end::handle_message_request_file, this, msg, b))->get_id();
 			file_requests.push_back(pair<pair<bool*, thread::id>, LocalTrackID>(pair<bool* , thread::id>(b, tid), msg->id.second));
 		}; break;
 		case message::MSG_REQUEST_FILE_RESULT: {
