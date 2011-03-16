@@ -156,7 +156,11 @@ vector<std::string> urilist_convert(const std::string urilist) {
 	boost::split(files, urilist, boost::is_any_of("\r\n"), boost::token_compress_on);
 	BOOST_FOREACH(string& file, files) {
 		if(file.substr(0,7) == "file://")
+#ifdef WIN32
+			file = file.substr(8); // On windows we need to strip the extra '/'
+#else
 			file = file.substr(7);
+#endif
 		file = urldecode(file);
 	}
 	return files;
