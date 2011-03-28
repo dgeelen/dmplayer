@@ -101,23 +101,36 @@ vector<LocalTrack> TrackDataBase::search(Track track) {
 	return result;
 }
 
-void TrackDataBase::add_directory(fs::path path) {
+bool my_exists(const fs::path& ph) {
 	try {
-		if(!fs::exists(path)) return;
-	} catch(exception& e) { return; }
+		return fs::exists(ph);
+	} catch (...) {
+		return false;
+	}
+}
 
-	if(fs::is_directory(path)) {
+void TrackDataBase::add_directory(fs::path path) {
+	vector<fs::path> files;
+	vector<fs::path> directories;
+	if(my_exists(path)) {
 		fs::directory_iterator end_iter; // default construction yields past-the-end
 		for(fs::directory_iterator iter(path);  iter != end_iter; ++iter ) {
-			try {
-				if(fs::exists(iter->path())) {
-					add_directory(iter->path());
-				}
-			} catch(std::exception& e) {} // on error resume next (eg exception denied etc)
+			if(fs::is_directory(iter->path()))
+				directories.push_back(iter->path());
+			else
+				files.push_back(iter->path());
 		}
 	}
-	else { // Some kind of file //FIXME: Handle recursive symlinks
-		add(path);
+
+
+	std::sort(directories.begin(), directories.end());
+	BOOST_FOREACH(const fs::path& directory, directories) {
+		add_directory(directory);
+	}
+
+	std::sort(files.begin(), files.end());
+	BOOST_FOREACH(const fs::path& file, files) {
+		add(file);
 	}
 }
 
