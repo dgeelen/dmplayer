@@ -75,6 +75,11 @@ vector<LocalTrack> TrackDataBase::search(Track track) {
 	vector<LocalTrack> result;
 	MetaDataMap& t = track.metadata;
 	string filename = ba::to_lower_copy(t["FILENAME"]);
+	const char* md_match = "FILENAME";
+	if(filename.substr(0,6) == "/path ") {
+		filename = filename.substr(6);
+		md_match = "PATH";
+	}
 	boost::regex regex(filename, boost::regex::perl|boost::regex::icase|boost::regex::no_except); // probably not every valid filename is also a valid or matching regex
 	if(regex.status() != 0) { // regex is not valid
 		regex = regex_match_no_filename;
@@ -89,7 +94,7 @@ vector<LocalTrack> TrackDataBase::search(Track track) {
 			}
 		}
 		else {
-			const string& fn       = tr.metadata["FILENAME"];
+			const string& fn       = tr.metadata[md_match];
 			const string  fn_lower = ba::to_lower_copy(fn);
 			bool          matches  = true;
 			BOOST_FOREACH(string& fn_part, fn_parts)
@@ -109,7 +114,11 @@ bool my_exists(const fs::path& ph) {
 	}
 }
 
-void TrackDataBase::add_directory(fs::path path) {
+void TrackDataBase::add_directory(const fs::path& path) {
+	add_directory_with_path(path.parent_path(), path);
+}
+
+void TrackDataBase::add_directory_with_path(const fs::path& base, const fs::path& path) {
 	vector<fs::path> files;
 	vector<fs::path> directories;
 	if(my_exists(path)) {
@@ -125,19 +134,43 @@ void TrackDataBase::add_directory(fs::path path) {
 
 	std::sort(directories.begin(), directories.end());
 	BOOST_FOREACH(const fs::path& directory, directories) {
-		add_directory(directory);
+		add_directory_with_path(base, directory);
 	}
 
 	std::sort(files.begin(), files.end());
 	BOOST_FOREACH(const fs::path& file, files) {
-		add(file);
+		add_file_with_path(base, file);
 	}
 }
 
-void TrackDataBase::add(fs::path path) {
-	MetaDataMap meta_data;
-	meta_data["FILENAME"] = path.leaf();
-	entries.push_back(LocalTrack(get_first_free_id(), path, meta_data));
+void TrackDataBase::add_file(const fs::path& path) {
+	add_file_with_path(path.parent_path(), path);
+}
+
+/**
+ * Adds a file to the trackdb, setting the "PATH" metadata such that it is
+ * relative to base. This is to avoid giving away too much information
+ * about the client's local filesystem layout.
+ *
+ * pre: (\exists p :: path = base / p)
+ */
+void TrackDataBase::add_file_with_path(const fs::path& base, fs::path path) {
+	try {
+		if(fs::is_regular(path)) {
+			MetaDataMap meta_data;
+			meta_data["FILENAME"] = path.leaf();
+
+			fs::path p;
+			path = path.parent_path();
+			while(!base.empty() && !path.empty() && base.parent_path() != path) {
+				p = path.leaf() / p;
+				path = path.parent_path();
+			}
+
+			meta_data["PATH"] = p.string();
+			entries.push_back(LocalTrack(get_first_free_id(), path, meta_data));
+		}
+	} catch(...) {}
 }
 
 std::string Track::idstr() const {
