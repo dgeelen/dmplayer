@@ -162,6 +162,7 @@ void GtkMpmpClientWindow::construct_gui() {
 
 	main_paned.add(playlist_widget);
 	main_paned.add(trackdb_widget);
+	main_paned.set_border_width(3); // Gnome HIG specifies 6
 
 	main_vbox.pack_start(*menubar_ptr, Gtk::PACK_SHRINK);
 	main_vbox.add(main_paned);

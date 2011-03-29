@@ -10,7 +10,11 @@ gmpmpc_playlist_widget::gmpmpc_playlist_widget(middle_end& m)
 	vbox.add(scrolledwindow);
 	vbox.pack_start(vote_down_button, Gtk::PACK_SHRINK);
 	Gtk::Frame::add(vbox);
-	set_label("Playlist:");
+
+	set_label("_Playlist:");
+	((Gtk::Label*)get_label_widget())->set_use_underline(true);
+	((Gtk::Label*)get_label_widget())->set_mnemonic_widget(*(gmpmpc_track_treeview*)treeview.get());
+
 	vote_down_button.set_border_width(3);
 	vote_down_button.set_use_underline(true);
 	vote_down_button.set_label("Vote _DOWN");

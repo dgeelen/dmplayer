@@ -24,8 +24,13 @@ gmpmpc_trackdb_widget::gmpmpc_trackdb_widget(middle_end& m)
 	vbox.pack_start(add_to_wishlist_button, Gtk::PACK_SHRINK);
 	add(vbox);
 
-	set_label("TrackDB:");
-	search_label.set_label("Filter:");
+	set_label("_TrackDB:");
+	((Gtk::Label*)get_label_widget())->set_use_underline(true);
+	((Gtk::Label*)get_label_widget())->set_mnemonic_widget(treeview);
+	search_label.set_label("Fi_lter:");
+	search_label.set_use_underline(true);
+	search_label.set_mnemonic_widget(search_entry);
+
 	add_to_wishlist_button.set_border_width(3);
 	add_to_wishlist_button.set_use_underline(true);
 	add_to_wishlist_button.set_label("_Enqueue selected");
