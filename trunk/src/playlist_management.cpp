@@ -154,20 +154,20 @@ void TrackDataBase::add_file(const fs::path& path) {
  *
  * pre: (\exists p :: path = base / p)
  */
-void TrackDataBase::add_file_with_path(const fs::path& base, fs::path path) {
+void TrackDataBase::add_file_with_path(const fs::path& base, const fs::path& path) {
 	try {
 		if(fs::is_regular(path)) {
 			MetaDataMap meta_data;
 			meta_data["FILENAME"] = path.leaf();
 
-			fs::path p;
-			path = path.parent_path();
-			while(!base.empty() && !path.empty() && base.parent_path() != path) {
-				p = path.leaf() / p;
-				path = path.parent_path();
+			fs::path relative_path;
+			fs::path base_path = path.parent_path();
+			while(!base.empty() && !base_path.empty() && base.parent_path() != base_path) {
+				relative_path = base_path.leaf() / relative_path;
+				base_path = base_path.parent_path();
 			}
 
-			meta_data["PATH"] = p.string();
+			meta_data["PATH"] = relative_path.string();
 			entries.push_back(LocalTrack(get_first_free_id(), path, meta_data));
 		}
 	} catch(...) {}
