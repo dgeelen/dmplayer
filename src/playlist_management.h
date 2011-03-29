@@ -98,7 +98,7 @@ class TrackDataBase {
 		void add_directory(const boost::filesystem::path& path);
 		void add_directory_with_path(const boost::filesystem::path& base, const boost::filesystem::path& path);
 		void add_file(const boost::filesystem::path& path);
-		void add_file_with_path(const boost::filesystem::path& base, boost::filesystem::path path);
+		void add_file_with_path(const boost::filesystem::path& base, const boost::filesystem::path& path);
 		std::vector<LocalTrack> search(Track t);
 	private:
 		LocalTrackID get_first_free_id();
